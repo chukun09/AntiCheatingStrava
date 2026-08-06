@@ -31,16 +31,18 @@ export function initTelegramBot(): Telegraf | null {
       if (ctx.message && 'text' in ctx.message) {
         const rawText = (ctx.message.text || '').trim();
         // Match patterns like `@Bot /command`, `@Bot command`, `/command@Bot`, `/command`, `command`
-        const match = rawText.match(/^(?:@[\w_]+\s+)?\/?([a-zA-Z0-9_]+)(?:@[\w_]+)?$/);
+        const match = rawText.match(/^(?:@[\w_]+\s+)?\/?([a-zA-Z0-9_]+)(?:@[\w_]+)?(?:\s+.*)?$/);
         if (match) {
           const cmdName = match[1].toLowerCase();
           const validCommands = [
-            'start', 'help', 'bxh_canhan', 'bxh_doi', 'speed_tuan1', 
-            'giai_tuan1', 'giai_tuan2', 'giai_tuan3', 'giai_tuan4', 'phat', 'sync'
+            'start', 'help', 'bxh_canhan', 'bxh_doi', 'bxh_phong', 'bxh_phongban',
+            'lichsu', 'chitiet', 'speed_tuan1', 'giai_tuan1', 'giai_tuan2', 
+            'giai_tuan3', 'giai_tuan4', 'phat', 'sync', 'duyet', 'huy'
           ];
           if (validCommands.includes(cmdName)) {
-            // Normalize to standard `/command` for Telegraf routing
-            ctx.message.text = `/${cmdName}`;
+            // Normalize command prefix while keeping trailing args
+            const trailingArgs = rawText.replace(/^(?:@[\w_]+\s+)?\/?([a-zA-Z0-9_]+)(?:@[\w_]+)?/, '');
+            ctx.message.text = `/${cmdName}${trailingArgs}`;
           }
         }
       }
@@ -56,7 +58,9 @@ Chào mừng các chiến binh đến với Giải Chạy Kỷ Niệm 15 Năm Th
 
 Danh sách lệnh hỗ trợ:
 🏆 <code>/bxh_canhan</code> - Xem Bảng Xếp Hạng Cá Nhân (Tách riêng Nam & Nữ).
-🛡️ <code>/bxh_doi</code> - Xem Bảng Xếp Hạng 8 Đội Thi Đấu (Tổng Cả Giải).
+🛡️ <code>/bxh_doi</code> - Xem Bảng Xếp Hạng 8 Đội Thi Đấu (Avg Km/người).
+🏢 <code>/bxh_phong</code> - Xem Bảng Xếp Hạng Theo Từng Phòng Ban (Avg Km/người).
+📋 <code>/lichsu [Nickname]</code> - Xem hồ sơ & danh sách bài chạy chi tiết của 1 VĐV.
 🥇 <code>/speed_tuan1</code> - Vinh danh Giải Cá Nhân Tuần 1 (Nam 30km, Nữ 15km).
 ⚡ <code>/giai_tuan1</code> - Xem BXH Giải Tập Thể Tuần 1 (Tỷ lệ % tham gia >= 3km).
 🏃 <code>/giai_tuan2</code> - Xem BXH Giải Tập Thể Tuần 2 (Pace Đội - Ưu đãi Nữ -1 min/km).
@@ -71,6 +75,105 @@ Danh sách lệnh hỗ trợ:
 🔗 <b>Trang đăng ký:</b> Truy cập <a href="${env.APP_BASE_URL}">${env.APP_BASE_URL}</a> để liên kết tài khoản Strava!`;
 
       return ctx.replyWithHTML(text);
+    });
+
+    // Command /bxh_phong or /bxh_phongban - Department Leaderboard
+    bot.command(['bxh_phong', 'bxh_phongban'], async (ctx) => {
+      try {
+        const users = await db.user.findMany();
+        const deptMap = new Map<string, { totalMeters: number; memberCount: number }>();
+
+        users.forEach(u => {
+          const deptName = u.department?.trim() || 'Chưa phân phòng';
+          const stat = deptMap.get(deptName) || { totalMeters: 0, memberCount: 0 };
+          stat.totalMeters += u.totalDistance;
+          stat.memberCount += 1;
+          deptMap.set(deptName, stat);
+        });
+
+        const deptList = Array.from(deptMap.entries()).map(([deptName, stat]) => {
+          const avgKm = stat.memberCount > 0 ? (stat.totalMeters / 1000) / stat.memberCount : 0;
+          const totalKm = stat.totalMeters / 1000;
+          return { deptName, totalKm, memberCount: stat.memberCount, avgKm };
+        }).sort((a, b) => b.avgKm - a.avgKm);
+
+        let message = `🏢 <b>BẢNG XẾP HẠNG THÀNH TÍCH PHÒNG BAN (AVG KM/NGƯỜI)</b> 🏢\n\n`;
+
+        if (deptList.length === 0) {
+          message += `<i>Chưa có dữ liệu phòng ban.</i>`;
+        } else {
+          deptList.forEach((dept, index) => {
+            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>#${index + 1}</b>`;
+            message += `${medal} <b>${dept.deptName}</b>\n`;
+            message += `   📊 Trung bình: <code>${dept.avgKm.toFixed(2)} km/người</code> (Tổng ${dept.totalKm.toFixed(1)}km - ${dept.memberCount} VĐV)\n`;
+          });
+        }
+
+        return ctx.replyWithHTML(message);
+      } catch (error) {
+        console.error('[Bot /bxh_phong] Error:', error);
+        return ctx.reply('Lỗi khi tải Bảng xếp hạng phòng ban.');
+      }
+    });
+
+    // Command /lichsu [Nickname] or /chitiet [Nickname] - Detailed athlete profile & activities history
+    bot.command(['lichsu', 'chitiet'], async (ctx) => {
+      try {
+        const parts = ctx.message.text.trim().split(/\s+/);
+        if (parts.length < 2) {
+          return ctx.replyWithHTML('⚠️ <b>Cú pháp sai!</b> Vui lòng gõ: <code>/lichsu [Nickname]</code>\nVí dụ: <code>/lichsu CapyLong</code>');
+        }
+
+        const searchNick = parts[1];
+        const user = await db.user.findFirst({
+          where: { nickName: { contains: searchNick, mode: 'insensitive' } },
+          include: {
+            activities: {
+              orderBy: { startDate: 'desc' },
+              take: 10
+            }
+          }
+        });
+
+        if (!user) {
+          return ctx.replyWithHTML(`⚠️ Không tìm thấy vận động viên nào có Nickname chứa <b>"${searchNick}"</b>.`);
+        }
+
+        const genderIcon = user.gender === 'FEMALE' ? '👩' : '👨';
+        const targetKm = user.gender === 'FEMALE' ? 15 : 30;
+        const totalKm = (user.totalDistance / 1000).toFixed(2);
+        const teamName = getTeamName(user.teamId);
+
+        let message = `👤 <b>HỒ SƠ VẬN ĐỘNG VIÊN: ${user.nickName}</b> ${genderIcon}\n`;
+        message += `🛡️ <b>Đội thi đấu:</b> ${teamName}\n`;
+        message += `🏢 <b>Phòng ban:</b> ${user.department || 'N/A'}\n`;
+        message += `📊 <b>Tổng km tích lũy:</b> <code>${totalKm} / ${targetKm} km</code>\n`;
+        message += `⚡ <b>Trạng thái mốc:</b> ${user.reachedTargetAt ? `✅ Đã đạt mốc (${new Date(user.reachedTargetAt).toLocaleDateString('vi-VN')})` : '⏳ Chưa đạt chỉ tiêu'}\n\n`;
+
+        message += `🏃 <b>DANH SÁCH BÀI CHẠY GẦN ĐÂY (${user.activities.length} bài):</b>\n`;
+        if (user.activities.length === 0) {
+          message += `<i>Chưa có bài chạy nào được ghi nhận.</i>\n`;
+        } else {
+          user.activities.forEach((act, idx) => {
+            const distKm = (act.distance / 1000).toFixed(2);
+            const dateStr = new Date(act.startDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+            const paceStr = formatPace(act.averagePace);
+            const statusIcon = act.isLegit ? '✅' : '❌ (Phạm quy)';
+            const stravaUrl = `https://www.strava.com/activities/${act.stravaActivityId}`;
+
+            message += `<b>${idx + 1}.</b> <a href="${stravaUrl}">${act.name}</a> - ${statusIcon}\n`;
+            message += `   ⏱️ ${dateStr} | <code>${distKm} km</code> | Pace: <code>${paceStr}</code> (ID: <code>${act.stravaActivityId}</code>)\n`;
+            if (!act.isLegit && act.flagReason) {
+              message += `   ⚠️ Lý do: <i>${act.flagReason}</i>\n`;
+            }
+          });
+        }
+
+        return ctx.replyWithHTML(message);
+      } catch (error) {
+        console.error('[Bot /lichsu] Error:', error);
+        return ctx.reply('Lỗi khi tải lịch sử bài chạy cá nhân.');
+      }
     });
 
     // Interactive Action: Approve activity via Telegram Inline Keyboard Button
@@ -274,7 +377,7 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
         let message = `🛡️ <b>BẢNG XẾP HẠNG 08 ĐỘI THI ĐẤU (AVG KM/NGƯỜI CẢ GIẢI)</b> 🛡️\n\n`;
 
         teamList.forEach((team, index) => {
-          const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>${index + 1}.</b>`;
+          const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>#${index + 1}.</b>`;
           message += `${medal} <b>${team.name}</b>\n`;
           message += `   📊 Trung bình: <code>${team.avgKm.toFixed(2)} km/người</code> (Tổng: ${team.totalKm.toFixed(1)}km - ${team.memberCount} thành viên)\n`;
         });
