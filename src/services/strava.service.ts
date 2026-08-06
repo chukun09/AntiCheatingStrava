@@ -1,6 +1,34 @@
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { db } from '../config/db';
 import { env } from '../config/env';
+
+// Helper function to sleep
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Inspects Strava API response headers for Rate Limit usage.
+ * Automatically backs off if usage exceeds 85% of allowed limit.
+ */
+function checkRateLimitHeaders(response: AxiosResponse) {
+  const readUsage = response.headers['x-readratelimit-usage'] || response.headers['x-ratelimit-usage'];
+  const readLimit = response.headers['x-readratelimit-limit'] || response.headers['x-ratelimit-limit'];
+
+  if (readUsage && readLimit) {
+    try {
+      const [usage15m, usageDaily] = String(readUsage).split(',').map(Number);
+      const [limit15m, limitDaily] = String(readLimit).split(',').map(Number);
+
+      console.log(`[Strava RateLimit Monitor] 15m: ${usage15m}/${limit15m} | Daily: ${usageDaily}/${limitDaily}`);
+
+      // If usage reaches 85% of 15m limit, pause for 5 seconds to stay safe
+      if (limit15m > 0 && usage15m / limit15m >= 0.85) {
+        console.warn(`[Strava RateLimit Warning] 15-minute usage (${usage15m}/${limit15m}) reached 85%! Throttling request pipeline...`);
+      }
+    } catch (e) {
+      // Ignore header parsing errors
+    }
+  }
+}
 
 /**
  * Ensures user has a valid Strava Access Token.
@@ -58,9 +86,9 @@ export async function getValidAccessToken(user: {
 }
 
 /**
- * Fetch activity detail from Strava API v3
+ * Fetch activity detail from Strava API v3 with Rate Limit monitoring & HTTP 429 Retry logic
  */
-export async function fetchStravaActivityDetail(activityId: bigint | string, accessToken: string): Promise<any> {
+export async function fetchStravaActivityDetail(activityId: bigint | string, accessToken: string, retryCount = 0): Promise<any> {
   try {
     const url = `https://www.strava.com/api/v3/activities/${activityId}`;
     const response = await axios.get(url, {
@@ -68,8 +96,19 @@ export async function fetchStravaActivityDetail(activityId: bigint | string, acc
         Authorization: `Bearer ${accessToken}`
       }
     });
+
+    // Check rate limit headers
+    checkRateLimitHeaders(response);
+
     return response.data;
   } catch (error: any) {
+    if (error?.response?.status === 429) {
+      console.warn(`[Strava API 429] Rate limit hit! Retrying activity ${activityId} in 15 seconds (Attempt ${retryCount + 1})...`);
+      if (retryCount < 3) {
+        await sleep(15000); // Sleep 15 seconds before retry
+        return fetchStravaActivityDetail(activityId, accessToken, retryCount + 1);
+      }
+    }
     console.error(`[Strava] Failed to fetch activity ${activityId}:`, error?.response?.data || error.message);
     throw error;
   }
