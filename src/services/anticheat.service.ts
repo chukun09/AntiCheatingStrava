@@ -56,12 +56,12 @@ export function validateActivity(activity: any): ValidationResult {
     };
   }
 
-  // 4. Block abnormal Max Speed (> 25 km/h ~ Pace 2:24 min/km)
+  // 4. Block abnormal Max Speed (> 30.0 km/h)
   const maxSpeedKmH = (activity.max_speed || 0) * 3.6;
-  if (maxSpeedKmH > 25.0) {
+  if (maxSpeedKmH > 30.0) {
     return { 
       isLegit: false, 
-      reason: `Tốc độ tối đa bất thường: ${maxSpeedKmH.toFixed(1)} km/h (Vượt ngưỡng 25.0 km/h)` 
+      reason: `Tốc độ tối đa bất thường: ${maxSpeedKmH.toFixed(1)} km/h (Vượt ngưỡng 30.0 km/h)` 
     };
   }
 
@@ -77,7 +77,54 @@ export function validateActivity(activity: any): ValidationResult {
     };
   }
 
-  // 6. Detect Fake GPX File Upload (Web simulation / Fake My Run)
+  // 6. Detect Sudden Pace/Speed Spike Anomaly (Biến động tốc độ / Pace bất thường)
+  const avgSpeedKmH = (activity.average_speed || 0) * 3.6;
+  if (avgSpeedKmH > 0 && maxSpeedKmH > 22.0) {
+    // If Max Speed is more than 3.0x higher than Average Speed (e.g. running 7 km/h but max speed spiked to 24 km/h)
+    const speedRatio = maxSpeedKmH / avgSpeedKmH;
+    if (speedRatio > 3.0) {
+      return {
+        isLegit: false,
+        reason: `Bất thường tốc độ: Tốc độ max (${maxSpeedKmH.toFixed(1)} km/h) cao gấp ${speedRatio.toFixed(1)} lần tốc độ trung bình (${avgSpeedKmH.toFixed(1)} km/h)`
+      };
+    }
+  }
+
+  // 7. Detect Split Anomaly (Biến động Pace đột ngột ở từng km)
+  if (Array.isArray(activity.splits_metric) && activity.splits_metric.length >= 2) {
+    const splits = activity.splits_metric;
+    for (let i = 0; i < splits.length; i++) {
+      const split = splits[i];
+      if (split.distance >= 500 && split.moving_time > 0) {
+        const splitPaceSec = split.moving_time / (split.distance / 1000);
+        
+        // If a split pace is abnormally fast (< 3:30 min/km = 210s/km)
+        if (splitPaceSec < 210) {
+          const prevSplit = i > 0 ? splits[i - 1] : null;
+          const nextSplit = i < splits.length - 1 ? splits[i + 1] : null;
+
+          const prevPace = prevSplit && prevSplit.distance >= 500 ? prevSplit.moving_time / (prevSplit.distance / 1000) : 0;
+          const nextPace = nextSplit && nextSplit.distance >= 500 ? nextSplit.moving_time / (nextSplit.distance / 1000) : 0;
+
+          // If adjacent splits were much slower (> 2:15 min/km difference = 135s/km gap)
+          const prevGap = prevPace > 0 ? prevPace - splitPaceSec : 0;
+          const nextGap = nextPace > 0 ? nextPace - splitPaceSec : 0;
+
+          if (prevGap > 135 || nextGap > 135) {
+            const minStr = Math.floor(splitPaceSec / 60);
+            const secStr = Math.round(splitPaceSec % 60);
+            const spikePaceStr = `${minStr}:${secStr < 10 ? '0' : ''}${secStr}`;
+            return {
+              isLegit: false,
+              reason: `Biến động Pace đột ngột: Km ${i + 1} Pace vọt lên ${spikePaceStr} min/km rồi giảm nhanh so với các km lân cận`
+            };
+          }
+        }
+      }
+    }
+  }
+
+  // 8. Detect Fake GPX File Upload (Web simulation / Fake My Run)
   const noCadence = !activity.average_cadence || activity.average_cadence === 0;
   const noHeartRate = !activity.has_heartrate;
   const externalId = activity.external_id ? String(activity.external_id).toLowerCase() : '';

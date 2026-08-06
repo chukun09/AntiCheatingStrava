@@ -3,7 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import { env } from './config/env';
 import { db } from './config/db';
-import { handleStravaLink, handleStravaCallback, handleSyncAll } from './controllers/auth.controller';
+import { handleStravaLink, handleStravaCallback, handleSyncAll, handleOverrideActivity } from './controllers/auth.controller';
 import { verifyWebhook, handleWebhookEvent } from './controllers/webhook.controller';
 import { initTelegramBot } from './bot';
 import { initWeeklyCronJob } from './cron/weekly';
@@ -19,22 +19,23 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static frontend landing page
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Auth Routes (Web Onboarding, OAuth & Historical Sync)
+// Auth Routes (Web Onboarding, OAuth, Historical Sync & Admin Override)
 app.post('/auth/strava-link', handleStravaLink);
 app.get('/auth/callback', handleStravaCallback);
 app.post('/auth/sync-all', handleSyncAll);
 app.get('/auth/sync-all', handleSyncAll); // Allow triggering sync via GET in Browser
+app.post('/auth/override-activity', handleOverrideActivity); // Admin manual approval API
 
 // Webhook Routes (Strava Event Listener)
 app.get('/webhook', verifyWebhook);
 app.post('/webhook', handleWebhookEvent);
 
 // System & Database Healthcheck Endpoint
-// Pings Supabase PostgreSQL with SELECT 1 to keep BOTH Render and Database active 24/7
+// Pings Supabase PostgreSQL with SELECT 1 (unsafe raw) to keep BOTH Render and Database active 24/7
 app.get('/health', async (req, res) => {
   try {
-    // Perform a lightweight SQL ping to keep Supabase DB active 24/7
-    await db.$queryRaw`SELECT 1`;
+    // Perform a lightweight unsafe SQL ping (bypasses prepared statement cache)
+    await db.$queryRawUnsafe('SELECT 1');
     return res.status(200).json({
       status: 'ok',
       database: 'connected',

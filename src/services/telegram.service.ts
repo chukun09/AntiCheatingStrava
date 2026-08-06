@@ -63,7 +63,7 @@ export async function notifyReachedMilestone(data: {
 }
 
 /**
- * Send anti-cheat warning alert to Telegram BTC Group
+ * Send anti-cheat warning alert to Telegram BTC Group WITH Interactive Inline Keyboard Buttons
  */
 export async function notifyCheatingAlert(data: {
   nickName: string;
@@ -73,15 +73,38 @@ export async function notifyCheatingAlert(data: {
   stravaActivityId: bigint | string;
 }) {
   const stravaUrl = `https://www.strava.com/activities/${data.stravaActivityId}`;
+  const actIdStr = String(data.stravaActivityId);
 
   const message = 
 `🚨 <b>CẢNH BÁO BÀI CHẠY PHẠM QUY (ANTI-CHEAT)</b> 🚨
 
-👤 <b>Vận động viên:</b> ${data.nickName}${data.fullName ? ` (${data.fullName})` : ''}
-📌 <b>Bài chạy:</b> <a href="${stravaUrl}">${data.activityName}</a>
+👤 <b>Vận động viên:</b> <b>${data.nickName}</b>${data.fullName ? ` (${data.fullName})` : ''}
+📌 <b>Bài chạy:</b> <a href="${stravaUrl}">${data.activityName}</a> (ID: <code>${actIdStr}</code>)
 ❌ <b>Lý do vi phạm:</b> <code>${data.reason}</code>
 
-⚠️ <i>Bài chạy này đã bị đánh dấu isLegit = false và KHÔNG tính vào thành tích cuộc thi IRIS.</i>`;
+⚠️ <i>Bài chạy này tạm thời bị loại (isLegit = false). Ban Tổ Chức bấm nút bên dưới để duyệt hoặc giữ nguyên:</i>`;
 
-  await sendTelegramMessage(env.TELEGRAM_GROUP_ID, message);
+  // Attach Inline Keyboard Buttons directly for Telegram Callback
+  const replyMarkup = {
+    inline_keyboard: [
+      [
+        { text: '✅ Duyệt Hợp Lệ (Mark Legit)', callback_data: `approve_${actIdStr}` },
+        { text: '❌ Giữ Nguyên Loại (Keep Invalid)', callback_data: `reject_${actIdStr}` }
+      ]
+    ]
+  };
+
+  try {
+    const url = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`;
+    await axios.post(url, {
+      chat_id: env.TELEGRAM_GROUP_ID,
+      text: message,
+      parse_mode: 'HTML',
+      reply_markup: replyMarkup
+    });
+    return true;
+  } catch (error: any) {
+    console.error('[Telegram] Failed to send cheating alert with buttons:', error?.response?.data || error.message);
+    return false;
+  }
 }

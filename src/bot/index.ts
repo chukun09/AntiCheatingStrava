@@ -5,6 +5,7 @@ import { TEAMS, getTeamName } from '../services/team.service';
 import { calculatePenalties } from '../services/penalty.service';
 import { formatPace } from '../services/telegram.service';
 import { syncAllUsersPastActivities } from '../services/sync.service';
+import { overrideActivityStatus } from '../services/override.service';
 import { 
   getWeek1TeamAward, 
   getWeek2TeamAward, 
@@ -63,11 +64,114 @@ Danh sách lệnh hỗ trợ:
 🏁 <code>/giai_tuan4</code> - Xem BXH Giải Tập Thể Về Đích (Avg Km Cả Giải).
 💸 <code>/phat</code> - Thống kê dự kiến đóng góp quỹ cho thành viên chưa đạt chỉ tiêu.
 🔄 <code>/sync</code> - Kích hoạt đồng bộ bài chạy mới nhất từ Strava cho tất cả VĐV.
+✅ <code>/duyet [ID_Bai_Chay]</code> - BTC duyệt bài chạy thủ công.
+❌ <code>/huy [ID_Bai_Chay] [Lý do]</code> - BTC từ chối bài chạy phạm quy.
 ❓ <code>/help</code> - Hướng dẫn sử dụng Bot.
 
 🔗 <b>Trang đăng ký:</b> Truy cập <a href="${env.APP_BASE_URL}">${env.APP_BASE_URL}</a> để liên kết tài khoản Strava!`;
 
       return ctx.replyWithHTML(text);
+    });
+
+    // Interactive Action: Approve activity via Telegram Inline Keyboard Button
+    bot.action(/^approve_(\d+)$/, async (ctx) => {
+      try {
+        const stravaActivityId = ctx.match[1];
+        const adminUser = ctx.from?.first_name || ctx.from?.username || 'Ban Tổ Chức';
+        
+        // Override activity status to legit & recalculate user stats
+        const res = await overrideActivityStatus(stravaActivityId, true, `Đã duyệt bởi ${adminUser} qua nút Telegram`);
+        
+        await ctx.answerCbQuery(`✅ Đã duyệt bài chạy ${stravaActivityId} thành hợp lệ!`);
+        
+        const updatedText = 
+`✅ <b>[ĐÃ DUYỆT HỢP LỆ THỦ CÔNG]</b> ✅
+
+👤 <b>Vận động viên:</b> <b>${res.userName}</b>
+📌 <b>Bài chạy ID:</b> <code>${res.stravaActivityId}</code>
+📊 <b>Tổng km tích lũy mới:</b> <code>${res.newTotalKm} km</code>
+📝 <b>Trạng thái:</b> Đã duyệt Hợp lệ bởi <b>${adminUser}</b>`;
+
+        return ctx.editMessageText(updatedText, { parse_mode: 'HTML' });
+      } catch (error: any) {
+        console.error('[Bot action approve] Error:', error);
+        return ctx.answerCbQuery(`Lỗi: ${error.message}`, { show_alert: true });
+      }
+    });
+
+    // Interactive Action: Keep invalid activity via Telegram Inline Keyboard Button
+    bot.action(/^reject_(\d+)$/, async (ctx) => {
+      try {
+        const stravaActivityId = ctx.match[1];
+        const adminUser = ctx.from?.first_name || ctx.from?.username || 'Ban Tổ Chức';
+
+        await ctx.answerCbQuery(`❌ Đã xác nhận loại bài chạy ${stravaActivityId}`);
+
+        const updatedText = 
+`❌ <b>[ĐÃ XÁC NHẬN PHẠM QUY - LOẠI BỎ]</b> ❌
+
+📌 <b>Bài chạy ID:</b> <code>${stravaActivityId}</code>
+📝 <b>Xác nhận bởi BTC:</b> <b>${adminUser}</b>
+⚠️ <i>Bài chạy giữ nguyên trạng thái bị loại và KHÔNG tính vào thành tích.</i>`;
+
+        return ctx.editMessageText(updatedText, { parse_mode: 'HTML' });
+      } catch (error: any) {
+        console.error('[Bot action reject] Error:', error);
+        return ctx.answerCbQuery(`Lỗi: ${error.message}`, { show_alert: true });
+      }
+    });
+
+    // Command /duyet [strava_activity_id] - Manually approve activity
+    bot.command('duyet', async (ctx) => {
+      try {
+        const parts = ctx.message.text.trim().split(/\s+/);
+        if (parts.length < 2) {
+          return ctx.replyWithHTML('⚠️ <b>Cú pháp sai!</b> Vui lòng gõ: <code>/duyet [ID_Bai_Chay_Strava]</code>\nVí dụ: <code>/duyet 19623991159</code>');
+        }
+
+        const activityId = parts[1];
+        const res = await overrideActivityStatus(activityId, true);
+
+        const text = 
+`✅ <b>ĐÃ DUYỆT THÀNH CÔNG BÀI CHẠY!</b> ✅
+
+📌 ID Bài chạy: <code>${res.stravaActivityId}</code>
+👤 VĐV: <b>${res.userName}</b>
+📊 Tổng tích lũy mới: <code>${res.newTotalKm} km</code>
+📝 Trạng thái: <b>Hợp lệ (Legit)</b>`;
+
+        return ctx.replyWithHTML(text);
+      } catch (error: any) {
+        console.error('[Bot /duyet] Error:', error);
+        return ctx.reply(`Lỗi khi duyệt bài chạy: ${error.message}`);
+      }
+    });
+
+    // Command /huy [strava_activity_id] [lý do] - Manually reject activity
+    bot.command('huy', async (ctx) => {
+      try {
+        const parts = ctx.message.text.trim().split(/\s+/);
+        if (parts.length < 2) {
+          return ctx.replyWithHTML('⚠️ <b>Cú pháp sai!</b> Vui lòng gõ: <code>/huy [ID_Bai_Chay_Strava] [Lý do]</code>\nVí dụ: <code>/huy 19623991159 Pace quá nhanh</code>');
+        }
+
+        const activityId = parts[1];
+        const reason = parts.slice(2).join(' ') || 'Ban Tổ Chức từ chối thủ công';
+        const res = await overrideActivityStatus(activityId, false, reason);
+
+        const text = 
+`❌ <b>ĐÃ TỪ CHỐI BÀI CHẠY!</b> ❌
+
+📌 ID Bài chạy: <code>${res.stravaActivityId}</code>
+👤 VĐV: <b>${res.userName}</b>
+📊 Tổng tích lũy mới: <code>${res.newTotalKm} km</code>
+📝 Lý do: <i>${res.reason}</i>`;
+
+        return ctx.replyWithHTML(text);
+      } catch (error: any) {
+        console.error('[Bot /huy] Error:', error);
+        return ctx.reply(`Lỗi khi từ chối bài chạy: ${error.message}`);
+      }
     });
 
     // Command /sync - Active Manual Sync for all athletes

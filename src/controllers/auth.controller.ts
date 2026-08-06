@@ -4,6 +4,7 @@ import { db } from '../config/db';
 import { env } from '../config/env';
 import { getTeamName } from '../services/team.service';
 import { syncUserPastActivities, syncAllUsersPastActivities } from '../services/sync.service';
+import { overrideActivityStatus } from '../services/override.service';
 
 /**
  * POST /auth/strava-link
@@ -248,6 +249,29 @@ export async function handleSyncAll(req: Request, res: Response) {
     });
   } catch (error: any) {
     console.error('[Auth Controller] Error in handleSyncAll:', error);
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+/**
+ * POST /auth/override-activity
+ * Admin API to manually approve or reject an activity and recalculate stats
+ */
+export async function handleOverrideActivity(req: Request, res: Response) {
+  try {
+    const { stravaActivityId, isLegit, reason } = req.body;
+    if (!stravaActivityId) {
+      return res.status(400).json({ error: 'stravaActivityId is required' });
+    }
+
+    const result = await overrideActivityStatus(stravaActivityId, isLegit === true || isLegit === 'true', reason);
+    return res.status(200).json({
+      status: 'success',
+      message: `Đã cập nhật trạng thái bài chạy ${stravaActivityId} thành ${result.isLegit ? 'HỢP LỆ' : 'KHÔNG HỢP LỆ'}.`,
+      result
+    });
+  } catch (error: any) {
+    console.error('[Auth Controller] Error in handleOverrideActivity:', error);
     return res.status(500).json({ error: error.message });
   }
 }
