@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { env } from './config/env';
+import { db } from './config/db';
 import { handleStravaLink, handleStravaCallback, handleSyncAll } from './controllers/auth.controller';
 import { verifyWebhook, handleWebhookEvent } from './controllers/webhook.controller';
 import { initTelegramBot } from './bot';
@@ -28,13 +29,26 @@ app.get('/auth/sync-all', handleSyncAll); // Allow triggering sync via GET in Br
 app.get('/webhook', verifyWebhook);
 app.post('/webhook', handleWebhookEvent);
 
-// System Healthcheck Endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
+// System & Database Healthcheck Endpoint
+// Pings Supabase PostgreSQL with SELECT 1 to keep BOTH Render and Database active 24/7
+app.get('/health', async (req, res) => {
+  try {
+    // Perform a lightweight SQL ping to keep Supabase DB active 24/7
+    await db.$queryRaw`SELECT 1`;
+    return res.status(200).json({
+      status: 'ok',
+      database: 'connected',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    });
+  } catch (error: any) {
+    console.error('[Healthcheck] DB Ping Error:', error?.message || error);
+    return res.status(500).json({
+      status: 'error',
+      database: 'disconnected',
+      error: error?.message || 'DB Ping Failed'
+    });
+  }
 });
 
 // Start Server
