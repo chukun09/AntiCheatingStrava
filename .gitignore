@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Build & Output Directories
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Environment Variables & Secrets (CRITICAL: Do NOT commit secrets)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# Logs & Debug
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+
+# OS System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# IDEs and Code Editors
+.idea/
+.vscode/
+*.suo
+*.ntvsopt
+*.njsproj
+*.sln
+*.sw?
+
+# Temporary & Testing Files
+.cache/
+coverage/
+.nyc_output/
+.temp/
+.tmp/

@@ -1,0 +1,221 @@
+import { db } from '../config/db';
+import { TEAMS } from './team.service';
+import { env } from '../config/env';
+
+// If ALLOW_TEST_DATE=true, expand Week 1 start date back to 2026-07-01 so test runs show up on leaderboards
+const week1StartDate = env.ALLOW_TEST_DATE ? new Date('2026-07-01T00:00:00+07:00') : new Date('2026-08-03T00:00:00+07:00');
+
+export const WEEKS = [
+  { week: 1, name: 'Tuần 1: Khởi động', start: week1StartDate, end: new Date('2026-08-09T23:59:59+07:00') },
+  { week: 2, name: 'Tuần 2: Vượt chướng ngại vật', start: new Date('2026-08-10T00:00:00+07:00'), end: new Date('2026-08-16T23:59:59+07:00') },
+  { week: 3, name: 'Tuần 3: Tăng tốc & Bứt phá', start: new Date('2026-08-17T00:00:00+07:00'), end: new Date('2026-08-23T23:59:59+07:00') },
+  { week: 4, name: 'Tuần 4: Về đích', start: new Date('2026-08-24T00:00:00+07:00'), end: new Date('2026-08-30T23:59:59+07:00') }
+];
+
+/**
+ * Tuần 1: Giải Tập Thể Khởi Động - Tỷ lệ % tham gia (>= 3km) cao nhất
+ */
+export async function getWeek1TeamAward() {
+  const week1 = WEEKS[0];
+  const users = await db.user.findMany();
+
+  // Get total distance per user in Week 1
+  const userDistances = await db.activity.groupBy({
+    by: ['userId'],
+    where: {
+      isLegit: true,
+      startDate: { gte: week1.start, lte: week1.end }
+    },
+    _sum: { distance: true }
+  });
+
+  const distanceMap = new Map(userDistances.map(d => [d.userId, (d._sum.distance || 0) / 1000]));
+
+  return TEAMS.map(team => {
+    const teamMembers = users.filter(u => u.teamId === team.id);
+    const totalMembers = teamMembers.length;
+
+    // Active member = reached >= 3km in Week 1
+    const qualifiedMembers = teamMembers.filter(u => (distanceMap.get(u.id) || 0) >= 3.0).length;
+    const participationRate = totalMembers > 0 ? (qualifiedMembers / totalMembers) * 100 : 0;
+
+    return {
+      teamId: team.id,
+      teamName: team.name,
+      totalMembers,
+      qualifiedMembers,
+      participationRate
+    };
+  }).sort((a, b) => b.participationRate - a.participationRate);
+}
+
+/**
+ * Tuần 2: Giải Tập Thể Vượt Chướng Ngại Vật - Pace tốt nhất (Ưu đãi Nữ: giảm 1 min/km ~ 60s/km)
+ * Điều kiện cần: 100% thành viên đội đã tham gia (chạy >= 1 bài hợp lệ trong Tuần 2)
+ */
+export async function getWeek2TeamAward() {
+  const week2 = WEEKS[1];
+  const users = await db.user.findMany();
+
+  const activities = await db.activity.findMany({
+    where: {
+      isLegit: true,
+      startDate: { gte: week2.start, lte: week2.end }
+    },
+    include: { user: true }
+  });
+
+  return TEAMS.map(team => {
+    const teamMembers = users.filter(u => u.teamId === team.id);
+    const totalMembers = teamMembers.length;
+
+    const participantSet = new Set(activities.filter(a => a.user.teamId === team.id).map(a => a.userId));
+    const participantCount = participantSet.size;
+    const is100PercentParticipated = totalMembers > 0 && participantCount >= totalMembers;
+
+    let totalAdjustedSec = 0;
+    let totalDistanceKm = 0;
+
+    activities.filter(a => a.user.teamId === team.id).forEach(a => {
+      const distKm = a.distance / 1000;
+      let movingSec = a.movingTime;
+
+      if (a.user.gender === 'FEMALE') {
+        const perkSec = distKm * 60;
+        movingSec = Math.max(0, movingSec - perkSec);
+      }
+
+      totalAdjustedSec += movingSec;
+      totalDistanceKm += distKm;
+    });
+
+    const averagePaceSecPerKm = totalDistanceKm > 0 ? totalAdjustedSec / totalDistanceKm : 0;
+
+    return {
+      teamId: team.id,
+      teamName: team.name,
+      totalMembers,
+      participantCount,
+      is100PercentParticipated,
+      totalDistanceKm,
+      averagePaceSecPerKm
+    };
+  }).sort((a, b) => {
+    if (a.is100PercentParticipated !== b.is100PercentParticipated) {
+      return a.is100PercentParticipated ? -1 : 1;
+    }
+    return a.averagePaceSecPerKm - b.averagePaceSecPerKm;
+  });
+}
+
+/**
+ * Tuần 3: Giải Cá Nhân Bứt Phá Giới Hạn - Quãng đường Tuần 3 cao nhất (Nam & Nữ)
+ */
+export async function getWeek3IndividualAward() {
+  const week3 = WEEKS[2];
+
+  const maleStats = await db.activity.groupBy({
+    by: ['userId'],
+    where: {
+      isLegit: true,
+      startDate: { gte: week3.start, lte: week3.end },
+      user: { gender: 'MALE' }
+    },
+    _sum: { distance: true },
+    orderBy: { _sum: { distance: 'desc' } },
+    take: 5
+  });
+
+  const femaleStats = await db.activity.groupBy({
+    by: ['userId'],
+    where: {
+      isLegit: true,
+      startDate: { gte: week3.start, lte: week3.end },
+      user: { gender: 'FEMALE' }
+    },
+    _sum: { distance: true },
+    orderBy: { _sum: { distance: 'desc' } },
+    take: 5
+  });
+
+  const userIds = [...maleStats.map(s => s.userId), ...femaleStats.map(s => s.userId)];
+  const users = await db.user.findMany({ where: { id: { in: userIds } } });
+  const userMap = new Map(users.map(u => [u.id, u]));
+
+  return {
+    males: maleStats.map(s => ({
+      user: userMap.get(s.userId),
+      totalKm: ((s._sum.distance || 0) / 1000)
+    })),
+    females: femaleStats.map(s => ({
+      user: userMap.get(s.userId),
+      totalKm: ((s._sum.distance || 0) / 1000)
+    }))
+  };
+}
+
+/**
+ * Tuần 3: Giải Tập Thể Tăng Tốc - Avg Km / người cao nhất trong Tuần 3
+ */
+export async function getWeek3TeamAward() {
+  const week3 = WEEKS[2];
+  const users = await db.user.findMany();
+
+  const userDistances = await db.activity.groupBy({
+    by: ['userId'],
+    where: {
+      isLegit: true,
+      startDate: { gte: week3.start, lte: week3.end }
+    },
+    _sum: { distance: true }
+  });
+
+  const distanceMap = new Map(userDistances.map(d => [d.userId, (d._sum.distance || 0) / 1000]));
+
+  return TEAMS.map(team => {
+    const teamMembers = users.filter(u => u.teamId === team.id);
+    const totalMembers = teamMembers.length;
+    let totalKmWeek3 = 0;
+
+    teamMembers.forEach(u => {
+      totalKmWeek3 += distanceMap.get(u.id) || 0;
+    });
+
+    const avgKmPerMember = totalMembers > 0 ? totalKmWeek3 / totalMembers : 0;
+
+    return {
+      teamId: team.id,
+      teamName: team.name,
+      totalMembers,
+      totalKmWeek3,
+      avgKmPerMember
+    };
+  }).sort((a, b) => b.avgKmPerMember - a.avgKmPerMember);
+}
+
+/**
+ * Tuần 4: Giải Tập Thể Về Đích - Avg Km / người cao nhất của CẢ GIẢI
+ */
+export async function getWeek4TeamAward() {
+  const users = await db.user.findMany();
+
+  return TEAMS.map(team => {
+    const teamMembers = users.filter(u => u.teamId === team.id);
+    const totalMembers = teamMembers.length;
+    let totalKmWholeContest = 0;
+
+    teamMembers.forEach(u => {
+      totalKmWholeContest += u.totalDistance / 1000;
+    });
+
+    const avgKmPerMember = totalMembers > 0 ? totalKmWholeContest / totalMembers : 0;
+
+    return {
+      teamId: team.id,
+      teamName: team.name,
+      totalMembers,
+      totalKmWholeContest,
+      avgKmPerMember
+    };
+  }).sort((a, b) => b.avgKmPerMember - a.avgKmPerMember);
+}

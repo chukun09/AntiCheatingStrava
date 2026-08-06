@@ -1,0 +1,59 @@
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import { env } from './config/env';
+import { handleStravaLink, handleStravaCallback, handleSyncAll } from './controllers/auth.controller';
+import { verifyWebhook, handleWebhookEvent } from './controllers/webhook.controller';
+import { initTelegramBot } from './bot';
+import { initWeeklyCronJob } from './cron/weekly';
+import { initKeepAliveCronJob } from './cron/keepalive';
+
+const app = express();
+
+// Middlewares
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Serve static frontend landing page
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Auth Routes (Web Onboarding, OAuth & Historical Sync)
+app.post('/auth/strava-link', handleStravaLink);
+app.get('/auth/callback', handleStravaCallback);
+app.post('/auth/sync-all', handleSyncAll);
+app.get('/auth/sync-all', handleSyncAll); // Allow triggering sync via GET in Browser
+
+// Webhook Routes (Strava Event Listener)
+app.get('/webhook', verifyWebhook);
+app.post('/webhook', handleWebhookEvent);
+
+// System Healthcheck Endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
+// Start Server
+app.listen(env.PORT, () => {
+  console.log(`====================================================`);
+  console.log(`🚀 IRIS Running System online on port ${env.PORT}`);
+  console.log(`🔗 Public App Base URL: ${env.APP_BASE_URL}`);
+  console.log(`📍 Web Landing Page: ${env.APP_BASE_URL}/`);
+  console.log(`📍 Strava Webhook URL: ${env.APP_BASE_URL}/webhook`);
+  console.log(`====================================================`);
+
+  // Initialize Telegram Bot
+  initTelegramBot();
+
+  // Initialize Weekly Sunday CronJob
+  initWeeklyCronJob();
+
+  // Initialize Self-Ping Keep-Alive CronJob (Every 5 minutes)
+  initKeepAliveCronJob();
+});
+
+export default app;

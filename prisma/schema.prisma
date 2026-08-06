@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+model User {
+  id               String     @id @default(uuid())
+  nickName         String     @unique // Nickname định danh Strava
+  fullName         String?    // Họ và tên
+  gender           Gender     @default(MALE) // Giới tính (MALE / FEMALE)
+  department       String?    // Phòng ban
+  teamId           Int        @default(1)    // 1 -> 8 (Đội 1 đến Đội 8)
+  isExempt         Boolean    @default(false) // Miễn phạt (thai sản, chấn thương...)
+  role             Role       @default(USER)
+  
+  // Strava OAuth Info
+  stravaAthleteId  BigInt?    @unique
+  accessToken      String?
+  refreshToken     String?
+  tokenExpiresAt   DateTime?
+  
+  // Thành tích
+  totalDistance    Float      @default(0.0) // Quãng đường hợp lệ trong cuộc thi (mét)
+  reachedTargetAt  DateTime?  // Thời điểm cán mốc chỉ tiêu cá nhân (Nam: 30km, Nữ: 15km)
+  
+  activities       Activity[]
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@index([totalDistance])
+  @@index([teamId])
+  @@index([reachedTargetAt])
+}
+
+model Activity {
+  id               String   @id @default(uuid())
+  stravaActivityId BigInt   @unique
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name             String
+  distance         Float    // Mét
+  movingTime       Int      // Giây
+  elapsedTime      Int      // Giây
+  type             String   // Run, TrailRun...
+  averagePace      Float    // Giây / km
+  maxSpeed         Float    // m/s
+  
+  // Anti-cheat Fields
+  manual           Boolean  @default(false)
+  hasHeartrate     Boolean  @default(false)
+  averageCadence   Float?   // spm
+  deviceName       String?
+  externalId       String?
+  
+  isLegit          Boolean  @default(true)
+  flagReason       String?
+  startDate        DateTime
+  createdAt        DateTime @default(now())
+
+  @@index([userId])
+  @@index([startDate])
+}
