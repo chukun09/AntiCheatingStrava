@@ -35,7 +35,7 @@ export function initTelegramBot(): Telegraf | null {
         if (match) {
           const cmdName = match[1].toLowerCase();
           const validCommands = [
-            'start', 'help', 'bxh_canhan', 'bxh_doi', 'bxh_phong', 'bxh_phongban',
+            'start', 'help', 'bxh_canhan', 'bxh_doi', 'doi', 'bxh_phong', 'bxh_phongban', 'phong',
             'lichsu', 'chitiet', 'speed_tuan1', 'giai_tuan1', 'giai_tuan2', 
             'giai_tuan3', 'giai_tuan4', 'phat', 'sync', 'duyet', 'huy'
           ];
@@ -58,8 +58,8 @@ Chào mừng các chiến binh đến với Giải Chạy Kỷ Niệm 15 Năm Th
 
 Danh sách lệnh hỗ trợ:
 🏆 <code>/bxh_canhan</code> - Xem Bảng Xếp Hạng Cá Nhân (Tách riêng Nam & Nữ).
-🛡️ <code>/bxh_doi</code> - Xem Bảng Xếp Hạng 8 Đội Thi Đấu (Avg Km/người).
-🏢 <code>/bxh_phong</code> - Xem Bảng Xếp Hạng Theo Từng Phòng Ban (Avg Km/người).
+🛡️ <code>/bxh_doi [1-8]</code> - Xem BXH 8 Đội Thi (Gõ <code>/bxh_doi 1</code> để xem chi tiết VĐV trong Đội 1).
+🏢 <code>/bxh_phong [Tên_Phòng]</code> - Xem BXH Phòng Ban (Gõ <code>/bxh_phong Kỹ thuật</code> để xem chi tiết VĐV).
 📋 <code>/lichsu [Nickname]</code> - Xem hồ sơ & danh sách bài chạy chi tiết của 1 VĐV.
 🥇 <code>/speed_tuan1</code> - Vinh danh Giải Cá Nhân Tuần 1 (Nam 30km, Nữ 15km).
 ⚡ <code>/giai_tuan1</code> - Xem BXH Giải Tập Thể Tuần 1 (Tỷ lệ % tham gia >= 3km).
@@ -77,9 +77,48 @@ Danh sách lệnh hỗ trợ:
       return ctx.replyWithHTML(text);
     });
 
-    // Command /bxh_phong or /bxh_phongban - Department Leaderboard
-    bot.command(['bxh_phong', 'bxh_phongban'], async (ctx) => {
+    // Command /bxh_phong or /bxh_phongban or /phong [Tên_Phòng] - Department Leaderboard & Detailed Members
+    bot.command(['bxh_phong', 'bxh_phongban', 'phong'], async (ctx) => {
       try {
+        const parts = ctx.message.text.trim().split(/\s+/);
+        const searchDept = parts.length > 1 ? parts.slice(1).join(' ') : null;
+
+        if (searchDept) {
+          // View detailed members for a specific department
+          const usersInDept = await db.user.findMany({
+            where: {
+              department: { contains: searchDept, mode: 'insensitive' }
+            },
+            orderBy: { totalDistance: 'desc' }
+          });
+
+          if (usersInDept.length === 0) {
+            return ctx.replyWithHTML(`⚠️ Không tìm thấy phòng ban nào chứa tên <b>"${searchDept}"</b>.`);
+          }
+
+          const actualDeptName = usersInDept[0].department || searchDept;
+          const totalMeters = usersInDept.reduce((sum, u) => sum + u.totalDistance, 0);
+          const avgKm = (totalMeters / 1000) / usersInDept.length;
+
+          let message = `🏢 <b>CHI TIẾT PHÒNG BAN: ${actualDeptName.toUpperCase()}</b> 🏢\n\n`;
+          message += `📊 <b>Trung bình phòng:</b> <code>${avgKm.toFixed(2)} km/người</code>\n`;
+          message += `🏃 <b>Tổng quãng đường:</b> <code>${(totalMeters / 1000).toFixed(1)} km</code> (${usersInDept.length} VĐV)\n\n`;
+          message += `👥 <b>DANH SÁCH CHI TIẾT TỪNG VĐV TRONG PHÒNG:</b>\n`;
+
+          usersInDept.forEach((user, index) => {
+            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>${index + 1}.</b>`;
+            const distKm = (user.totalDistance / 1000).toFixed(2);
+            const genderIcon = user.gender === 'FEMALE' ? '👩' : '👨';
+            const targetMeters = user.gender === 'FEMALE' ? 15000 : 30000;
+            const doneTag = user.totalDistance >= targetMeters ? ' ⚡ (Đã đạt)' : '';
+
+            message += `${medal} ${genderIcon} <b>${user.nickName}</b> (${getTeamName(user.teamId)}): <code>${distKm} km</code>${doneTag}\n`;
+          });
+
+          return ctx.replyWithHTML(message);
+        }
+
+        // View summary list of all departments
         const users = await db.user.findMany();
         const deptMap = new Map<string, { totalMeters: number; memberCount: number }>();
 
@@ -109,10 +148,95 @@ Danh sách lệnh hỗ trợ:
           });
         }
 
+        message += `\n💡 <i>Mẹo: Gõ <code>/bxh_phong Kỹ thuật</code> để xem chi tiết từng VĐV trong Phòng!</i>`;
         return ctx.replyWithHTML(message);
       } catch (error) {
         console.error('[Bot /bxh_phong] Error:', error);
         return ctx.reply('Lỗi khi tải Bảng xếp hạng phòng ban.');
+      }
+    });
+
+    // Command /bxh_doi [1-8] or /doi [1-8] - Team Leaderboard & Detailed Members per Team
+    bot.command(['bxh_doi', 'doi'], async (ctx) => {
+      try {
+        const parts = ctx.message.text.trim().split(/\s+/);
+        const teamParam = parts.length > 1 ? parseInt(parts[1], 10) : null;
+
+        if (teamParam && teamParam >= 1 && teamParam <= 8) {
+          // View detailed members for a specific Team ID (1 -> 8)
+          const teamInfo = TEAMS.find(t => t.id === teamParam);
+          const teamName = teamInfo ? teamInfo.name : `Đội ${teamParam}`;
+
+          const usersInTeam = await db.user.findMany({
+            where: { teamId: teamParam },
+            orderBy: { totalDistance: 'desc' }
+          });
+
+          const totalMeters = usersInTeam.reduce((sum, u) => sum + u.totalDistance, 0);
+          const avgKm = usersInTeam.length > 0 ? (totalMeters / 1000) / usersInTeam.length : 0;
+
+          let message = `🛡️ <b>CHI TIẾT THÀNH TÍCH ${teamName.toUpperCase()}</b> 🛡️\n\n`;
+          message += `📊 <b>Chỉ số trung bình:</b> <code>${avgKm.toFixed(2)} km/người</code>\n`;
+          message += `🏃 <b>Tổng quãng đường cả đội:</b> <code>${(totalMeters / 1000).toFixed(1)} km</code> (${usersInTeam.length} VĐV)\n\n`;
+          message += `👥 <b>DANH SÁCH CHI TIẾT TỪNG THÀNH VIÊN TRONG ĐỘI:</b>\n`;
+
+          if (usersInTeam.length === 0) {
+            message += `<i>Chưa có VĐV nào trong đội này.</i>`;
+          } else {
+            usersInTeam.forEach((user, index) => {
+              const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>${index + 1}.</b>`;
+              const distKm = (user.totalDistance / 1000).toFixed(2);
+              const genderIcon = user.gender === 'FEMALE' ? '👩' : '👨';
+              const targetMeters = user.gender === 'FEMALE' ? 15000 : 30000;
+              const doneTag = user.totalDistance >= targetMeters ? ' ⚡ (Đã đạt)' : '';
+
+              message += `${medal} ${genderIcon} <b>${user.nickName}</b> (${user.department || 'N/A'}): <code>${distKm} km</code>${doneTag}\n`;
+            });
+          }
+
+          return ctx.replyWithHTML(message);
+        }
+
+        // View summary leaderboard of all 8 teams
+        const users = await db.user.findMany();
+        
+        const teamStatsMap = new Map<number, { totalMeters: number; memberCount: number }>();
+        TEAMS.forEach(t => teamStatsMap.set(t.id, { totalMeters: 0, memberCount: 0 }));
+
+        users.forEach(u => {
+          const stat = teamStatsMap.get(u.teamId);
+          if (stat) {
+            stat.totalMeters += u.totalDistance;
+            stat.memberCount += 1;
+          }
+        });
+
+        const teamList = TEAMS.map(t => {
+          const stat = teamStatsMap.get(t.id) || { totalMeters: 0, memberCount: 0 };
+          const avgKm = stat.memberCount > 0 ? (stat.totalMeters / 1000) / stat.memberCount : 0;
+          const totalKm = stat.totalMeters / 1000;
+          return {
+            id: t.id,
+            name: t.name,
+            totalKm,
+            memberCount: stat.memberCount,
+            avgKm
+          };
+        }).sort((a, b) => b.avgKm - a.avgKm);
+
+        let message = `🛡️ <b>BẢNG XẾP HẠNG 08 ĐỘI THI ĐẤU (AVG KM/NGƯỜI CẢ GIẢI)</b> 🛡️\n\n`;
+
+        teamList.forEach((team, index) => {
+          const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>#${index + 1}.</b>`;
+          message += `${medal} <b>${team.name}</b>\n`;
+          message += `   📊 Trung bình: <code>${team.avgKm.toFixed(2)} km/người</code> (Tổng: ${team.totalKm.toFixed(1)}km - ${team.memberCount} thành viên)\n`;
+        });
+
+        message += `\n💡 <i>Mẹo: Gõ <code>/bxh_doi 1</code> đến <code>/bxh_doi 8</code> để xem chi tiết danh sách VĐV từng Đội!</i>`;
+        return ctx.replyWithHTML(message);
+      } catch (error) {
+        console.error('[Bot /bxh_doi] Error:', error);
+        return ctx.reply('Lỗi khi tải Bảng xếp hạng đội thi.');
       }
     });
 
@@ -342,50 +466,6 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
       } catch (error) {
         console.error('[Bot /bxh_canhan] Error:', error);
         return ctx.reply('Lỗi khi tải dữ liệu Bảng xếp hạng cá nhân.');
-      }
-    });
-
-    // Command /bxh_doi - Team Leaderboard for 8 Teams
-    bot.command('bxh_doi', async (ctx) => {
-      try {
-        const users = await db.user.findMany();
-        
-        const teamStatsMap = new Map<number, { totalMeters: number; memberCount: number }>();
-        TEAMS.forEach(t => teamStatsMap.set(t.id, { totalMeters: 0, memberCount: 0 }));
-
-        users.forEach(u => {
-          const stat = teamStatsMap.get(u.teamId);
-          if (stat) {
-            stat.totalMeters += u.totalDistance;
-            stat.memberCount += 1;
-          }
-        });
-
-        const teamList = TEAMS.map(t => {
-          const stat = teamStatsMap.get(t.id) || { totalMeters: 0, memberCount: 0 };
-          const avgKm = stat.memberCount > 0 ? (stat.totalMeters / 1000) / stat.memberCount : 0;
-          const totalKm = stat.totalMeters / 1000;
-          return {
-            id: t.id,
-            name: t.name,
-            totalKm,
-            memberCount: stat.memberCount,
-            avgKm
-          };
-        }).sort((a, b) => b.avgKm - a.avgKm);
-
-        let message = `🛡️ <b>BẢNG XẾP HẠNG 08 ĐỘI THI ĐẤU (AVG KM/NGƯỜI CẢ GIẢI)</b> 🛡️\n\n`;
-
-        teamList.forEach((team, index) => {
-          const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>#${index + 1}.</b>`;
-          message += `${medal} <b>${team.name}</b>\n`;
-          message += `   📊 Trung bình: <code>${team.avgKm.toFixed(2)} km/người</code> (Tổng: ${team.totalKm.toFixed(1)}km - ${team.memberCount} thành viên)\n`;
-        });
-
-        return ctx.replyWithHTML(message);
-      } catch (error) {
-        console.error('[Bot /bxh_doi] Error:', error);
-        return ctx.reply('Lỗi khi tải Bảng xếp hạng đội thi.');
       }
     });
 
