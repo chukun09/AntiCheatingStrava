@@ -26,25 +26,25 @@ export function validateActivity(activity: any): ValidationResult {
   // 1. Check Activity Type (Only Run or TrailRun)
   const allowedTypes = ['Run', 'TrailRun'];
   if (!activity.type || !allowedTypes.includes(activity.type)) {
-    return { 
-      isLegit: false, 
-      reason: `Loại vận động không hợp lệ: ${activity.type || 'Không xác định'} (Chỉ tính Run / TrailRun)` 
+    return {
+      isLegit: false,
+      reason: `Loại vận động không hợp lệ: ${activity.type || 'Không xác định'} (Chỉ tính Run / TrailRun)`
     };
   }
 
   // 2. Block Manual Entry
   if (activity.manual === true) {
-    return { 
-      isLegit: false, 
-      reason: 'Bài chạy nhập thủ công (Manual Entry)' 
+    return {
+      isLegit: false,
+      reason: 'Bài chạy nhập thủ công (Manual Entry)'
     };
   }
 
   // 3. Block missing GPS map data
   if (!activity.map || !activity.map.summary_polyline) {
-    return { 
-      isLegit: false, 
-      reason: 'Bài chạy không có dữ liệu bản đồ GPS (Polyline summary missing)' 
+    return {
+      isLegit: false,
+      reason: 'Bài chạy không có dữ liệu bản đồ GPS (Polyline summary missing)'
     };
   }
 
@@ -58,10 +58,10 @@ export function validateActivity(activity: any): ValidationResult {
 
   // 4. Block abnormal Max Speed (> 30.0 km/h)
   const maxSpeedKmH = (activity.max_speed || 0) * 3.6;
-  if (maxSpeedKmH > 30.0) {
-    return { 
-      isLegit: false, 
-      reason: `Tốc độ tối đa bất thường: ${maxSpeedKmH.toFixed(1)} km/h (Vượt ngưỡng 30.0 km/h)` 
+  if (maxSpeedKmH > 35.0) {
+    return {
+      isLegit: false,
+      reason: `Tốc độ tối đa bất thường: ${maxSpeedKmH.toFixed(1)} km/h (Vượt ngưỡng 30.0 km/h)`
     };
   }
 
@@ -71,9 +71,9 @@ export function validateActivity(activity: any): ValidationResult {
     const paceMin = Math.floor(averagePaceSecPerKm / 60);
     const paceSec = Math.round(averagePaceSecPerKm % 60);
     const paceStr = `${paceMin}:${paceSec < 10 ? '0' : ''}${paceSec}`;
-    return { 
-      isLegit: false, 
-      reason: `Pace trung bình quá nhanh: ${paceStr} min/km (Nhanh hơn ngưỡng 4:00 min/km theo Thể lệ IRIS)` 
+    return {
+      isLegit: false,
+      reason: `Pace trung bình quá nhanh: ${paceStr} min/km (Nhanh hơn ngưỡng 4:00 min/km theo Thể lệ IRIS)`
     };
   }
 
@@ -82,7 +82,7 @@ export function validateActivity(activity: any): ValidationResult {
   if (avgSpeedKmH > 0 && maxSpeedKmH > 22.0) {
     // If Max Speed is more than 3.0x higher than Average Speed (e.g. running 7 km/h but max speed spiked to 24 km/h)
     const speedRatio = maxSpeedKmH / avgSpeedKmH;
-    if (speedRatio > 3.0) {
+    if (speedRatio > 4.0) {
       return {
         isLegit: false,
         reason: `Bất thường tốc độ: Tốc độ max (${maxSpeedKmH.toFixed(1)} km/h) cao gấp ${speedRatio.toFixed(1)} lần tốc độ trung bình (${avgSpeedKmH.toFixed(1)} km/h)`
@@ -97,7 +97,7 @@ export function validateActivity(activity: any): ValidationResult {
       const split = splits[i];
       if (split.distance >= 500 && split.moving_time > 0) {
         const splitPaceSec = split.moving_time / (split.distance / 1000);
-        
+
         // If a split pace is abnormally fast (< 3:30 min/km = 210s/km)
         if (splitPaceSec < 210) {
           const prevSplit = i > 0 ? splits[i - 1] : null;
@@ -131,9 +131,36 @@ export function validateActivity(activity: any): ValidationResult {
   const isGpxUploaded = externalId.endsWith('.gpx');
 
   if (noCadence && noHeartRate && isGpxUploaded) {
-    return { 
-      isLegit: false, 
-      reason: 'Nghi vấn File GPX giả lập (Tệp nguồn .gpx không có cảm biến nhịp tim & guồng chân)' 
+    return {
+      isLegit: false,
+      reason: 'Nghi vấn File GPX giả lập (Tệp nguồn .gpx không có cảm biến nhịp tim & guồng chân)'
+    };
+  }
+
+  // 9. Detect Abnormally Low Cadence / Step Rate while moving at running pace (< 7:00 min/km = 420s/km)
+  if (activity.average_cadence && activity.average_cadence > 0) {
+    // Strava returns average_cadence in RPM (half-steps per minute). < 50 rpm = < 100 spm steps/min.
+    const stepsPerMin = Math.round(activity.average_cadence * 2);
+    if (stepsPerMin < 100 && averagePaceSecPerKm < 420) {
+      const paceMin = Math.floor(averagePaceSecPerKm / 60);
+      const paceSec = Math.round(averagePaceSecPerKm % 60);
+      const paceStr = `${paceMin}:${paceSec < 10 ? '0' : ''}${paceSec}`;
+      return {
+        isLegit: false,
+        reason: `Nghi vấn sử dụng phương tiện xe máy/xe điện (Pace di chuyển ${paceStr} min/km nhưng guồng chân Cadence quá thấp: ${stepsPerMin} bước/phút)`
+      };
+    }
+  }
+
+  // 10. Detect Abnormally Low Heart Rate (Resting HR) while moving at running pace (< 6:00 min/km = 360s/km)
+  const avgHr = activity.average_heartrate || (activity.has_heartrate ? activity.heartrate : null);
+  if (activity.has_heartrate && avgHr && avgHr > 0 && avgHr < 90) {
+    const paceMin = Math.floor(averagePaceSecPerKm / 60);
+    const paceSec = Math.round(averagePaceSecPerKm % 60);
+    const paceStr = `${paceMin}:${paceSec < 10 ? '0' : ''}${paceSec}`;
+    return {
+      isLegit: false,
+      reason: `Nghi vấn ngồi phương tiện xe (Pace di chuyển ${paceStr} min/km nhưng nhịp tim trôi ở mức nghỉ: ${Math.round(avgHr)} bpm)`
     };
   }
 
