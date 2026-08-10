@@ -635,11 +635,20 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
       }
     });
 
-    bot.launch().then(() => {
-      console.log('[Telegram Bot] IRIS Challenge Bot launched successfully!');
-    }).catch((err) => {
-      console.error('[Telegram Bot] Failed to launch bot:', err.message);
-    });
+    const launchBotWithRetry = (retryCount = 0) => {
+      bot?.launch().then(() => {
+        console.log('[Telegram Bot] IRIS Challenge Bot launched successfully!');
+      }).catch((err) => {
+        if (err.message?.includes('409') && retryCount < 5) {
+          console.warn(`[Telegram Bot] 409 Conflict (Another bot instance running). Retrying in 5s... (Attempt ${retryCount + 1}/5)`);
+          setTimeout(() => launchBotWithRetry(retryCount + 1), 5000);
+        } else {
+          console.error('[Telegram Bot] Failed to launch bot:', err.message);
+        }
+      });
+    };
+
+    launchBotWithRetry();
 
     process.once('SIGINT', () => bot?.stop('SIGINT'));
     process.once('SIGTERM', () => bot?.stop('SIGTERM'));
