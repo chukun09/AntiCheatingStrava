@@ -107,6 +107,9 @@ export async function getAvailableStravaApp(): Promise<StravaAppCredentials> {
  */
 export async function migrateLegacyUsersAppClientId() {
   try {
+    // Ensure column exists in PostgreSQL DDL
+    await db.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "appClientId" TEXT;`);
+
     const pool = getStravaAppPool();
     if (pool.length > 0) {
       const defaultClientId = pool[0].clientId;
