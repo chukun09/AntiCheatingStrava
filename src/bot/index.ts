@@ -518,16 +518,18 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
       }
     });
 
-    // Command /giai_tuan1 - Week 1 Team Award (% Participation >= 3km)
+    // Command /giai_tuan1 - Week 1 Team Award (% Participation >= 3km + 3-tier tie-breakers)
     bot.command('giai_tuan1', async (ctx) => {
       try {
         const teams = await getWeek1TeamAward();
-        let message = `⚡ <b>GIẢI TẬP THỂ TUẦN 1: KHỞI ĐỘNG (TỶ LỆ % THAM GIA >= 3KM)</b> ⚡\n\n`;
+        let message = `⚡ <b>GIẢI TẬP THỂ TUẦN 1: KHỞI ĐỘNG</b> ⚡\n`;
+        message += `<i>(Tiêu chí: Tỷ lệ % VĐV đạt >= 3km | Bằng điểm: Tổng km ➔ TB km/VĐV ➔ VĐV >= 5km)</i>\n\n`;
 
         teams.forEach((t, index) => {
           const medal = index === 0 ? '👑 TOP 1 (1.000.000đ)' : index === 1 ? '🥈 TOP 2' : index === 2 ? '🥉 TOP 3' : `<b>#${index + 1}</b>`;
           message += `${medal} <b>${t.teamName}</b>\n`;
           message += `   📊 Tỷ lệ tham gia: <code>${t.participationRate.toFixed(1)}%</code> (${t.qualifiedMembers}/${t.totalMembers} VĐV đạt >= 3km)\n`;
+          message += `   🏃 Tổng km Tuần 1: <code>${t.totalDistanceKmWeek1.toFixed(1)} km</code> | TB VĐV: <code>${t.avgKmPerActiveParticipant.toFixed(1)} km/người</code> | (>= 5km: ${t.qualified5KmMembers} VĐV)\n`;
         });
 
         return ctx.replyWithHTML(message);

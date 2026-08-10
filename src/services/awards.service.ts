@@ -35,18 +35,46 @@ export async function getWeek1TeamAward() {
     const teamMembers = users.filter(u => u.teamId === team.id);
     const totalMembers = teamMembers.length;
 
-    // Active member = reached >= 3km in Week 1
-    const qualifiedMembers = teamMembers.filter(u => (distanceMap.get(u.id) || 0) >= 3.0).length;
+    let totalDistanceKmWeek1 = 0;
+    let qualifiedMembers = 0;
+    let qualified5KmMembers = 0;
+
+    teamMembers.forEach(u => {
+      const dist = distanceMap.get(u.id) || 0;
+      totalDistanceKmWeek1 += dist;
+      if (dist >= 3.0) qualifiedMembers++;
+      if (dist >= 5.0) qualified5KmMembers++;
+    });
+
     const participationRate = totalMembers > 0 ? (qualifiedMembers / totalMembers) * 100 : 0;
+    const avgKmPerActiveParticipant = qualifiedMembers > 0 ? totalDistanceKmWeek1 / qualifiedMembers : 0;
 
     return {
       teamId: team.id,
       teamName: team.name,
       totalMembers,
       qualifiedMembers,
-      participationRate
+      qualified5KmMembers,
+      participationRate,
+      totalDistanceKmWeek1,
+      avgKmPerActiveParticipant
     };
-  }).sort((a, b) => b.participationRate - a.participationRate);
+  }).sort((a, b) => {
+    // Tier 1: Primary - Participation Rate (%)
+    if (Math.abs(b.participationRate - a.participationRate) > 0.001) {
+      return b.participationRate - a.participationRate;
+    }
+    // Tier 2: Secondary Tie-breaker 1 - Total Distance in Week 1 (km)
+    if (Math.abs(b.totalDistanceKmWeek1 - a.totalDistanceKmWeek1) > 0.01) {
+      return b.totalDistanceKmWeek1 - a.totalDistanceKmWeek1;
+    }
+    // Tier 3: Secondary Tie-breaker 2 - Average Distance per Active Participant (km/person)
+    if (Math.abs(b.avgKmPerActiveParticipant - a.avgKmPerActiveParticipant) > 0.01) {
+      return b.avgKmPerActiveParticipant - a.avgKmPerActiveParticipant;
+    }
+    // Tier 4: Secondary Tie-breaker 3 - Number of members completing >= 5km
+    return b.qualified5KmMembers - a.qualified5KmMembers;
+  });
 }
 
 /**

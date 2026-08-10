@@ -37,10 +37,11 @@ export async function handleWebhookEvent(req: Request, res: Response) {
     const event = req.body;
     console.log('[Webhook Event] Received Strava event:', event);
 
-    // Process 'activity' creation AND update events
-    if (event.object_type === 'activity' && (event.aspect_type === 'create' || event.aspect_type === 'update')) {
+    // Process 'activity' creation, update, AND delete events
+    if (event.object_type === 'activity' && (event.aspect_type === 'create' || event.aspect_type === 'update' || event.aspect_type === 'delete')) {
       const activityId = event.object_id;
       const athleteId = event.owner_id;
+      const aspectType = event.aspect_type as 'create' | 'update' | 'delete';
 
       if (activityId && athleteId) {
         if (isActivityQueued(String(activityId))) {
@@ -49,11 +50,11 @@ export async function handleWebhookEvent(req: Request, res: Response) {
           markActivityQueued(String(activityId));
           
           // Push task into P-Queue asynchronously
-          activityQueue.add(() => processActivityQueueItem(activityId, athleteId)).catch((err) => {
+          activityQueue.add(() => processActivityQueueItem(activityId, athleteId, aspectType)).catch((err) => {
             console.error(`[Queue Error] Error executing activity task ${activityId}:`, err);
           });
 
-          console.log(`[Webhook Event] Activity ${activityId} queued successfully (aspect_type=${event.aspect_type}). Current queue length: ${activityQueue.size}`);
+          console.log(`[Webhook Event] Activity ${activityId} queued successfully (aspect_type=${aspectType}). Current queue length: ${activityQueue.size}`);
         }
       }
     }
