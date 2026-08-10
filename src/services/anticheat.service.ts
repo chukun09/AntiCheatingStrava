@@ -61,7 +61,7 @@ export function validateActivity(activity: any): ValidationResult {
   if (maxSpeedKmH > 35.0) {
     return {
       isLegit: false,
-      reason: `Tốc độ tối đa bất thường: ${maxSpeedKmH.toFixed(1)} km/h (Vượt ngưỡng 30.0 km/h)`
+      reason: `Tốc độ tối đa bất thường: ${maxSpeedKmH.toFixed(1)} km/h (Vượt ngưỡng 35.0 km/h)`
     };
   }
 
@@ -79,10 +79,10 @@ export function validateActivity(activity: any): ValidationResult {
 
   // 6. Detect Sudden Pace/Speed Spike Anomaly (Biến động tốc độ / Pace bất thường)
   const avgSpeedKmH = (activity.average_speed || 0) * 3.6;
-  if (avgSpeedKmH > 0 && maxSpeedKmH > 22.0) {
-    // If Max Speed is more than 3.0x higher than Average Speed (e.g. running 7 km/h but max speed spiked to 24 km/h)
+  if (avgSpeedKmH > 0 && maxSpeedKmH > 28.0) {
+    // If Max Speed is more than 4.5x higher than Average Speed (e.g. running 6 km/h but max speed spiked to > 28 km/h)
     const speedRatio = maxSpeedKmH / avgSpeedKmH;
-    if (speedRatio > 4.0) {
+    if (speedRatio > 4.5) {
       return {
         isLegit: false,
         reason: `Bất thường tốc độ: Tốc độ max (${maxSpeedKmH.toFixed(1)} km/h) cao gấp ${speedRatio.toFixed(1)} lần tốc độ trung bình (${avgSpeedKmH.toFixed(1)} km/h)`
