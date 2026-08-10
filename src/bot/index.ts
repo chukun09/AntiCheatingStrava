@@ -652,7 +652,7 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
 
         await ctx.replyWithDocument(
           { source: result.buffer, filename: result.filename },
-          { caption: `📄 <b>BÁO CÁO BÀI CHẠY VI PHẠM</b>\n📌 <b>Bộ lọc:</b> ${result.filterTitle}\n📊 <b>Tổng số bài vi phạm:</b> <code>${result.totalRecords} bài</code>\n💡 <i>Mẹo: Copy cột Activity ID trong file Excel dán vào câu lệnh /duyet <ID...> hoặc /huy <ID...> để xử lý hàng loạt!</i>`, parse_mode: 'HTML' }
+          { caption: `📄 <b>BÁO CÁO BÀI CHẠY VI PHẠM</b>\n📌 <b>Bộ lọc:</b> ${result.filterTitle}\n📊 <b>Tổng số bài vi phạm:</b> <code>${result.totalRecords} bài</code>\n💡 <i>Mẹo: Copy cột Activity ID trong file Excel dán vào câu lệnh /duyet [IDs] hoặc /huy [IDs] để xử lý hàng loạt!</i>`, parse_mode: 'HTML' }
         );
       } catch (error: any) {
         console.error('[Bot /excel_vipham] Error:', error);

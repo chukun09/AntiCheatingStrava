@@ -1,9 +1,13 @@
 import * as XLSX from 'xlsx';
 import { db } from '../config/db';
 
+import { env } from '../config/env';
+
+const week1StartDate = env.ALLOW_TEST_DATE ? new Date('2026-07-01T00:00:00+07:00') : new Date('2026-08-03T00:00:00+07:00');
+
 const WEEK_RANGES: Record<string, { start: Date; end: Date; name: string }> = {
   tuan1: {
-    start: new Date('2026-08-03T00:00:00+07:00'),
+    start: week1StartDate,
     end: new Date('2026-08-09T23:59:59+07:00'),
     name: 'Tuần 1 (03/08 - 09/08)'
   },
