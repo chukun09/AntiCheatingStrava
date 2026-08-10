@@ -8,6 +8,7 @@ import { verifyWebhook, handleWebhookEvent } from './controllers/webhook.control
 import { initTelegramBot } from './bot';
 import { initWeeklyCronJob } from './cron/weekly';
 import { initKeepAliveCronJob } from './cron/keepalive';
+import { migrateLegacyUsersAppClientId } from './services/stravapool.service';
 
 const app = express();
 
@@ -69,6 +70,9 @@ app.listen(env.PORT, () => {
 
   // Initialize Self-Ping Keep-Alive CronJob (Every 5 minutes)
   initKeepAliveCronJob();
+
+  // Populate default appClientId for legacy users in DB
+  migrateLegacyUsersAppClientId();
 });
 
 export default app;

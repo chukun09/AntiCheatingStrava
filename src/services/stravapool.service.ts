@@ -101,3 +101,24 @@ export async function getAvailableStravaApp(): Promise<StravaAppCredentials> {
   console.warn(`[Strava App Pool] All apps in pool reached limit. Selected App ${bestApp.clientId} with ${minCount} athletes.`);
   return bestApp;
 }
+
+/**
+ * Automatically populates default appClientId for existing legacy users in DB who have null appClientId.
+ */
+export async function migrateLegacyUsersAppClientId() {
+  try {
+    const pool = getStravaAppPool();
+    if (pool.length > 0) {
+      const defaultClientId = pool[0].clientId;
+      const res = await db.user.updateMany({
+        where: { appClientId: null, stravaAthleteId: { not: null } },
+        data: { appClientId: defaultClientId }
+      });
+      if (res.count > 0) {
+        console.log(`[Strava App Pool] Migrated ${res.count} legacy users to default appClientId (${defaultClientId}).`);
+      }
+    }
+  } catch (e: any) {
+    console.warn('[Strava App Pool] Legacy user migration notice:', e?.message || e);
+  }
+}
