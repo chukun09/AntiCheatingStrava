@@ -1,6 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 import { db } from '../config/db';
 import { env } from '../config/env';
+import { getAppCredentials } from './stravapool.service';
 
 // Helper function to sleep
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -36,6 +37,7 @@ function checkRateLimitHeaders(response: AxiosResponse) {
  */
 export async function getValidAccessToken(user: {
   id: string;
+  appClientId?: string | null;
   accessToken: string | null;
   refreshToken: string | null;
   tokenExpiresAt: Date | null;
@@ -54,12 +56,13 @@ export async function getValidAccessToken(user: {
     return user.accessToken;
   }
 
-  console.log(`[Strava] Access token for user ${user.id} expired. Refreshing token...`);
+  console.log(`[Strava] Access token for user ${user.id} expired. Refreshing token via App Pool...`);
 
   try {
+    const creds = getAppCredentials(user.appClientId);
     const response = await axios.post('https://www.strava.com/oauth/token', {
-      client_id: env.STRAVA_CLIENT_ID,
-      client_secret: env.STRAVA_CLIENT_SECRET,
+      client_id: creds.clientId,
+      client_secret: creds.clientSecret,
       grant_type: 'refresh_token',
       refresh_token: user.refreshToken
     });

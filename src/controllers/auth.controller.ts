@@ -5,6 +5,7 @@ import { env } from '../config/env';
 import { getTeamName } from '../services/team.service';
 import { syncUserPastActivities, syncAllUsersPastActivities } from '../services/sync.service';
 import { overrideActivityStatus } from '../services/override.service';
+import { getAvailableStravaApp, getAppCredentials } from '../services/stravapool.service';
 
 /**
  * POST /auth/strava-link
@@ -33,18 +34,22 @@ export async function handleStravaLink(req: Request, res: Response) {
     const userGender = gender === 'FEMALE' ? 'FEMALE' : 'MALE';
     const userTeamId = parseInt(teamId || '1', 10);
 
+    // Auto select Strava App from Pool (< 10 athletes)
+    const selectedApp = await getAvailableStravaApp();
+
     const statePayload = JSON.stringify({
       nickName: trimmedNickName,
       fullName: fullName ? fullName.trim() : null,
       gender: userGender,
       department: department ? department.trim() : null,
-      teamId: userTeamId
+      teamId: userTeamId,
+      appClientId: selectedApp.clientId
     });
 
     const stateEncoded = Buffer.from(statePayload).toString('base64');
     const redirectUri = `${env.APP_BASE_URL}/auth/callback`;
 
-    const stravaAuthUrl = `https://www.strava.com/oauth/authorize?client_id=${env.STRAVA_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&approval_prompt=auto&scope=read,activity:read_all&state=${encodeURIComponent(stateEncoded)}`;
+    const stravaAuthUrl = `https://www.strava.com/oauth/authorize?client_id=${selectedApp.clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&approval_prompt=auto&scope=read,activity:read_all&state=${encodeURIComponent(stateEncoded)}`;
 
     return res.redirect(stravaAuthUrl);
   } catch (error: any) {
@@ -78,7 +83,7 @@ export async function handleStravaCallback(req: Request, res: Response) {
     }
 
     // Decode state
-    let stateData: { nickName: string; fullName?: string | null; gender?: 'MALE' | 'FEMALE'; department?: string | null; teamId?: number } = { nickName: 'Runner', gender: 'MALE', teamId: 1 };
+    let stateData: { nickName: string; fullName?: string | null; gender?: 'MALE' | 'FEMALE'; department?: string | null; teamId?: number; appClientId?: string } = { nickName: 'Runner', gender: 'MALE', teamId: 1 };
     if (state && typeof state === 'string') {
       try {
         const decodedStr = Buffer.from(state, 'base64').toString('utf-8');
@@ -88,10 +93,13 @@ export async function handleStravaCallback(req: Request, res: Response) {
       }
     }
 
+    // Get correct App credentials based on appClientId in state
+    const appCreds = getAppCredentials(stateData.appClientId);
+
     // Exchange authorization code for access_token and refresh_token
     const tokenResponse = await axios.post('https://www.strava.com/oauth/token', {
-      client_id: env.STRAVA_CLIENT_ID,
-      client_secret: env.STRAVA_CLIENT_SECRET,
+      client_id: appCreds.clientId,
+      client_secret: appCreds.clientSecret,
       code: String(code),
       grant_type: 'authorization_code'
     });
@@ -141,6 +149,7 @@ export async function handleStravaCallback(req: Request, res: Response) {
           gender: userGender,
           department: stateData.department || existingUserByAthlete.department,
           teamId: userTeamId,
+          appClientId: appCreds.clientId,
           accessToken: access_token,
           refreshToken: refresh_token,
           tokenExpiresAt: tokenExpiresAt
@@ -156,6 +165,7 @@ export async function handleStravaCallback(req: Request, res: Response) {
           gender: userGender,
           department: stateData.department || existingUserByNickName.department,
           teamId: userTeamId,
+          appClientId: appCreds.clientId,
           accessToken: access_token,
           refreshToken: refresh_token,
           tokenExpiresAt: tokenExpiresAt
@@ -171,6 +181,7 @@ export async function handleStravaCallback(req: Request, res: Response) {
           department: stateData.department || null,
           teamId: userTeamId,
           stravaAthleteId: stravaAthleteId,
+          appClientId: appCreds.clientId,
           accessToken: access_token,
           refreshToken: refresh_token,
           tokenExpiresAt: tokenExpiresAt

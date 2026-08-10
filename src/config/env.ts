@@ -21,6 +21,9 @@ export const env = {
   STRAVA_CLIENT_SECRET: process.env.STRAVA_CLIENT_SECRET || '',
   STRAVA_VERIFY_TOKEN: process.env.STRAVA_VERIFY_TOKEN || 'my_secret_token',
   
+  // Multi-App Pool support
+  STRAVA_APPS_JSON: process.env.STRAVA_APPS_JSON || '',
+  
   APP_BASE_URL: (process.env.APP_BASE_URL || 'http://localhost:3000').replace(/\/$/, ''),
   
   // Allow test activities submitted before official contest start date 03/08/2026

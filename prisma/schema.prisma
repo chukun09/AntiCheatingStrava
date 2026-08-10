@@ -29,6 +29,7 @@ model User {
   
   // Strava OAuth Info
   stravaAthleteId  BigInt?    @unique
+  appClientId      String?
   accessToken      String?
   refreshToken     String?
   tokenExpiresAt   DateTime?
