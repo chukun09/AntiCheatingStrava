@@ -1,7 +1,7 @@
 import { db } from '../config/db';
 import { getValidAccessToken, fetchStravaActivityDetail } from './strava.service';
 import { validateActivity } from './anticheat.service';
-import { notifyReachedMilestone, notifyCheatingAlert } from './telegram.service';
+import { notifyReachedMilestone, notifyCheatingAlert, notifyActivityDeleted, notifyActivityUpdated } from './telegram.service';
 
 /**
  * Worker function executed by P-Queue to process a Strava activity event (create, update, or delete)
@@ -42,6 +42,7 @@ export async function processActivityQueueItem(
     }
 
     console.log(`[Queue Worker] Deleting activity ${activityId} for ${user.nickName}...`);
+    let newTotalKm = 0;
     await db.$transaction(async (tx) => {
       if (existingActivity.isLegit) {
         const updatedUser = await tx.user.update({
@@ -50,6 +51,7 @@ export async function processActivityQueueItem(
             totalDistance: { decrement: existingActivity.distance }
           }
         });
+        newTotalKm = updatedUser.totalDistance / 1000;
 
         // Reset milestone if totalDistance falls below target
         if (updatedUser.totalDistance < targetDistanceMeters && updatedUser.reachedTargetAt !== null) {
@@ -58,6 +60,9 @@ export async function processActivityQueueItem(
             data: { reachedTargetAt: null }
           });
         }
+      } else {
+        const currentUser = await tx.user.findUnique({ where: { id: user.id } });
+        newTotalKm = (currentUser?.totalDistance || 0) / 1000;
       }
 
       await tx.activity.delete({
@@ -66,6 +71,17 @@ export async function processActivityQueueItem(
     });
 
     console.log(`[Queue Worker] Deleted activity ${activityId} successfully.`);
+
+    // Send Telegram alert to BTC group
+    await notifyActivityDeleted({
+      nickName: user.nickName,
+      fullName: user.fullName,
+      activityName: existingActivity.name,
+      stravaActivityId: activityId,
+      deletedKm: existingActivity.distance / 1000,
+      newTotalKm
+    });
+
     return;
   }
 
@@ -196,6 +212,20 @@ export async function processActivityQueueItem(
   });
 
   // Telegram Notifications
+  if (aspectType === 'update' && existingActivity) {
+    const updatedUser = await db.user.findUnique({ where: { id: user.id } });
+    await notifyActivityUpdated({
+      nickName: user.nickName,
+      fullName: user.fullName,
+      activityName: activityData.name || 'Bài chạy',
+      stravaActivityId: activityId,
+      oldKm: existingActivity.distance / 1000,
+      newKm: (activityData.distance || 0) / 1000,
+      newTotalKm: ((updatedUser?.totalDistance || 0) / 1000),
+      isLegit: validation.isLegit
+    });
+  }
+
   if (validation.isLegit) {
     if (isNewWinner && reachedAtDate) {
       await notifyReachedMilestone({

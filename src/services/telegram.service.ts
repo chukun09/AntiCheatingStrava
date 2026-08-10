@@ -108,3 +108,52 @@ export async function notifyCheatingAlert(data: {
     return false;
   }
 }
+
+/**
+ * Send notification when an activity is deleted on Strava
+ */
+export async function notifyActivityDeleted(data: {
+  nickName: string;
+  fullName?: string | null;
+  activityName: string;
+  stravaActivityId: bigint | string;
+  deletedKm: number;
+  newTotalKm: number;
+}) {
+  const stravaUrl = `https://www.strava.com/activities/${data.stravaActivityId}`;
+  const message = 
+`🗑️ <b>[THÔNG BÁO XÓA BÀI CHẠY TỪ STRAVA]</b> 🗑️
+
+👤 <b>VĐV:</b> <b>${data.nickName}</b>${data.fullName ? ` (${data.fullName})` : ''}
+📌 <b>Bài chạy:</b> <a href="${stravaUrl}">${data.activityName}</a> (ID: <code>${data.stravaActivityId}</code>)
+🏃 <b>Số km vừa xóa:</b> <code>${data.deletedKm.toFixed(2)} km</code>
+📊 <b>Tổng km tích lũy mới:</b> <code>${data.newTotalKm.toFixed(2)} km</code> (Đã tự động trừ bớt)`;
+
+  await sendTelegramMessage(env.TELEGRAM_GROUP_ID, message);
+}
+
+/**
+ * Send notification when an activity is updated on Strava
+ */
+export async function notifyActivityUpdated(data: {
+  nickName: string;
+  fullName?: string | null;
+  activityName: string;
+  stravaActivityId: bigint | string;
+  oldKm: number;
+  newKm: number;
+  newTotalKm: number;
+  isLegit: boolean;
+}) {
+  const stravaUrl = `https://www.strava.com/activities/${data.stravaActivityId}`;
+  const statusStr = data.isLegit ? '✅ Hợp lệ' : '❌ Phạm quy';
+  const message = 
+`✏️ <b>[THÔNG BÁO SỬA BÀI CHẠY TỪ STRAVA]</b> ✏️
+
+👤 <b>VĐV:</b> <b>${data.nickName}</b>${data.fullName ? ` (${data.fullName})` : ''}
+📌 <b>Bài chạy:</b> <a href="${stravaUrl}">${data.activityName}</a> (ID: <code>${data.stravaActivityId}</code>)
+📊 <b>Thay đổi khoảng cách:</b> <code>${data.oldKm.toFixed(2)} km ➔ ${data.newKm.toFixed(2)} km</code> (${statusStr})
+🏃 <b>Tổng km tích lũy mới:</b> <code>${data.newTotalKm.toFixed(2)} km</code>`;
+
+  await sendTelegramMessage(env.TELEGRAM_GROUP_ID, message);
+}
