@@ -55,9 +55,12 @@ export function getAppCredentials(clientId?: string | null): StravaAppCredential
   };
 }
 
+let roundRobinIndex = 0;
+const pendingCountMap = new Map<string, number>();
+
 /**
- * Selects an available Strava App from the pool that currently has < 10 connected athletes.
- * If all apps are full or none defined, returns the default fallback app.
+ * Selects an available Strava App from the pool using Round-Robin rotation.
+ * Evenly distributes load across all apps with < 10 connected athletes to prevent overloading a single app.
  */
 export async function getAvailableStravaApp(): Promise<StravaAppCredentials> {
   const pool = getStravaAppPool();
@@ -77,29 +80,45 @@ export async function getAvailableStravaApp(): Promise<StravaAppCredentials> {
     countMap.set(cid, (countMap.get(cid) || 0) + 1);
   });
 
-  // Find first app with < 10 athletes
-  for (const app of pool) {
-    const currentCount = countMap.get(app.clientId) || 0;
-    if (currentCount < 10) {
-      console.log(`[Strava App Pool] Selected App Client ID: ${app.clientId} (${currentCount}/10 athletes connected)`);
-      return app;
-    }
+  // Filter eligible apps that currently have < 10 total (DB connected + pending attempts)
+  const eligibleApps = pool.filter(app => {
+    const dbCount = countMap.get(app.clientId) || 0;
+    const pendingCount = pendingCountMap.get(app.clientId) || 0;
+    return (dbCount + pendingCount) < 10;
+  });
+
+  let selectedApp: StravaAppCredentials;
+
+  if (eligibleApps.length > 0) {
+    // Select evenly via Round-Robin rotation
+    selectedApp = eligibleApps[roundRobinIndex % eligibleApps.length];
+    roundRobinIndex = (roundRobinIndex + 1) % eligibleApps.length;
+  } else {
+    // If all apps reached 10, select app with minimum total load
+    selectedApp = pool.reduce((best, current) => {
+      const bestCount = (countMap.get(best.clientId) || 0) + (pendingCountMap.get(best.clientId) || 0);
+      const currentCount = (countMap.get(current.clientId) || 0) + (pendingCountMap.get(current.clientId) || 0);
+      return currentCount < bestCount ? current : best;
+    }, pool[0]);
   }
 
-  // If all apps reached 10 athletes, select the one with lowest count
-  let bestApp = pool[0];
-  let minCount = Infinity;
+  // Track pending registration attempt
+  const currentPending = pendingCountMap.get(selectedApp.clientId) || 0;
+  pendingCountMap.set(selectedApp.clientId, currentPending + 1);
 
-  for (const app of pool) {
-    const count = countMap.get(app.clientId) || 0;
-    if (count < minCount) {
-      minCount = count;
-      bestApp = app;
+  // Auto safety timeout: decrement pending count after 10 minutes
+  setTimeout(() => {
+    const p = pendingCountMap.get(selectedApp.clientId) || 0;
+    if (p > 0) {
+      pendingCountMap.set(selectedApp.clientId, p - 1);
     }
-  }
+  }, 10 * 60 * 1000);
 
-  console.warn(`[Strava App Pool] All apps in pool reached limit. Selected App ${bestApp.clientId} with ${minCount} athletes.`);
-  return bestApp;
+  const dbCount = countMap.get(selectedApp.clientId) || 0;
+  const pendingCount = pendingCountMap.get(selectedApp.clientId) || 0;
+  console.log(`[Strava App Pool] Selected App Client ID: ${selectedApp.clientId} (DB: ${dbCount}, Pending: ${pendingCount}, Total: ${dbCount + pendingCount}/10)`);
+
+  return selectedApp;
 }
 
 /**
