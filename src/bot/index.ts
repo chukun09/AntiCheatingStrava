@@ -13,6 +13,7 @@ import {
   getWeek3TeamAward, 
   getWeek4TeamAward 
 } from '../services/awards.service';
+import { exportViolationsToExcelBuffer } from '../services/excel.service';
 
 let bot: Telegraf | null = null;
 
@@ -632,6 +633,133 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
       } catch (error) {
         console.error('[Bot /phat] Error:', error);
         return ctx.reply('Lỗi khi tải bảng kê phạt đóng góp.');
+      }
+    });
+
+    // Command /excel_vipham & /vipham_excel - Flexible Excel Export
+    const handleExcelExport = async (ctx: any) => {
+      try {
+        const text = ctx.message?.text || '';
+        const parts = text.split(/\s+/);
+        const param = parts.length > 1 ? parts[1] : 'tatca';
+
+        await ctx.reply(`📊 Đang trích xuất báo cáo Excel vi phạm theo bộ lọc "${param}"... Vui lòng đợi trong giây lát.`);
+
+        const result = await exportViolationsToExcelBuffer(param);
+        if (result.totalRecords === 0) {
+          return ctx.replyWithHTML(`🎉 <b>BÁO CÁO VI PHẠM:</b> Không tìm thấy bài chạy vi phạm nào thuộc bộ lọc "${result.filterTitle}".`);
+        }
+
+        await ctx.replyWithDocument(
+          { source: result.buffer, filename: result.filename },
+          { caption: `📄 <b>BÁO CÁO BÀI CHẠY VI PHẠM</b>\n📌 <b>Bộ lọc:</b> ${result.filterTitle}\n📊 <b>Tổng số bài vi phạm:</b> <code>${result.totalRecords} bài</code>\n💡 <i>Mẹo: Copy cột Activity ID trong file Excel dán vào câu lệnh /duyet <ID...> hoặc /huy <ID...> để xử lý hàng loạt!</i>`, parse_mode: 'HTML' }
+        );
+      } catch (error: any) {
+        console.error('[Bot /excel_vipham] Error:', error);
+        return ctx.reply('Lỗi khi xuất tệp Excel bài vi phạm: ' + (error?.message || error));
+      }
+    };
+
+    bot.command('excel_vipham', handleExcelExport);
+    bot.command('vipham_excel', handleExcelExport);
+
+    // Command /duyet <ID1> <ID2> ... - Exact List ID Bulk Approval
+    bot.command('duyet', async (ctx) => {
+      try {
+        const text = ctx.message?.text || '';
+        const matches = text.match(/\d{8,}/g);
+
+        if (!matches || matches.length === 0) {
+          let msg = `⚠️ <b>HƯỚNG DẪN DUYỆT THEO DANH SÁCH ACTIVITY IDs:</b>\n\n`;
+          msg += `Hãy dán danh sách các Activity ID (dạng chuỗi số từ Strava) sau câu lệnh <code>/duyet</code>.\n`;
+          msg += `<i>Ví dụ:</i> <code>/duyet 19675590203 19675335814 19674697299</code>\n\n`;
+          msg += `💡 <i>Lưu ý: Bạn có thể dán 10, 50, 100 hay 200 IDs cách nhau bởi dấu cách hoặc xuống dòng!</i>`;
+          return ctx.replyWithHTML(msg);
+        }
+
+        const ids = matches.map((idStr: string) => BigInt(idStr));
+        const res = await db.activity.updateMany({
+          where: {
+            stravaActivityId: { in: ids }
+          },
+          data: {
+            isLegit: true,
+            flagReason: 'Đã duyệt hàng loạt theo danh sách IDs bởi BTC'
+          }
+        });
+
+        return ctx.replyWithHTML(`🟢 <b>DUYỆT THEO DANH SÁCH THÀNH CÔNG!</b>\n\n✅ Đã cập nhật trạng thái Hợp Lệ cho <b>${res.count} / ${ids.length}</b> bài chạy được chỉ định.`);
+      } catch (error: any) {
+        console.error('[Bot /duyet] Error:', error);
+        return ctx.reply('Lỗi khi duyệt hàng loạt theo danh sách: ' + (error?.message || error));
+      }
+    });
+
+    // Command /huy <ID1> <ID2> ... - Exact List ID Bulk Rejection
+    bot.command('huy', async (ctx) => {
+      try {
+        const text = ctx.message?.text || '';
+        const matches = text.match(/\d{8,}/g);
+
+        if (!matches || matches.length === 0) {
+          let msg = `⚠️ <b>HƯỚNG DẪN HỦY/LOẠI THEO DANH SÁCH ACTIVITY IDs:</b>\n\n`;
+          msg += `Hãy dán danh sách các Activity ID sau câu lệnh <code>/huy</code>.\n`;
+          msg += `<i>Ví dụ:</i> <code>/huy 19675590203 19675335814 19674697299</code>`;
+          return ctx.replyWithHTML(msg);
+        }
+
+        const ids = matches.map((idStr: string) => BigInt(idStr));
+        const res = await db.activity.updateMany({
+          where: {
+            stravaActivityId: { in: ids }
+          },
+          data: {
+            isLegit: false,
+            flagReason: 'Xác nhận giữ loại hàng loạt theo danh sách IDs bởi BTC'
+          }
+        });
+
+        return ctx.replyWithHTML(`🔴 <b>HỦY THEO DANH SÁCH THÀNH CÔNG!</b>\n\n❌ Đã xác nhận loại <b>${res.count} / ${ids.length}</b> bài chạy được chỉ định.`);
+      } catch (error: any) {
+        console.error('[Bot /huy] Error:', error);
+        return ctx.reply('Lỗi khi hủy hàng loạt theo danh sách: ' + (error?.message || error));
+      }
+    });
+
+    // Command /duyet_tatca - Bulk approve ALL non-legit activities
+    bot.command('duyet_tatca', async (ctx) => {
+      try {
+        const res = await db.activity.updateMany({
+          where: { isLegit: false },
+          data: {
+            isLegit: true,
+            flagReason: 'Đã duyệt toàn bộ bởi BTC'
+          }
+        });
+
+        if (res.count === 0) {
+          return ctx.replyWithHTML('🎉 <b>THÔNG BÁO:</b> Hiện tại không có bài chạy vi phạm nào cần duyệt.');
+        }
+
+        return ctx.replyWithHTML(`🟢 <b>DUYỆT TOÀN BỘ THÀNH CÔNG!</b>\n\n✅ Đã chuyển trạng thái Hợp Lệ cho tất cả <b>${res.count} bài chạy</b> vi phạm trong CSDL.`);
+      } catch (error: any) {
+        console.error('[Bot /duyet_tatca] Error:', error);
+        return ctx.reply('Lỗi khi duyệt toàn bộ bài vi phạm.');
+      }
+    });
+
+    // Command /huy_tatca - Bulk confirm reject ALL non-legit activities
+    bot.command('huy_tatca', async (ctx) => {
+      try {
+        const count = await db.activity.count({ where: { isLegit: false } });
+        if (count === 0) {
+          return ctx.replyWithHTML('🎉 <b>THÔNG BÁO:</b> Hiện tại không có bài chạy vi phạm nào trong danh sách.');
+        }
+
+        return ctx.replyWithHTML(`🔴 <b>XÁC NHẬN HỦY TOÀN BỘ!</b>\n\n❌ Đã giữ nguyên trạng thái Loại Bỏ đối với tất cả <b>${count} bài chạy</b> vi phạm.`);
+      } catch (error: any) {
+        console.error('[Bot /huy_tatca] Error:', error);
+        return ctx.reply('Lỗi khi xác nhận hủy toàn bộ.');
       }
     });
 
