@@ -156,7 +156,8 @@ export async function exportViolationsToExcelBuffer(param?: string): Promise<Exc
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Bai_Vi_Pham');
 
   const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-  const filename = `DANH_SACH_VI_PHAM_${cleanParam.toUpperCase()}_${Date.now()}.xlsx`;
+  const nowStr = new Date().toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }).replace(/\//g, '_');
+  const filename = `DANH_SACH_VI_PHAM_${cleanParam.toUpperCase()}_${nowStr}.xlsx`;
 
   return {
     buffer,
