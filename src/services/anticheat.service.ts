@@ -137,31 +137,77 @@ export function validateActivity(activity: any): ValidationResult {
     };
   }
 
-  // 9. Detect Abnormally Low Cadence / Step Rate while moving at running pace (< 7:00 min/km = 420s/km)
+  // 9. Detect Dedicated Sports Watch with Missing/Zero Cadence (Garmin, Coros, Suunto, Polar)
+  const deviceName = activity.device_name ? String(activity.device_name).toLowerCase() : '';
+  const isDedicatedSportsWatch = ['garmin', 'coros', 'suunto', 'polar'].some(brand => deviceName.includes(brand));
+  if (isDedicatedSportsWatch && noCadence && averagePaceSecPerKm < 480) { // Pace < 8:00 min/km
+    return {
+      isLegit: false,
+      reason: `Nghi vấn đặt tay tĩnh trên tay lái xe (Đeo đồng hồ thể thao chuyên dụng ${activity.device_name} nhưng guồng chân Cadence bằng 0)`
+    };
+  }
+
+  // 10. Detect Abnormally Low Cadence / Step Rate & Stride Length Anomaly (when cadence data exists)
   if (activity.average_cadence && activity.average_cadence > 0) {
-    // Strava returns average_cadence in RPM (half-steps per minute). < 50 rpm = < 100 spm steps/min.
+    // Strava returns average_cadence in RPM (half-steps per minute). Multiply by 2 for total steps/min.
     const stepsPerMin = Math.round(activity.average_cadence * 2);
+    const movingMin = activity.moving_time / 60;
+    const totalEstSteps = Math.round(stepsPerMin * movingMin);
+    const distKm = activity.distance / 1000;
+    const stepsPerKm = distKm > 0 ? totalEstSteps / distKm : 0;
+    const strideLengthMeters = totalEstSteps > 0 ? activity.distance / totalEstSteps : 0;
+
+    const paceMin = Math.floor(averagePaceSecPerKm / 60);
+    const paceSec = Math.round(averagePaceSecPerKm % 60);
+    const paceStr = `${paceMin}:${paceSec < 10 ? '0' : ''}${paceSec}`;
+
+    // 10a. Low Cadence Check (< 100 spm while moving < 7:00 min/km)
     if (stepsPerMin < 100 && averagePaceSecPerKm < 420) {
-      const paceMin = Math.floor(averagePaceSecPerKm / 60);
-      const paceSec = Math.round(averagePaceSecPerKm % 60);
-      const paceStr = `${paceMin}:${paceSec < 10 ? '0' : ''}${paceSec}`;
       return {
         isLegit: false,
-        reason: `Nghi vấn sử dụng phương tiện xe máy/xe điện (Pace di chuyển ${paceStr} min/km nhưng guồng chân Cadence quá thấp: ${stepsPerMin} bước/phút)`
+        reason: `Nghi vấn đi xe máy/xe điện (Pace di chuyển ${paceStr} min/km nhưng guồng chân Cadence quá thấp: ${stepsPerMin} bước/phút)`
+      };
+    }
+
+    // 10b. Stride Length Anomaly (> 1.60m per step while moving < 7:00 min/km)
+    if (strideLengthMeters > 1.60 && averagePaceSecPerKm < 420 && distKm >= 1.0) {
+      return {
+        isLegit: false,
+        reason: `Sải chân bất thường: ${strideLengthMeters.toFixed(2)}m/bước (Chỉ có ${Math.round(stepsPerKm)} bước/km - Vượt ngưỡng thể lực người chạy thật)`
+      };
+    }
+
+    // 10c. Minimum Steps Per Km (< 700 steps/km while moving < 7:00 min/km)
+    if (stepsPerKm < 700 && averagePaceSecPerKm < 420 && distKm >= 1.0) {
+      return {
+        isLegit: false,
+        reason: `Mật độ bước chân quá thưa: ${Math.round(stepsPerKm)} bước/km (Dấu hiệu di chuyển bằng xe đạp/xe điện)`
       };
     }
   }
 
-  // 10. Detect Abnormally Low Heart Rate (Resting HR) while moving at running pace (< 6:00 min/km = 360s/km)
+  // 11. Detect Abnormally Low Heart Rate vs Physical Effort (when heart rate exists)
   const avgHr = activity.average_heartrate || (activity.has_heartrate ? activity.heartrate : null);
-  if (activity.has_heartrate && avgHr && avgHr > 0 && avgHr < 90) {
+  if (activity.has_heartrate && avgHr && avgHr > 0) {
     const paceMin = Math.floor(averagePaceSecPerKm / 60);
     const paceSec = Math.round(averagePaceSecPerKm % 60);
     const paceStr = `${paceMin}:${paceSec < 10 ? '0' : ''}${paceSec}`;
-    return {
-      isLegit: false,
-      reason: `Nghi vấn ngồi phương tiện xe (Pace di chuyển ${paceStr} min/km nhưng nhịp tim trôi ở mức nghỉ: ${Math.round(avgHr)} bpm)`
-    };
+
+    // 11a. Resting Heart Rate check (< 100 bpm while moving < 7:00 min/km)
+    if (avgHr < 100 && averagePaceSecPerKm < 420) {
+      return {
+        isLegit: false,
+        reason: `Nghi vấn ngồi phương tiện xe (Pace di chuyển ${paceStr} min/km nhưng nhịp tim trôi ở mức nghỉ: ${Math.round(avgHr)} bpm)`
+      };
+    }
+
+    // 11b. Low Heart Rate during fast effort (< 115 bpm while moving < 5:00 min/km)
+    if (avgHr < 115 && averagePaceSecPerKm < 300) {
+      return {
+        isLegit: false,
+        reason: `Nghi vấn mượn xe/phương tiện (Chạy Pace rất nhanh ${paceStr} min/km nhưng nhịp tim trôi thong thả: ${Math.round(avgHr)} bpm)`
+      };
+    }
   }
 
   return { isLegit: true };
