@@ -1,7 +1,7 @@
 import { Telegraf } from 'telegraf';
 import { db } from '../config/db';
 import { env } from '../config/env';
-import { TEAMS, getTeamName } from '../services/team.service';
+import { TEAMS, getTeamName, getTeamWeekDetail } from '../services/team.service';
 import { calculatePenalties } from '../services/penalty.service';
 import { formatPace, formatVietnamDateTime, sendTelegramMessage } from '../services/telegram.service';
 import { syncAllUsersPastActivities } from '../services/sync.service';
@@ -574,6 +574,76 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
       } catch (error) {
         console.error('[Bot /giai_tuan4] Error:', error);
         return ctx.reply('Lỗi khi tải dữ liệu Giải Tuần 4.');
+      }
+    });
+
+    // Command /doi [số_đội] [tuần] - Detailed breakdown for a team in a specific week
+    bot.command('doi', async (ctx) => {
+      try {
+        const text = (ctx.message?.text || '').trim();
+        const parts = text.split(/\s+/).slice(1);
+
+        if (parts.length === 0) {
+          let usageMsg = `📌 <b>HƯỚNG DẪN CÂU LỆNH TRA CỨU CHI TIẾT ĐỘI THI ĐẤU:</b>\n\n`;
+          usageMsg += `Cú pháp: <code>/doi [số_đội] [tuần]</code>\n\n`;
+          usageMsg += `<b>Ví dụ:</b>\n`;
+          usageMsg += `• <code>/doi 2 tuan 1</code> (hoặc <code>/doi 2 1</code>): Xem chi tiết từng VĐV của Đội 2 trong Tuần 1\n`;
+          usageMsg += `• <code>/doi 2</code>: Xem chi tiết từng VĐV của Đội 2 tích lũy từ đầu giải đến nay\n\n`;
+          usageMsg += `<b>Danh sách 8 Đội thi đấu:</b>\n`;
+          usageMsg += `1. Đội 1: Kỹ thuật vận hành\n`;
+          usageMsg += `2. Đội 2: Phát triển phần mềm\n`;
+          usageMsg += `3. Đội 3: Chăm sóc khách hàng\n`;
+          usageMsg += `4. Đội 4: Kinh doanh\n`;
+          usageMsg += `5. Đội 5: Kế toán + Sản phẩm\n`;
+          usageMsg += `6. Đội 6: HCNS + Đối soát + Lái xe\n`;
+          usageMsg += `7. Đội 7: VP HCM + Phát triển kd\n`;
+          usageMsg += `8. Đội 8: HĐQT + BGĐ + Trợ lý\n`;
+          return ctx.replyWithHTML(usageMsg);
+        }
+
+        const teamIdArg = parseInt(parts[0], 10);
+        if (isNaN(teamIdArg) || teamIdArg < 1 || teamIdArg > 8) {
+          return ctx.replyWithHTML('❌ Số Đội không hợp lệ! Vui lòng nhập số Đội từ 1 đến 8. Ví dụ: <code>/doi 2 tuan 1</code>');
+        }
+
+        let weekNumArg: number | null = null;
+        if (parts.length >= 2) {
+          const rawWeek = parts.slice(1).join(' ').toLowerCase();
+          const match = rawWeek.match(/\d+/);
+          if (match) {
+            const parsedWeek = parseInt(match[0], 10);
+            if (parsedWeek >= 1 && parsedWeek <= 4) {
+              weekNumArg = parsedWeek;
+            }
+          }
+        }
+
+        const detail = await getTeamWeekDetail(teamIdArg, weekNumArg);
+
+        if (!detail) {
+          return ctx.replyWithHTML(`❌ Không tìm thấy dữ liệu cho Đội ${teamIdArg}.`);
+        }
+
+        const headerWeekStr = detail.weekNumber ? `(TUẦN ${detail.weekNumber})` : `(TÍCH LŨY TOÀN GIẢI)`;
+        let message = `🛡️ <b>CHI TIẾT THÀNH TÍCH ${detail.teamName.toUpperCase()} ${headerWeekStr}</b> 🛡️\n`;
+        message += `📌 <b>Khung thời gian:</b> ${detail.weekName}\n`;
+        message += `📊 <b>VĐV Đạt chỉ tiêu:</b> <code>${detail.qualifiedMembers}/${detail.totalMembers} VĐV</code> (${((detail.qualifiedMembers / detail.totalMembers) * 100).toFixed(1)}%)\n`;
+        message += `🏃 <b>Tổng quãng đường Đội:</b> <code>${detail.totalTeamDistanceKm.toFixed(1)} km</code>\n\n`;
+
+        detail.members.forEach((m, idx) => {
+          const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `<b>${idx + 1}.</b>`;
+          const statusIcon = m.isQualified ? '✅' : '❌';
+          const paceStr = m.runCount > 0 ? formatPace(m.avgPaceSecPerKm) : '--:--';
+          const genderIcon = m.gender === 'FEMALE' ? '👩' : '👨';
+
+          message += `${medal} ${statusIcon} <b>${escapeHtml(m.nickName)}</b> ${genderIcon}\n`;
+          message += `   └─ <code>${m.totalDistanceKm.toFixed(2)} km</code> | ${m.runCount} bài | Pace: <code>${paceStr}</code>\n`;
+        });
+
+        return ctx.replyWithHTML(message);
+      } catch (error) {
+        console.error('[Bot /doi] Error:', error);
+        return ctx.reply('Lỗi khi tải thông tin chi tiết Đội.');
       }
     });
 

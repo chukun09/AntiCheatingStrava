@@ -120,7 +120,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "package_dependencies",
-      "community": 1,
+      "community": 0,
       "norm_label": "dependencies"
     },
     {
@@ -130,7 +130,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "package_dependencies_prisma_client",
-      "community": 1,
+      "community": 0,
       "norm_label": "@prisma/client"
     },
     {
@@ -140,7 +140,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "package_dependencies_axios",
-      "community": 1,
+      "community": 0,
       "norm_label": "axios"
     },
     {
@@ -150,7 +150,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "package_dependencies_cors",
-      "community": 1,
+      "community": 0,
       "norm_label": "cors"
     },
     {
@@ -160,7 +160,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "package_dependencies_dotenv",
-      "community": 1,
+      "community": 0,
       "norm_label": "dotenv"
     },
     {
@@ -170,7 +170,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "package_dependencies_express",
-      "community": 1,
+      "community": 0,
       "norm_label": "express"
     },
     {
@@ -180,7 +180,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "package_dependencies_node_cron",
-      "community": 1,
+      "community": 0,
       "norm_label": "node-cron"
     },
     {
@@ -190,7 +190,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "package_dependencies_p_queue",
-      "community": 1,
+      "community": 0,
       "norm_label": "p-queue"
     },
     {
@@ -200,7 +200,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "package_dependencies_telegraf",
-      "community": 1,
+      "community": 0,
       "norm_label": "telegraf"
     },
     {
@@ -210,7 +210,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "package_dependencies_xlsx",
-      "community": 1,
+      "community": 0,
       "norm_label": "xlsx"
     },
     {
@@ -374,13 +374,33 @@
       "norm_label": "inittelegrambot()"
     },
     {
+      "label": "check_app_distribution.ts",
+      "file_type": "code",
+      "source_file": "src/check_app_distribution.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_check_app_distribution",
+      "community": 8,
+      "norm_label": "check_app_distribution.ts"
+    },
+    {
+      "label": "checkDistribution()",
+      "file_type": "code",
+      "source_file": "src/check_app_distribution.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "id": "src_check_app_distribution_checkdistribution",
+      "community": 8,
+      "norm_label": "checkdistribution()"
+    },
+    {
       "label": "db.ts",
       "file_type": "code",
       "source_file": "src/config/db.ts",
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_config_db",
-      "community": 3,
+      "community": 8,
       "norm_label": "db.ts"
     },
     {
@@ -390,7 +410,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_config_db_globalforprisma",
-      "community": 3,
+      "community": 8,
       "norm_label": "globalforprisma"
     },
     {
@@ -420,7 +440,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_controllers_auth_controller",
-      "community": 2,
+      "community": 8,
       "norm_label": "auth.controller.ts"
     },
     {
@@ -430,24 +450,24 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_controllers_auth_controller_handlestravalink",
-      "community": 2,
+      "community": 8,
       "norm_label": "handlestravalink()"
     },
     {
       "label": "handleStravaCallback()",
       "file_type": "code",
       "source_file": "src/controllers/auth.controller.ts",
-      "source_location": "L65",
+      "source_location": "L107",
       "_origin": "ast",
       "id": "src_controllers_auth_controller_handlestravacallback",
-      "community": 2,
+      "community": 8,
       "norm_label": "handlestravacallback()"
     },
     {
       "label": "handleSyncAll()",
       "file_type": "code",
       "source_file": "src/controllers/auth.controller.ts",
-      "source_location": "L253",
+      "source_location": "L298",
       "_origin": "ast",
       "id": "src_controllers_auth_controller_handlesyncall",
       "community": 2,
@@ -457,10 +477,10 @@
       "label": "handleOverrideActivity()",
       "file_type": "code",
       "source_file": "src/controllers/auth.controller.ts",
-      "source_location": "L274",
+      "source_location": "L319",
       "_origin": "ast",
       "id": "src_controllers_auth_controller_handleoverrideactivity",
-      "community": 2,
+      "community": 3,
       "norm_label": "handleoverrideactivity()"
     },
     {
@@ -570,7 +590,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_export_club_api_excel",
-      "community": 6,
+      "community": 0,
       "norm_label": "export-club-api-excel.ts"
     },
     {
@@ -580,7 +600,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_export_club_api_excel_contest_start_date",
-      "community": 6,
+      "community": 0,
       "norm_label": "contest_start_date"
     },
     {
@@ -590,7 +610,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_export_club_api_excel_formatduration",
-      "community": 6,
+      "community": 0,
       "norm_label": "formatduration()"
     },
     {
@@ -600,7 +620,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_export_club_api_excel_formatpace",
-      "community": 6,
+      "community": 0,
       "norm_label": "formatpace()"
     },
     {
@@ -610,7 +630,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_export_club_api_excel_exportclubapiactivities",
-      "community": 6,
+      "community": 0,
       "norm_label": "exportclubapiactivities()"
     },
     {
@@ -640,7 +660,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_anticheat_service",
-      "community": 4,
+      "community": 2,
       "norm_label": "anticheat.service.ts"
     },
     {
@@ -650,7 +670,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_services_anticheat_service_validationresult",
-      "community": 4,
+      "community": 2,
       "norm_label": "validationresult"
     },
     {
@@ -660,7 +680,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_services_anticheat_service_contest_start",
-      "community": 4,
+      "community": 2,
       "norm_label": "contest_start"
     },
     {
@@ -670,7 +690,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_services_anticheat_service_contest_end",
-      "community": 4,
+      "community": 2,
       "norm_label": "contest_end"
     },
     {
@@ -760,7 +780,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_excel_service",
-      "community": 3,
+      "community": 2,
       "norm_label": "excel.service.ts"
     },
     {
@@ -770,7 +790,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_services_excel_service_week_ranges",
-      "community": 3,
+      "community": 2,
       "norm_label": "week_ranges"
     },
     {
@@ -780,7 +800,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_services_excel_service_excelexportresult",
-      "community": 3,
+      "community": 2,
       "norm_label": "excelexportresult"
     },
     {
@@ -910,7 +930,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_strava_service",
-      "community": 6,
+      "community": 4,
       "norm_label": "strava.service.ts"
     },
     {
@@ -920,7 +940,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_services_strava_service_sleep",
-      "community": 6,
+      "community": 4,
       "norm_label": "sleep()"
     },
     {
@@ -930,7 +950,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_services_strava_service_tokenrefreshpromises",
-      "community": 6,
+      "community": 4,
       "norm_label": "tokenrefreshpromises"
     },
     {
@@ -940,7 +960,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_services_strava_service_checkratelimitheaders",
-      "community": 6,
+      "community": 4,
       "norm_label": "checkratelimitheaders()"
     },
     {
@@ -950,7 +970,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_services_strava_service_getvalidaccesstoken",
-      "community": 6,
+      "community": 0,
       "norm_label": "getvalidaccesstoken()"
     },
     {
@@ -960,7 +980,7 @@
       "source_location": "L109",
       "_origin": "ast",
       "id": "src_services_strava_service_fetchstravaactivitydetail",
-      "community": 6,
+      "community": 4,
       "norm_label": "fetchstravaactivitydetail()"
     },
     {
@@ -970,67 +990,77 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_stravapool_service",
-      "community": 2,
+      "community": 8,
       "norm_label": "stravapool.service.ts"
     },
     {
       "label": "StravaAppCredentials",
       "file_type": "code",
       "source_file": "src/services/stravapool.service.ts",
-      "source_location": "L4",
+      "source_location": "L5",
       "_origin": "ast",
       "id": "src_services_stravapool_service_stravaappcredentials",
-      "community": 2,
+      "community": 8,
       "norm_label": "stravaappcredentials"
     },
     {
       "label": "getStravaAppPool()",
       "file_type": "code",
       "source_file": "src/services/stravapool.service.ts",
-      "source_location": "L13",
+      "source_location": "L18",
       "_origin": "ast",
       "id": "src_services_stravapool_service_getstravaapppool",
-      "community": 2,
+      "community": 8,
       "norm_label": "getstravaapppool()"
     },
     {
       "label": "getAppCredentials()",
       "file_type": "code",
       "source_file": "src/services/stravapool.service.ts",
-      "source_location": "L42",
+      "source_location": "L47",
       "_origin": "ast",
       "id": "src_services_stravapool_service_getappcredentials",
-      "community": 2,
+      "community": 8,
       "norm_label": "getappcredentials()"
     },
     {
       "label": "pendingCountMap",
       "file_type": "code",
       "source_file": "src/services/stravapool.service.ts",
-      "source_location": "L59",
+      "source_location": "L64",
       "_origin": "ast",
       "id": "src_services_stravapool_service_pendingcountmap",
-      "community": 2,
+      "community": 8,
       "norm_label": "pendingcountmap"
+    },
+    {
+      "label": "decrementPendingApp()",
+      "file_type": "code",
+      "source_file": "src/services/stravapool.service.ts",
+      "source_location": "L69",
+      "_origin": "ast",
+      "id": "src_services_stravapool_service_decrementpendingapp",
+      "community": 8,
+      "norm_label": "decrementpendingapp()"
     },
     {
       "label": "getAvailableStravaApp()",
       "file_type": "code",
       "source_file": "src/services/stravapool.service.ts",
-      "source_location": "L65",
+      "source_location": "L84",
       "_origin": "ast",
       "id": "src_services_stravapool_service_getavailablestravaapp",
-      "community": 2,
+      "community": 8,
       "norm_label": "getavailablestravaapp()"
     },
     {
       "label": "migrateLegacyUsersAppClientId()",
       "file_type": "code",
       "source_file": "src/services/stravapool.service.ts",
-      "source_location": "L139",
+      "source_location": "L162",
       "_origin": "ast",
       "id": "src_services_stravapool_service_migratelegacyusersappclientid",
-      "community": 2,
+      "community": 8,
       "norm_label": "migratelegacyusersappclientid()"
     },
     {
@@ -1040,7 +1070,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_sync_service",
-      "community": 6,
+      "community": 7,
       "norm_label": "sync.service.ts"
     },
     {
@@ -1050,7 +1080,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_services_sync_service_contest_start",
-      "community": 6,
+      "community": 7,
       "norm_label": "contest_start"
     },
     {
@@ -1060,7 +1090,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_services_sync_service_sleep",
-      "community": 6,
+      "community": 7,
       "norm_label": "sleep()"
     },
     {
@@ -1080,7 +1110,7 @@
       "source_location": "L194",
       "_origin": "ast",
       "id": "src_services_sync_service_syncalluserspastactivities",
-      "community": 2,
+      "community": 7,
       "norm_label": "syncalluserspastactivities()"
     },
     {
@@ -1250,7 +1280,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_utils_http",
-      "community": 6,
+      "community": 4,
       "norm_label": "http.ts"
     },
     {
@@ -1260,7 +1290,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_utils_http_stravahttp",
-      "community": 6,
+      "community": 4,
       "norm_label": "stravahttp"
     },
     {
@@ -1270,7 +1300,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_utils_http_telegramhttp",
-      "community": 6,
+      "community": 4,
       "norm_label": "telegramhttp"
     },
     {
@@ -1434,10 +1464,20 @@
       "norm_label": ".updatefromheaders()"
     },
     {
+      "label": ".isRateLimited()",
+      "file_type": "code",
+      "source_file": "src/utils/ratelimit.ts",
+      "source_location": "L84",
+      "_origin": "ast",
+      "id": "src_utils_ratelimit_stravaratelimiter_isratelimited",
+      "community": 6,
+      "norm_label": ".isratelimited()"
+    },
+    {
       "label": ".acquire()",
       "file_type": "code",
       "source_file": "src/utils/ratelimit.ts",
-      "source_location": "L86",
+      "source_location": "L96",
       "_origin": "ast",
       "id": "src_utils_ratelimit_stravaratelimiter_acquire",
       "community": 6,
@@ -2688,6 +2728,60 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "src/check_app_distribution.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_check_app_distribution",
+      "target": "src_check_app_distribution_checkdistribution",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/check_app_distribution.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "src_check_app_distribution",
+      "target": "src_config_db",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/check_app_distribution.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_check_app_distribution",
+      "target": "src_services_stravapool_service",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/check_app_distribution.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_check_app_distribution",
+      "target": "src_services_stravapool_service_getstravaapppool",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/check_app_distribution.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_check_app_distribution_checkdistribution",
+      "target": "src_services_stravapool_service_getstravaapppool",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "src/config/db.ts",
       "source_location": "L8",
       "weight": 1.0,
@@ -3083,7 +3177,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/controllers/auth.controller.ts",
-      "source_location": "L274",
+      "source_location": "L319",
       "weight": 1.0,
       "source": "src_controllers_auth_controller",
       "target": "src_controllers_auth_controller_handleoverrideactivity",
@@ -3093,7 +3187,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/controllers/auth.controller.ts",
-      "source_location": "L65",
+      "source_location": "L107",
       "weight": 1.0,
       "source": "src_controllers_auth_controller",
       "target": "src_controllers_auth_controller_handlestravacallback",
@@ -3113,7 +3207,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/controllers/auth.controller.ts",
-      "source_location": "L253",
+      "source_location": "L298",
       "weight": 1.0,
       "source": "src_controllers_auth_controller",
       "target": "src_controllers_auth_controller_handlesyncall",
@@ -3150,6 +3244,17 @@
       "weight": 1.0,
       "source": "src_controllers_auth_controller",
       "target": "src_services_stravapool_service",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/controllers/auth.controller.ts",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_controllers_auth_controller",
+      "target": "src_services_stravapool_service_decrementpendingapp",
       "confidence_score": 1.0
     },
     {
@@ -3235,7 +3340,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/controllers/auth.controller.ts",
-      "source_location": "L38",
+      "source_location": "L45",
+      "weight": 1.0,
+      "source": "src_controllers_auth_controller_handlestravalink",
+      "target": "src_services_stravapool_service_getappcredentials"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/controllers/auth.controller.ts",
+      "source_location": "L48",
       "weight": 1.0,
       "source": "src_controllers_auth_controller_handlestravalink",
       "target": "src_services_stravapool_service_getavailablestravaapp"
@@ -3246,7 +3362,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/controllers/auth.controller.ts",
-      "source_location": "L97",
+      "source_location": "L150",
+      "weight": 1.0,
+      "source": "src_controllers_auth_controller_handlestravacallback",
+      "target": "src_services_stravapool_service_decrementpendingapp"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/controllers/auth.controller.ts",
+      "source_location": "L139",
       "weight": 1.0,
       "source": "src_controllers_auth_controller_handlestravacallback",
       "target": "src_services_stravapool_service_getappcredentials"
@@ -3257,7 +3384,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/controllers/auth.controller.ts",
-      "source_location": "L196",
+      "source_location": "L241",
       "weight": 1.0,
       "source": "src_controllers_auth_controller_handlestravacallback",
       "target": "src_services_sync_service_syncuserpastactivities"
@@ -3268,7 +3395,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/controllers/auth.controller.ts",
-      "source_location": "L192",
+      "source_location": "L237",
       "weight": 1.0,
       "source": "src_controllers_auth_controller_handlestravacallback",
       "target": "src_services_team_service_getteamname"
@@ -3279,7 +3406,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/controllers/auth.controller.ts",
-      "source_location": "L256",
+      "source_location": "L301",
       "weight": 1.0,
       "source": "src_controllers_auth_controller_handlesyncall",
       "target": "src_services_sync_service_syncalluserspastactivities"
@@ -3290,7 +3417,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/controllers/auth.controller.ts",
-      "source_location": "L281",
+      "source_location": "L326",
       "weight": 1.0,
       "source": "src_controllers_auth_controller_handleoverrideactivity",
       "target": "src_services_override_service_overrideactivitystatus"
@@ -4373,7 +4500,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/stravapool.service.ts",
-      "source_location": "L42",
+      "source_location": "L69",
+      "weight": 1.0,
+      "source": "src_services_stravapool_service",
+      "target": "src_services_stravapool_service_decrementpendingapp",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/stravapool.service.ts",
+      "source_location": "L47",
       "weight": 1.0,
       "source": "src_services_stravapool_service",
       "target": "src_services_stravapool_service_getappcredentials",
@@ -4383,7 +4520,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/stravapool.service.ts",
-      "source_location": "L65",
+      "source_location": "L84",
       "weight": 1.0,
       "source": "src_services_stravapool_service",
       "target": "src_services_stravapool_service_getavailablestravaapp",
@@ -4393,7 +4530,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/stravapool.service.ts",
-      "source_location": "L13",
+      "source_location": "L18",
       "weight": 1.0,
       "source": "src_services_stravapool_service",
       "target": "src_services_stravapool_service_getstravaapppool",
@@ -4403,7 +4540,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/stravapool.service.ts",
-      "source_location": "L139",
+      "source_location": "L162",
       "weight": 1.0,
       "source": "src_services_stravapool_service",
       "target": "src_services_stravapool_service_migratelegacyusersappclientid",
@@ -4413,7 +4550,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/stravapool.service.ts",
-      "source_location": "L59",
+      "source_location": "L64",
       "weight": 1.0,
       "source": "src_services_stravapool_service",
       "target": "src_services_stravapool_service_pendingcountmap",
@@ -4423,10 +4560,32 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/stravapool.service.ts",
-      "source_location": "L4",
+      "source_location": "L5",
       "weight": 1.0,
       "source": "src_services_stravapool_service",
       "target": "src_services_stravapool_service_stravaappcredentials",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/stravapool.service.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_services_stravapool_service",
+      "target": "src_utils_ratelimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/stravapool.service.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_services_stravapool_service",
+      "target": "src_utils_ratelimit_stravaratelimiter",
       "confidence_score": 1.0
     },
     {
@@ -4434,7 +4593,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/services/stravapool.service.ts",
-      "source_location": "L43",
+      "source_location": "L48",
       "weight": 1.0,
       "source": "src_services_stravapool_service_getappcredentials",
       "target": "src_services_stravapool_service_getstravaapppool",
@@ -4445,7 +4604,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/services/stravapool.service.ts",
-      "source_location": "L66",
+      "source_location": "L85",
       "weight": 1.0,
       "source": "src_services_stravapool_service_getavailablestravaapp",
       "target": "src_services_stravapool_service_getstravaapppool",
@@ -4456,7 +4615,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/services/stravapool.service.ts",
-      "source_location": "L144",
+      "source_location": "L167",
       "weight": 1.0,
       "source": "src_services_stravapool_service_migratelegacyusersappclientid",
       "target": "src_services_stravapool_service_getstravaapppool",
@@ -4467,11 +4626,33 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/services/stravapool.service.ts",
-      "source_location": "L69",
+      "source_location": "L88",
       "weight": 1.0,
       "source": "src_services_stravapool_service_getavailablestravaapp",
       "target": "src_services_stravapool_service_getappcredentials",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/stravapool.service.ts",
+      "source_location": "L146",
+      "weight": 1.0,
+      "source": "src_services_stravapool_service_getavailablestravaapp",
+      "target": "src_services_stravapool_service_decrementpendingapp",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "indirect_call",
+      "context": "collection",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/services/stravapool.service.ts",
+      "source_location": "L112",
+      "weight": 1.0,
+      "source": "src_services_stravapool_service_getavailablestravaapp",
+      "target": "src_utils_ratelimit_stravaratelimiter_isratelimited"
     },
     {
       "relation": "contains",
@@ -5130,7 +5311,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/utils/ratelimit.ts",
-      "source_location": "L123",
+      "source_location": "L133",
       "weight": 1.0,
       "source": "src_utils_ratelimit",
       "target": "src_utils_ratelimit_stravaratelimiter",
@@ -5150,7 +5331,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/utils/ratelimit.ts",
-      "source_location": "L86",
+      "source_location": "L96",
       "weight": 1.0,
       "source": "src_utils_ratelimit_stravaratelimiter",
       "target": "src_utils_ratelimit_stravaratelimiter_acquire",
@@ -5170,6 +5351,16 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/utils/ratelimit.ts",
+      "source_location": "L84",
+      "weight": 1.0,
+      "source": "src_utils_ratelimit_stravaratelimiter",
+      "target": "src_utils_ratelimit_stravaratelimiter_isratelimited",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/ratelimit.ts",
       "source_location": "L64",
       "weight": 1.0,
       "source": "src_utils_ratelimit_stravaratelimiter",
@@ -5181,9 +5372,20 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/utils/ratelimit.ts",
-      "source_location": "L87",
+      "source_location": "L97",
       "weight": 1.0,
       "source": "src_utils_ratelimit_stravaratelimiter_acquire",
+      "target": "src_utils_ratelimit_stravaratelimiter_getbucket",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/ratelimit.ts",
+      "source_location": "L85",
+      "weight": 1.0,
+      "source": "src_utils_ratelimit_stravaratelimiter_isratelimited",
       "target": "src_utils_ratelimit_stravaratelimiter_getbucket",
       "confidence_score": 1.0
     },
@@ -5330,5 +5532,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "0af8fac6898b239ad297953d69ba2e8ff19dd07c"
+  "built_at_commit": "3d5643d44a2dfe9bdc39457aea995d2d06aa3266"
 }

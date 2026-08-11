@@ -1,9 +1,11 @@
 {
+  "0": "dependencies",
   "1": "devDependencies",
   "2": "app.ts",
   "3": "index.ts",
   "4": "telegram.service.ts",
   "5": "compilerOptions",
   "6": "db.ts",
-  "7": "sync.service.ts"
+  "7": "sync.service.ts",
+  "8": "auth.controller.ts"
 }
