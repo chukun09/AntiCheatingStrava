@@ -1,16 +1,16 @@
 # Graph Report - Anti Cheating Strava  (2026-08-11)
 
 ## Corpus Check
-- 29 files · ~19,045 words
+- 29 files · ~19,939 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 162 nodes · 367 edges · 9 communities
+- 165 nodes · 375 edges · 9 communities (8 shown, 1 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 2 edges (avg confidence: 0.65)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `3d5643d4`
+- Built from commit: `23ad4f62`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -26,7 +26,7 @@
 - [[_COMMUNITY_auth.controller.ts|auth.controller.ts]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `initTelegramBot()` - 19 edges
+1. `initTelegramBot()` - 20 edges
 2. `env` - 14 edges
 3. `processActivityQueueItem()` - 12 edges
 4. `sendTelegramMessage()` - 12 edges
@@ -52,62 +52,59 @@
 ## Import Cycles
 - None detected.
 
-## Communities (9 total, 0 thin omitted)
+## Communities (9 total, 1 thin omitted)
 
 ### Community 0 - "dependencies"
 Cohesion: 0.15
-Nodes (15): dependencies, axios, cors, dotenv, express, node-cron, p-queue, @prisma/client (+7 more)
+Nodes (14): dependencies, axios, cors, dotenv, express, node-cron, p-queue, @prisma/client (+6 more)
 
 ### Community 1 - "devDependencies"
 Cohesion: 0.11
 Nodes (18): description, devDependencies, prisma, ts-node-dev, @types/cors, @types/express, @types/node, @types/node-cron (+10 more)
 
 ### Community 2 - "app.ts"
-Cohesion: 0.12
-Nodes (16): app, server, env, handleSyncAll(), verifyWebhook(), initKeepAliveCronJob(), initReconcileCronJob(), initWeeklyCronJob() (+8 more)
+Cohesion: 0.15
+Nodes (12): app, server, env, verifyWebhook(), initKeepAliveCronJob(), initReconcileCronJob(), CONTEST_END, CONTEST_START (+4 more)
 
 ### Community 3 - "index.ts"
-Cohesion: 0.18
-Nodes (19): escapeHtml(), initTelegramBot(), handleOverrideActivity(), getWeek1TeamAward(), getWeek2TeamAward(), getWeek3IndividualAward(), getWeek3TeamAward(), getWeek4TeamAward() (+11 more)
+Cohesion: 0.14
+Nodes (25): escapeHtml(), initTelegramBot(), globalForPrisma, handleOverrideActivity(), getWeek1TeamAward(), getWeek2TeamAward(), getWeek3IndividualAward(), getWeek3TeamAward() (+17 more)
 
 ### Community 4 - "telegram.service.ts"
-Cohesion: 0.21
-Nodes (17): processActivityQueueItem(), validateActivity(), checkRateLimitHeaders(), fetchStravaActivityDetail(), sleep(), tokenRefreshPromises, formatVietnamDateTime(), notifyActivityDeleted() (+9 more)
+Cohesion: 0.15
+Nodes (22): initWeeklyCronJob(), processActivityQueueItem(), validateActivity(), checkRateLimitHeaders(), fetchStravaActivityDetail(), getValidAccessToken(), sleep(), tokenRefreshPromises (+14 more)
 
 ### Community 5 - "compilerOptions"
 Cohesion: 0.14
 Nodes (13): compilerOptions, esModuleInterop, forceConsistentCasingInFileNames, lib, module, moduleResolution, outDir, resolveJsonModule (+5 more)
 
-### Community 6 - "db.ts"
-Cohesion: 0.31
-Nodes (3): ClientBucket, StravaDailyQuotaError, StravaRateLimiter
-
 ### Community 7 - "sync.service.ts"
-Cohesion: 0.24
-Nodes (14): enqueueActivityTask(), handleWebhookEvent(), CONTEST_START, sleep(), syncAllUsersPastActivities(), syncUserPastActivities(), activityQueue, AspectType (+6 more)
+Cohesion: 0.29
+Nodes (11): enqueueActivityTask(), handleWebhookEvent(), syncUserPastActivities(), activityQueue, AspectType, getAspectPriority(), isActivityQueued(), markActivityQueued() (+3 more)
 
 ### Community 8 - "auth.controller.ts"
-Cohesion: 0.29
-Nodes (11): checkDistribution(), globalForPrisma, handleStravaCallback(), handleStravaLink(), decrementPendingApp(), getAppCredentials(), getAvailableStravaApp(), getStravaAppPool() (+3 more)
+Cohesion: 0.25
+Nodes (13): checkDistribution(), handleStravaCallback(), handleStravaLink(), handleSyncAll(), decrementPendingApp(), getAppCredentials(), getAvailableStravaApp(), getStravaAppPool() (+5 more)
 
 ## Knowledge Gaps
-- **59 isolated node(s):** `name`, `version`, `description`, `main`, `build` (+54 more)
+- **60 isolated node(s):** `name`, `version`, `description`, `main`, `build` (+55 more)
   These have ≤1 connection - possible missing edges or undocumented components.
+- **1 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `dependencies` connect `dependencies` to `devDependencies`?**
-  _High betweenness centrality (0.266) - this node is a cross-community bridge._
+  _High betweenness centrality (0.262) - this node is a cross-community bridge._
 - **Why does `xlsx` connect `dependencies` to `index.ts`?**
-  _High betweenness centrality (0.260) - this node is a cross-community bridge._
-- **Why does `exportViolationsToExcelBuffer()` connect `index.ts` to `dependencies`, `app.ts`?**
+  _High betweenness centrality (0.257) - this node is a cross-community bridge._
+- **Why does `exportViolationsToExcelBuffer()` connect `index.ts` to `dependencies`?**
   _High betweenness centrality (0.180) - this node is a cross-community bridge._
 - **What connects `name`, `version`, `description` to the rest of the system?**
-  _59 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _60 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `devDependencies` be split into smaller, more focused modules?**
   _Cohesion score 0.10526315789473684 - nodes in this community are weakly interconnected._
-- **Should `app.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.12 - nodes in this community are weakly interconnected._
+- **Should `index.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.13911290322580644 - nodes in this community are weakly interconnected._
 - **Should `compilerOptions` be split into smaller, more focused modules?**
   _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._

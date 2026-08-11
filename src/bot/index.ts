@@ -167,45 +167,50 @@ Danh sách lệnh hỗ trợ:
       }
     });
 
-    // Command /bxh_doi [1-8] or /doi [1-8] - Team Leaderboard & Detailed Members per Team
+    // Command /bxh_doi [1-8] [tuần] or /doi [1-8] [tuần] - Team Leaderboards & Detailed Weekly Breakdown
     bot.command(['bxh_doi', 'doi'], async (ctx) => {
       try {
-        const parts = ctx.message.text.trim().split(/\s+/);
-        const teamParam = parts.length > 1 ? parseInt(parts[1], 10) : null;
+        const text = (ctx.message?.text || '').trim();
+        const parts = text.split(/\s+/);
 
-        if (teamParam && teamParam >= 1 && teamParam <= 8) {
-          // View detailed members for a specific Team ID (1 -> 8)
-          const teamInfo = TEAMS.find(t => t.id === teamParam);
-          const teamName = teamInfo ? teamInfo.name : `Đội ${teamParam}`;
+        if (parts.length > 1) {
+          const teamIdArg = parseInt(parts[1], 10);
+          if (!isNaN(teamIdArg) && teamIdArg >= 1 && teamIdArg <= 8) {
+            let weekNumArg: number | null = null;
+            if (parts.length >= 3) {
+              const rawWeek = parts.slice(2).join(' ').toLowerCase();
+              const match = rawWeek.match(/\d+/);
+              if (match) {
+                const parsedWeek = parseInt(match[0], 10);
+                if (parsedWeek >= 1 && parsedWeek <= 4) {
+                  weekNumArg = parsedWeek;
+                }
+              }
+            }
 
-          const usersInTeam = await db.user.findMany({
-            where: { teamId: teamParam },
-            orderBy: { totalDistance: 'desc' }
-          });
+            const detail = await getTeamWeekDetail(teamIdArg, weekNumArg);
+            if (!detail) {
+              return ctx.replyWithHTML(`❌ Không tìm thấy dữ liệu cho Đội ${teamIdArg}.`);
+            }
 
-          const totalMeters = usersInTeam.reduce((sum, u) => sum + u.totalDistance, 0);
-          const avgKm = usersInTeam.length > 0 ? (totalMeters / 1000) / usersInTeam.length : 0;
+            const headerWeekStr = detail.weekNumber ? `(TUẦN ${detail.weekNumber})` : `(TÍCH LŨY TOÀN GIẢI)`;
+            let message = `🛡️ <b>CHI TIẾT THÀNH TÍCH ${detail.teamName.toUpperCase()} ${headerWeekStr}</b> 🛡️\n`;
+            message += `📌 <b>Khung thời gian:</b> ${detail.weekName}\n`;
+            message += `📊 <b>VĐV Đạt chỉ tiêu:</b> <code>${detail.qualifiedMembers}/${detail.totalMembers} VĐV</code> (${((detail.qualifiedMembers / detail.totalMembers) * 100).toFixed(1)}%)\n`;
+            message += `🏃 <b>Tổng quãng đường Đội:</b> <code>${detail.totalTeamDistanceKm.toFixed(1)} km</code>\n\n`;
 
-          let message = `🛡️ <b>CHI TIẾT THÀNH TÍCH ${teamName.toUpperCase()}</b> 🛡️\n\n`;
-          message += `📊 <b>Chỉ số trung bình:</b> <code>${avgKm.toFixed(2)} km/người</code>\n`;
-          message += `🏃 <b>Tổng quãng đường cả đội:</b> <code>${(totalMeters / 1000).toFixed(1)} km</code> (${usersInTeam.length} VĐV)\n\n`;
-          message += `👥 <b>DANH SÁCH CHI TIẾT TỪNG THÀNH VIÊN TRONG ĐỘI:</b>\n`;
+            detail.members.forEach((m, idx) => {
+              const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `<b>${idx + 1}.</b>`;
+              const statusIcon = m.isQualified ? '✅' : '❌';
+              const paceStr = m.runCount > 0 ? formatPace(m.avgPaceSecPerKm) : '--:--';
+              const genderIcon = m.gender === 'FEMALE' ? '👩' : '👨';
 
-          if (usersInTeam.length === 0) {
-            message += `<i>Chưa có VĐV nào trong đội này.</i>`;
-          } else {
-            usersInTeam.forEach((user, index) => {
-              const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>${index + 1}.</b>`;
-              const distKm = (user.totalDistance / 1000).toFixed(2);
-              const genderIcon = user.gender === 'FEMALE' ? '👩' : '👨';
-              const targetMeters = user.gender === 'FEMALE' ? 15000 : 30000;
-              const doneTag = user.totalDistance >= targetMeters ? ' ⚡ (Đã đạt)' : '';
-
-              message += `${medal} ${genderIcon} <b>${escapeHtml(user.nickName)}</b> (${escapeHtml(user.department || 'N/A')}): <code>${distKm} km</code>${doneTag}\n`;
+              message += `${medal} ${statusIcon} <b>${escapeHtml(m.nickName)}</b> ${genderIcon}\n`;
+              message += `   └─ <code>${m.totalDistanceKm.toFixed(2)} km</code> | ${m.runCount} bài | Pace: <code>${paceStr}</code>\n`;
             });
-          }
 
-          return ctx.replyWithHTML(message);
+            return ctx.replyWithHTML(message);
+          }
         }
 
         // View summary leaderboard of all 8 teams
@@ -243,7 +248,7 @@ Danh sách lệnh hỗ trợ:
           message += `   📊 Trung bình: <code>${team.avgKm.toFixed(2)} km/người</code> (Tổng: ${team.totalKm.toFixed(1)}km - ${team.memberCount} thành viên)\n`;
         });
 
-        message += `\n💡 <i>Mẹo: Gõ <code>/bxh_doi 1</code> đến <code>/bxh_doi 8</code> để xem chi tiết danh sách VĐV từng Đội!</i>`;
+        message += `\n💡 <i>Mẹo: Gõ <code>/doi 2 tuan 1</code> hoặc <code>/doi 2</code> để xem chi tiết danh sách VĐV từng Đội!</i>`;
         return ctx.replyWithHTML(message);
       } catch (error) {
         console.error('[Bot /bxh_doi] Error:', error);
@@ -574,76 +579,6 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
       } catch (error) {
         console.error('[Bot /giai_tuan4] Error:', error);
         return ctx.reply('Lỗi khi tải dữ liệu Giải Tuần 4.');
-      }
-    });
-
-    // Command /doi [số_đội] [tuần] - Detailed breakdown for a team in a specific week
-    bot.command('doi', async (ctx) => {
-      try {
-        const text = (ctx.message?.text || '').trim();
-        const parts = text.split(/\s+/).slice(1);
-
-        if (parts.length === 0) {
-          let usageMsg = `📌 <b>HƯỚNG DẪN CÂU LỆNH TRA CỨU CHI TIẾT ĐỘI THI ĐẤU:</b>\n\n`;
-          usageMsg += `Cú pháp: <code>/doi [số_đội] [tuần]</code>\n\n`;
-          usageMsg += `<b>Ví dụ:</b>\n`;
-          usageMsg += `• <code>/doi 2 tuan 1</code> (hoặc <code>/doi 2 1</code>): Xem chi tiết từng VĐV của Đội 2 trong Tuần 1\n`;
-          usageMsg += `• <code>/doi 2</code>: Xem chi tiết từng VĐV của Đội 2 tích lũy từ đầu giải đến nay\n\n`;
-          usageMsg += `<b>Danh sách 8 Đội thi đấu:</b>\n`;
-          usageMsg += `1. Đội 1: Kỹ thuật vận hành\n`;
-          usageMsg += `2. Đội 2: Phát triển phần mềm\n`;
-          usageMsg += `3. Đội 3: Chăm sóc khách hàng\n`;
-          usageMsg += `4. Đội 4: Kinh doanh\n`;
-          usageMsg += `5. Đội 5: Kế toán + Sản phẩm\n`;
-          usageMsg += `6. Đội 6: HCNS + Đối soát + Lái xe\n`;
-          usageMsg += `7. Đội 7: VP HCM + Phát triển kd\n`;
-          usageMsg += `8. Đội 8: HĐQT + BGĐ + Trợ lý\n`;
-          return ctx.replyWithHTML(usageMsg);
-        }
-
-        const teamIdArg = parseInt(parts[0], 10);
-        if (isNaN(teamIdArg) || teamIdArg < 1 || teamIdArg > 8) {
-          return ctx.replyWithHTML('❌ Số Đội không hợp lệ! Vui lòng nhập số Đội từ 1 đến 8. Ví dụ: <code>/doi 2 tuan 1</code>');
-        }
-
-        let weekNumArg: number | null = null;
-        if (parts.length >= 2) {
-          const rawWeek = parts.slice(1).join(' ').toLowerCase();
-          const match = rawWeek.match(/\d+/);
-          if (match) {
-            const parsedWeek = parseInt(match[0], 10);
-            if (parsedWeek >= 1 && parsedWeek <= 4) {
-              weekNumArg = parsedWeek;
-            }
-          }
-        }
-
-        const detail = await getTeamWeekDetail(teamIdArg, weekNumArg);
-
-        if (!detail) {
-          return ctx.replyWithHTML(`❌ Không tìm thấy dữ liệu cho Đội ${teamIdArg}.`);
-        }
-
-        const headerWeekStr = detail.weekNumber ? `(TUẦN ${detail.weekNumber})` : `(TÍCH LŨY TOÀN GIẢI)`;
-        let message = `🛡️ <b>CHI TIẾT THÀNH TÍCH ${detail.teamName.toUpperCase()} ${headerWeekStr}</b> 🛡️\n`;
-        message += `📌 <b>Khung thời gian:</b> ${detail.weekName}\n`;
-        message += `📊 <b>VĐV Đạt chỉ tiêu:</b> <code>${detail.qualifiedMembers}/${detail.totalMembers} VĐV</code> (${((detail.qualifiedMembers / detail.totalMembers) * 100).toFixed(1)}%)\n`;
-        message += `🏃 <b>Tổng quãng đường Đội:</b> <code>${detail.totalTeamDistanceKm.toFixed(1)} km</code>\n\n`;
-
-        detail.members.forEach((m, idx) => {
-          const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `<b>${idx + 1}.</b>`;
-          const statusIcon = m.isQualified ? '✅' : '❌';
-          const paceStr = m.runCount > 0 ? formatPace(m.avgPaceSecPerKm) : '--:--';
-          const genderIcon = m.gender === 'FEMALE' ? '👩' : '👨';
-
-          message += `${medal} ${statusIcon} <b>${escapeHtml(m.nickName)}</b> ${genderIcon}\n`;
-          message += `   └─ <code>${m.totalDistanceKm.toFixed(2)} km</code> | ${m.runCount} bài | Pace: <code>${paceStr}</code>\n`;
-        });
-
-        return ctx.replyWithHTML(message);
-      } catch (error) {
-        console.error('[Bot /doi] Error:', error);
-        return ctx.reply('Lỗi khi tải thông tin chi tiết Đội.');
       }
     });
 
