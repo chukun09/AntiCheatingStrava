@@ -4074,7 +4074,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/activity.service.ts",
-      "source_location": "L244",
+      "source_location": "L252",
       "weight": 1.0,
       "source": "src_services_activity_service_processactivityqueueitem",
       "target": "src_services_telegram_service_notifyactivityupdated"
@@ -4085,7 +4085,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/activity.service.ts",
-      "source_location": "L267",
+      "source_location": "L275",
       "weight": 1.0,
       "source": "src_services_activity_service_processactivityqueueitem",
       "target": "src_services_telegram_service_notifycheatingalert"
@@ -4096,7 +4096,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/activity.service.ts",
-      "source_location": "L258",
+      "source_location": "L266",
       "weight": 1.0,
       "source": "src_services_activity_service_processactivityqueueitem",
       "target": "src_services_telegram_service_notifyreachedmilestone"
@@ -5647,5 +5647,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "44a4586c507e24c0b2188bfb1215eaa897339a8f"
+  "built_at_commit": "a7c994f667b68df5ff579ffcec2c18f3bf15d890"
 }

@@ -132,6 +132,8 @@ export async function processActivityQueueItem(
   let isExisting = false;
   let oldDistanceKm = 0;
 
+  let isCreateSkipped = false;
+
   // Atomic DB Transaction
   await db.$transaction(async (tx) => {
     const existingActivity = await tx.activity.findUnique({
@@ -145,6 +147,7 @@ export async function processActivityQueueItem(
 
     if (aspectType === 'create' && existingActivity) {
       console.log(`[Queue Worker] Activity ${activityId} already exists in DB for 'create'. Skipping.`);
+      isCreateSkipped = true;
       return;
     }
 
@@ -238,6 +241,11 @@ export async function processActivityQueueItem(
     }
   });
 
+  // Early return if creation was skipped because activity already exists in DB
+  if (isCreateSkipped) {
+    return;
+  }
+
   // Telegram Notifications
   if (aspectType === 'update' && isExisting) {
     const updatedUser = await db.user.findUnique({ where: { id: user.id } });
@@ -263,7 +271,7 @@ export async function processActivityQueueItem(
         reachedAt: reachedAtDate
       });
     }
-  } else if (aspectType === 'create') {
+  } else if (aspectType === 'create' && !isExisting) {
     await notifyCheatingAlert({
       nickName: user.nickName,
       fullName: user.fullName,
