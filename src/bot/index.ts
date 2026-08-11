@@ -17,6 +17,15 @@ import { exportViolationsToExcelBuffer } from '../services/excel.service';
 
 let bot: Telegraf | null = null;
 
+function escapeHtml(text?: string | null): string {
+  if (!text) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 export function initTelegramBot(): Telegraf | null {
   if (!env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_BOT_TOKEN === '123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ') {
     console.warn('[Telegram Bot] Token is default or missing. Bot commands will be disabled.');
@@ -38,7 +47,8 @@ export function initTelegramBot(): Telegraf | null {
           const validCommands = [
             'start', 'help', 'bxh_canhan', 'bxh_doi', 'doi', 'bxh_phong', 'bxh_phongban', 'phong',
             'lichsu', 'chitiet', 'speed_tuan1', 'giai_tuan1', 'giai_tuan2', 
-            'giai_tuan3', 'giai_tuan4', 'phat', 'sync', 'duyet', 'huy'
+            'giai_tuan3', 'giai_tuan4', 'phat', 'sync', 'excel_vipham', 'vipham_excel',
+            'duyet', 'huy', 'duyet_tatca', 'huy_tatca'
           ];
           if (validCommands.includes(cmdName)) {
             // Normalize command prefix while keeping trailing args
@@ -191,7 +201,7 @@ Danh sách lệnh hỗ trợ:
               const targetMeters = user.gender === 'FEMALE' ? 15000 : 30000;
               const doneTag = user.totalDistance >= targetMeters ? ' ⚡ (Đã đạt)' : '';
 
-              message += `${medal} ${genderIcon} <b>${user.nickName}</b> (${user.department || 'N/A'}): <code>${distKm} km</code>${doneTag}\n`;
+              message += `${medal} ${genderIcon} <b>${escapeHtml(user.nickName)}</b> (${escapeHtml(user.department || 'N/A')}): <code>${distKm} km</code>${doneTag}\n`;
             });
           }
 
@@ -429,18 +439,18 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
         const maleUsers = await db.user.findMany({
           where: { gender: 'MALE' },
           orderBy: { totalDistance: 'desc' },
-          take: 5
+          take: 10
         });
 
         const femaleUsers = await db.user.findMany({
           where: { gender: 'FEMALE' },
           orderBy: { totalDistance: 'desc' },
-          take: 5
+          take: 10
         });
 
         let message = `🏆 <b>BẢNG XẾP HẠNG CÁ NHÂN - HÀNH TRÌNH IRIS</b> 🏆\n\n`;
 
-        message += `👨 <b>BẢNG NAM (Chỉ tiêu 30km):</b>\n`;
+        message += `👨 <b>TOP 10 NAM (Chỉ tiêu 30km):</b>\n`;
         if (maleUsers.length === 0) {
           message += `<i>Chưa có dữ liệu.</i>\n`;
         } else {
@@ -448,11 +458,11 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
             const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>${index + 1}.</b>`;
             const distKm = (user.totalDistance / 1000).toFixed(2);
             const doneTag = user.totalDistance >= 30000 ? ' ⚡ (Đã đạt 30km)' : '';
-            message += `${medal} <b>${user.nickName}</b> (${getTeamName(user.teamId)}): <code>${distKm} km</code>${doneTag}\n`;
+            message += `${medal} <b>${escapeHtml(user.nickName)}</b> (${getTeamName(user.teamId)}): <code>${distKm} km</code>${doneTag}\n`;
           });
         }
 
-        message += `\n👩 <b>BẢNG NỮ (Chỉ tiêu 15km):</b>\n`;
+        message += `\n👩 <b>TOP 10 NỮ (Chỉ tiêu 15km):</b>\n`;
         if (femaleUsers.length === 0) {
           message += `<i>Chưa có dữ liệu.</i>\n`;
         } else {
@@ -460,7 +470,7 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
             const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>${index + 1}.</b>`;
             const distKm = (user.totalDistance / 1000).toFixed(2);
             const doneTag = user.totalDistance >= 15000 ? ' ⚡ (Đã đạt 15km)' : '';
-            message += `${medal} <b>${user.nickName}</b> (${getTeamName(user.teamId)}): <code>${distKm} km</code>${doneTag}\n`;
+            message += `${medal} <b>${escapeHtml(user.nickName)}</b> (${getTeamName(user.teamId)}): <code>${distKm} km</code>${doneTag}\n`;
           });
         }
 
