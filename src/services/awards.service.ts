@@ -6,10 +6,10 @@ import { env } from '../config/env';
 const week1StartDate = env.ALLOW_TEST_DATE ? new Date('2026-07-01T00:00:00+07:00') : new Date('2026-08-03T00:00:00+07:00');
 
 export const WEEKS = [
-  { week: 1, name: 'Tuần 1: Khởi động', start: week1StartDate, end: new Date('2026-08-09T23:59:59+07:00') },
-  { week: 2, name: 'Tuần 2: Vượt chướng ngại vật', start: new Date('2026-08-10T00:00:00+07:00'), end: new Date('2026-08-16T23:59:59+07:00') },
-  { week: 3, name: 'Tuần 3: Tăng tốc & Bứt phá', start: new Date('2026-08-17T00:00:00+07:00'), end: new Date('2026-08-23T23:59:59+07:00') },
-  { week: 4, name: 'Tuần 4: Về đích', start: new Date('2026-08-24T00:00:00+07:00'), end: new Date('2026-08-30T23:59:59+07:00') }
+  { week: 1, name: 'Tuần 1: Khởi động', start: week1StartDate, end: new Date('2026-08-10T00:00:00+07:00') },
+  { week: 2, name: 'Tuần 2: Vượt chướng ngại vật', start: new Date('2026-08-10T00:00:00+07:00'), end: new Date('2026-08-17T00:00:00+07:00') },
+  { week: 3, name: 'Tuần 3: Tăng tốc & Bứt phá', start: new Date('2026-08-17T00:00:00+07:00'), end: new Date('2026-08-24T00:00:00+07:00') },
+  { week: 4, name: 'Tuần 4: Về đích', start: new Date('2026-08-24T00:00:00+07:00'), end: new Date('2026-08-31T00:00:00+07:00') }
 ];
 
 /**
@@ -24,7 +24,7 @@ export async function getWeek1TeamAward() {
     by: ['userId'],
     where: {
       isLegit: true,
-      startDate: { gte: week1.start, lte: week1.end }
+      startDate: { gte: week1.start, lt: week1.end }
     },
     _sum: { distance: true }
   });
@@ -88,23 +88,34 @@ export async function getWeek2TeamAward() {
   const activities = await db.activity.findMany({
     where: {
       isLegit: true,
-      startDate: { gte: week2.start, lte: week2.end }
+      startDate: { gte: week2.start, lt: week2.end }
     },
     include: { user: true }
+  });
+
+  // Group activities by teamId once
+  const teamActivitiesMap = new Map<number, typeof activities>();
+  activities.forEach(a => {
+    const teamId = a.user.teamId;
+    if (!teamActivitiesMap.has(teamId)) {
+      teamActivitiesMap.set(teamId, []);
+    }
+    teamActivitiesMap.get(teamId)!.push(a);
   });
 
   return TEAMS.map(team => {
     const teamMembers = users.filter(u => u.teamId === team.id);
     const totalMembers = teamMembers.length;
 
-    const participantSet = new Set(activities.filter(a => a.user.teamId === team.id).map(a => a.userId));
+    const teamActs = teamActivitiesMap.get(team.id) || [];
+    const participantSet = new Set(teamActs.map(a => a.userId));
     const participantCount = participantSet.size;
     const is100PercentParticipated = totalMembers > 0 && participantCount >= totalMembers;
 
     let totalAdjustedSec = 0;
     let totalDistanceKm = 0;
 
-    activities.filter(a => a.user.teamId === team.id).forEach(a => {
+    teamActs.forEach(a => {
       const distKm = a.distance / 1000;
       let movingSec = a.movingTime;
 
@@ -117,7 +128,7 @@ export async function getWeek2TeamAward() {
       totalDistanceKm += distKm;
     });
 
-    const averagePaceSecPerKm = totalDistanceKm > 0 ? totalAdjustedSec / totalDistanceKm : 0;
+    const averagePaceSecPerKm = totalDistanceKm > 0 ? totalAdjustedSec / totalDistanceKm : Number.POSITIVE_INFINITY;
 
     return {
       teamId: team.id,
@@ -146,7 +157,7 @@ export async function getWeek3IndividualAward() {
     by: ['userId'],
     where: {
       isLegit: true,
-      startDate: { gte: week3.start, lte: week3.end },
+      startDate: { gte: week3.start, lt: week3.end },
       user: { gender: 'MALE' }
     },
     _sum: { distance: true },
@@ -158,7 +169,7 @@ export async function getWeek3IndividualAward() {
     by: ['userId'],
     where: {
       isLegit: true,
-      startDate: { gte: week3.start, lte: week3.end },
+      startDate: { gte: week3.start, lt: week3.end },
       user: { gender: 'FEMALE' }
     },
     _sum: { distance: true },
@@ -174,11 +185,11 @@ export async function getWeek3IndividualAward() {
     males: maleStats.map(s => ({
       user: userMap.get(s.userId),
       totalKm: ((s._sum.distance || 0) / 1000)
-    })),
+    })).filter(m => m.user !== undefined),
     females: femaleStats.map(s => ({
       user: userMap.get(s.userId),
       totalKm: ((s._sum.distance || 0) / 1000)
-    }))
+    })).filter(f => f.user !== undefined)
   };
 }
 
@@ -193,7 +204,7 @@ export async function getWeek3TeamAward() {
     by: ['userId'],
     where: {
       isLegit: true,
-      startDate: { gte: week3.start, lte: week3.end }
+      startDate: { gte: week3.start, lt: week3.end }
     },
     _sum: { distance: true }
   });
@@ -225,7 +236,21 @@ export async function getWeek3TeamAward() {
  * Tuần 4: Giải Tập Thể Về Đích - Avg Km / người cao nhất của CẢ GIẢI
  */
 export async function getWeek4TeamAward() {
+  const contestStart = week1StartDate;
+  const contestEnd = WEEKS[3].end;
+
   const users = await db.user.findMany();
+
+  const userDistances = await db.activity.groupBy({
+    by: ['userId'],
+    where: {
+      isLegit: true,
+      startDate: { gte: contestStart, lt: contestEnd }
+    },
+    _sum: { distance: true }
+  });
+
+  const distanceMap = new Map(userDistances.map(d => [d.userId, (d._sum.distance || 0) / 1000]));
 
   return TEAMS.map(team => {
     const teamMembers = users.filter(u => u.teamId === team.id);
@@ -233,7 +258,7 @@ export async function getWeek4TeamAward() {
     let totalKmWholeContest = 0;
 
     teamMembers.forEach(u => {
-      totalKmWholeContest += u.totalDistance / 1000;
+      totalKmWholeContest += distanceMap.get(u.id) ?? 0;
     });
 
     const avgKmPerMember = totalMembers > 0 ? totalKmWholeContest / totalMembers : 0;

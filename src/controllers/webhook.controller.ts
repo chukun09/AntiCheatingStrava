@@ -29,6 +29,29 @@ export async function verifyWebhook(req: Request, res: Response) {
 }
 
 /**
+ * Helper function to enqueue activity task into P-Queue with pending aspect coalescing
+ */
+function enqueueActivityTask(activityId: string, athleteId: string | bigint | number, aspectType: 'create' | 'update' | 'delete') {
+  markActivityQueued(activityId, aspectType);
+  
+  activityQueue.add(async () => {
+    try {
+      await processActivityQueueItem(activityId, String(athleteId), aspectType);
+    } finally {
+      // Check if another event for the same activity arrived while running
+      const pendingAspect = unmarkActivityQueued(activityId);
+      if (pendingAspect) {
+        console.log(`[Queue Worker] Executing coalesced pending aspect for activity ${activityId}: ${pendingAspect}`);
+        enqueueActivityTask(activityId, athleteId, pendingAspect);
+      }
+    }
+  }).catch((err) => {
+    console.error(`[Queue Error] Error executing activity task ${activityId} (${aspectType}):`, err);
+    unmarkActivityQueued(activityId);
+  });
+}
+
+/**
  * POST /webhook
  * Strava Event Listener: Accepts webhook event and dispatches task to P-Queue
  */
@@ -44,23 +67,16 @@ export async function handleWebhookEvent(req: Request, res: Response) {
       const aspectType = event.aspect_type as 'create' | 'update' | 'delete';
 
       if (activityId && athleteId) {
-        if (isActivityQueued(activityId, aspectType)) {
-          console.log(`[Webhook Event] Activity ${activityId} (${aspectType}) is already in processing queue. Skipping duplicate.`);
-        } else {
-          markActivityQueued(activityId, aspectType);
-          
-          // Push task into P-Queue asynchronously
-          activityQueue.add(async () => {
-            try {
-              await processActivityQueueItem(activityId, athleteId, aspectType);
-            } finally {
-              unmarkActivityQueued(activityId, aspectType);
-            }
-          }).catch((err) => {
-            console.error(`[Queue Error] Error executing activity task ${activityId} (${aspectType}):`, err);
-            unmarkActivityQueued(activityId, aspectType);
-          });
+        // Queue length cap guard (max 500 items) to prevent OOM on 512MB RAM
+        if (activityQueue.size > 500) {
+          console.warn(`[Webhook Event] Activity queue size limit reached (${activityQueue.size} items). Dropping non-critical webhook event for activity ${activityId}.`);
+          return res.status(200).json({ status: 'queue_full_dropped' });
+        }
 
+        if (isActivityQueued(activityId, aspectType)) {
+          console.log(`[Webhook Event] Activity ${activityId} (${aspectType}) is already in processing queue. Coalesced into pending tasks.`);
+        } else {
+          enqueueActivityTask(activityId, athleteId, aspectType);
           console.log(`[Webhook Event] Activity ${activityId} queued successfully (aspect_type=${aspectType}). Current queue length: ${activityQueue.size}`);
         }
       }

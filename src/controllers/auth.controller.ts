@@ -252,11 +252,14 @@ export async function handleStravaCallback(req: Request, res: Response) {
  */
 export async function handleSyncAll(req: Request, res: Response) {
   try {
-    const result = await syncAllUsersPastActivities();
-    return res.status(200).json({
-      status: 'success',
-      message: `Đã hoàn thành đồng bộ dữ liệu quá khứ cho ${result.totalUsers} vận động viên.`,
-      result
+    // Trigger background sync task
+    syncAllUsersPastActivities().catch(err => {
+      console.error('[Auth Controller] Background sync error:', err);
+    });
+
+    return res.status(202).json({
+      status: 'accepted',
+      message: 'Đã nhận yêu cầu. Tiến trình đồng bộ dữ liệu toàn bộ VĐV đang được thực thi trong nền (background).'
     });
   } catch (error: any) {
     console.error('[Auth Controller] Error in handleSyncAll:', error);

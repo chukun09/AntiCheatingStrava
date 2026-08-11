@@ -47,7 +47,7 @@ export function initWeeklyCronJob() {
       });
 
       if (weeklyStats.length === 0) {
-        console.log('[CronJob IRIS] No activities recorded this week.');
+        console.log('[CronJob IRIS] No legit activities found for this week. Skipping broadcast.');
         return;
       }
 
@@ -57,15 +57,16 @@ export function initWeeklyCronJob() {
       });
       const userMap = new Map(users.map(u => [u.id, u]));
 
-      let message = 
-`🏆📊 <b>BẢNG XẾP HẠNG TOP RUNNER TUẦN (HÀNH TRÌNH IRIS)</b> 📊🏆
-<i>(Tổng hợp đến 23:59 Chủ Nhật)</i>\n\n`;
+      let message = `🏆 <b>BẢNG XẾP HẠNG THÀNH TÍCH XUẤT SẮC TUẦN</b> 🏆\n\n`;
+      message += `📅 <i>Tính đến 23:59 Chủ Nhật</i>\n\n`;
+
+      const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
 
       weeklyStats.forEach((stat, index) => {
         const user = userMap.get(stat.userId);
         if (!user) return;
 
-        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>${index + 1}.</b>`;
+        const medal = medals[index] || `${index + 1}.`;
         const totalKm = ((stat._sum.distance || 0) / 1000).toFixed(2);
         const runsCount = stat._count.id;
         const genderIcon = user.gender === 'FEMALE' ? '👩' : '👨';
@@ -80,7 +81,7 @@ export function initWeeklyCronJob() {
     } catch (error) {
       console.error('[CronJob IRIS] Error running weekly leaderboard cron:', error);
     }
-  });
+  }, { timezone: 'Asia/Ho_Chi_Minh' });
 
-  console.log('[CronJob IRIS] Weekly Sunday Leaderboard cron initialized (Runs every Sunday at 23:59).');
+  console.log('[CronJob IRIS] Weekly Sunday Leaderboard cron initialized (Runs every Sunday at 23:59 Asia/Ho_Chi_Minh).');
 }

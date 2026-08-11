@@ -17,7 +17,11 @@ export interface PenaltyRecord {
  */
 export async function calculatePenalties(): Promise<PenaltyRecord[]> {
   const users = await db.user.findMany({
-    orderBy: { teamId: 'asc' }
+    where: { stravaAthleteId: { not: null } },
+    orderBy: [
+      { teamId: 'asc' },
+      { nickName: 'asc' }
+    ]
   });
 
   return users.map((user) => {
@@ -26,7 +30,8 @@ export async function calculatePenalties(): Promise<PenaltyRecord[]> {
 
     // Rounding rule per IRIS Section VIII:
     // Achievement is rounded down to nearest integer km (e.g. 13.2km -> 13km), so missing km = targetKm - floor(totalKm)
-    const flooredAchievedKm = Math.floor(totalKmAchieved);
+    // Add 1e-6 epsilon to prevent precision penalty bug on exact m0.0000km values
+    const flooredAchievedKm = Math.floor(totalKmAchieved + 1e-6);
     const missingKm = Math.max(0, targetKm - flooredAchievedKm);
     const fineAmountVnd = user.isExempt ? 0 : missingKm * 100000;
 

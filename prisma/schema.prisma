@@ -45,6 +45,7 @@ model User {
   @@index([totalDistance])
   @@index([teamId])
   @@index([reachedTargetAt])
+  @@index([gender, totalDistance])
 }
 
 model Activity {
@@ -75,4 +76,7 @@ model Activity {
 
   @@index([userId])
   @@index([startDate])
+  @@index([isLegit])
+  @@index([isLegit, startDate])
+  @@index([userId, startDate])
 }

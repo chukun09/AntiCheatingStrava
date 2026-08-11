@@ -5,17 +5,25 @@ export interface ValidationResult {
   reason?: string;
 }
 
-// Contest Start & End dates: 00:00 03/08/2026 -> 23:59 30/08/2026
+// Contest Start & End dates: 00:00 03/08/2026 -> 23:59:59 30/08/2026 (boundary 00:00:00 31/08/2026)
 const CONTEST_START = new Date('2026-08-03T00:00:00+07:00');
-const CONTEST_END = new Date('2026-08-30T23:59:59+07:00');
+const CONTEST_END = new Date('2026-08-31T00:00:00+07:00');
 
 export function validateActivity(activity: any): ValidationResult {
+  if (!activity) {
+    return { isLegit: false, reason: 'Dữ liệu bài chạy rỗng (Empty payload)' };
+  }
+
   // 0. Check Contest Date Window (Bypassed if ALLOW_TEST_DATE=true in .env for pre-contest testing)
   if (env.ALLOW_TEST_DATE) {
     console.log('[Anti-Cheat] ALLOW_TEST_DATE=true -> Bypassing contest start date window check for test activity.');
   } else {
-    const activityDate = new Date(activity.start_date || activity.start_date_local || Date.now());
-    if (activityDate < CONTEST_START || activityDate > CONTEST_END) {
+    const rawDateStr = activity.start_date || activity.start_date_local;
+    if (!rawDateStr) {
+      return { isLegit: false, reason: 'Thiếu dữ liệu ngày bắt đầu bài chạy' };
+    }
+    const activityDate = new Date(rawDateStr);
+    if (isNaN(activityDate.getTime()) || activityDate < CONTEST_START || activityDate >= CONTEST_END) {
       return {
         isLegit: false,
         reason: `Ngoài thời gian diễn ra cuộc thi (Hành trình IRIS: 03/08 - 30/08/2026)`
@@ -49,14 +57,22 @@ export function validateActivity(activity: any): ValidationResult {
   }
 
   // Safe distance check
-  if (!activity.distance || activity.distance <= 0) {
+  if (!activity.distance || typeof activity.distance !== 'number' || activity.distance <= 0) {
     return {
       isLegit: false,
       reason: 'Quãng đường không hợp lệ (<= 0m)'
     };
   }
 
-  // 4. Block abnormal Max Speed (> 30.0 km/h)
+  // Moving time guard check to prevent NaN in all pace calculations
+  if (!activity.moving_time || typeof activity.moving_time !== 'number' || activity.moving_time <= 0 || !isFinite(activity.moving_time)) {
+    return {
+      isLegit: false,
+      reason: 'Thiếu dữ liệu thời gian di chuyển (moving_time invalid/missing)'
+    };
+  }
+
+  // 4. Block abnormal Max Speed (> 35.0 km/h)
   const maxSpeedKmH = (activity.max_speed || 0) * 3.6;
   if (maxSpeedKmH > 35.0) {
     return {
@@ -116,7 +132,7 @@ export function validateActivity(activity: any): ValidationResult {
             const spikePaceStr = `${minStr}:${secStr < 10 ? '0' : ''}${secStr}`;
             return {
               isLegit: false,
-              reason: `Biến động Pace đột ngột: Km ${i + 1} Pace vọt lên ${spikePaceStr} min/km rồi giảm nhanh so với các km lân cận`
+              reason: `Biến động Pace đột ngột: Km ${i + 1} Pace tăng bất thường lên ${spikePaceStr} min/km so với các km lân cận`
             };
           }
         }
@@ -187,7 +203,7 @@ export function validateActivity(activity: any): ValidationResult {
   }
 
   // 11. Detect Abnormally Low Heart Rate vs Physical Effort (when heart rate exists)
-  const avgHr = activity.average_heartrate || (activity.has_heartrate ? activity.heartrate : null);
+  const avgHr = activity.average_heartrate || null;
   if (activity.has_heartrate && avgHr && avgHr > 0) {
     const paceMin = Math.floor(averagePaceSecPerKm / 60);
     const paceSec = Math.round(averagePaceSecPerKm % 60);

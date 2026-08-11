@@ -18,7 +18,7 @@ export function initKeepAliveCronJob() {
     } catch (error: any) {
       console.warn(`[Keep-Alive Cron] Ping warning: ${error.message}`);
     }
-  });
+  }, { timezone: 'Asia/Ho_Chi_Minh' });
 
   console.log('[Keep-Alive Cron] Self-ping cron initialized (Pings /health every 5 minutes).');
 }

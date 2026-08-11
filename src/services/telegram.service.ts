@@ -1,6 +1,6 @@
-import axios from 'axios';
+import { telegramHttp } from '../utils/http';
 import { env } from '../config/env';
-import { getTeamName } from './team.service';
+import { escapeHtml } from '../utils/format';
 
 /**
  * Format Date to UTC+7 (Asia/Ho_Chi_Minh) Vietnam String format: "HH:MM DD/MM/YYYY"
@@ -29,28 +29,56 @@ export function formatPace(secPerKm: number): string {
   return `${min}:${sec < 10 ? '0' : ''}${sec} min/km`;
 }
 
+let lastSendTime = 0;
+let telegramSendChain: Promise<any> = Promise.resolve();
+
 /**
- * Send HTML formatted message to Telegram Chat ID
+ * Send HTML formatted message to Telegram Chat ID.
+ * Truncates messages exceeding 4000 characters and throttles rate (~1 msg/sec) to ensure Telegram API compliance.
  */
-export async function sendTelegramMessage(chatId: string, text: string): Promise<boolean> {
+export async function sendTelegramMessage(chatId: string, text: string, replyMarkup?: any): Promise<boolean> {
   if (!env.TELEGRAM_BOT_TOKEN || !chatId || chatId === 'your_telegram_bot_token_here') {
     console.warn('[Telegram] Bot token or chat ID missing. Message skipped.');
     return false;
   }
 
-  try {
-    const url = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`;
-    await axios.post(url, {
-      chat_id: chatId,
-      text: text,
-      parse_mode: 'HTML',
-      disable_web_page_preview: false
-    });
-    return true;
-  } catch (error: any) {
-    console.error('[Telegram] Failed to send message:', error?.response?.data || error.message);
-    return false;
+  // Truncate message text if it exceeds 4000 chars to avoid Telegram API 400 bad request
+  let safeText = text;
+  if (safeText.length > 4000) {
+    safeText = safeText.slice(0, 3950) + '\n\n<i>[Nội dung quá dài, đã tự động cắt bớt...]</i>';
   }
+
+  // Chain messages sequentially with 1000ms pause to comply with Telegram 20 msg/min group rate limits
+  return new Promise((resolve) => {
+    telegramSendChain = telegramSendChain.then(async () => {
+      const now = Date.now();
+      const elapsed = now - lastSendTime;
+      if (elapsed < 1000) {
+        await new Promise(r => setTimeout(r, 1000 - elapsed));
+      }
+      lastSendTime = Date.now();
+
+      try {
+        const url = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`;
+        const payload: any = {
+          chat_id: chatId,
+          text: safeText,
+          parse_mode: 'HTML',
+          disable_web_page_preview: false
+        };
+
+        if (replyMarkup) {
+          payload.reply_markup = replyMarkup;
+        }
+
+        await telegramHttp.post(url, payload);
+        resolve(true);
+      } catch (error: any) {
+        console.error('[Telegram] Failed to send message:', error?.response?.data || error.message);
+        resolve(false);
+      }
+    });
+  });
 }
 
 /**
@@ -65,11 +93,13 @@ export async function notifyReachedMilestone(data: {
 }) {
   const dateTimeStr = formatVietnamDateTime(data.reachedAt);
   const genderIcon = data.gender === 'FEMALE' ? '👩' : '👨';
+  const safeNick = escapeHtml(data.nickName);
+  const safeFull = data.fullName ? ` (${escapeHtml(data.fullName)})` : '';
 
   const message = 
 `🎉🏆 <b>CHÚC MỪNG HOÀN THÀNH MỐC CHỈ TIÊU (${data.targetKm} KM)!</b> 🏆🎉
 
-🌟 Vận động viên ${genderIcon} <b>${data.nickName}</b>${data.fullName ? ` (${data.fullName})` : ''} đã xuất sắc hoàn thành mốc <b>${data.targetKm}.0 KM TÍCH LŨY</b>!
+🌟 Vận động viên ${genderIcon} <b>${safeNick}</b>${safeFull} đã xuất sắc hoàn thành mốc <b>${data.targetKm}.0 KM TÍCH LŨY</b>!
 
 ⏱ <b>Thời điểm cán đích (UTC+7):</b> ${dateTimeStr}
 
@@ -91,12 +121,17 @@ export async function notifyCheatingAlert(data: {
   const stravaUrl = `https://www.strava.com/activities/${data.stravaActivityId}`;
   const actIdStr = String(data.stravaActivityId);
 
+  const safeNick = escapeHtml(data.nickName);
+  const safeFull = data.fullName ? ` (${escapeHtml(data.fullName)})` : '';
+  const safeActName = escapeHtml(data.activityName);
+  const safeReason = escapeHtml(data.reason);
+
   const message = 
 `🚨 <b>CẢNH BÁO BÀI CHẠY PHẠM QUY (ANTI-CHEAT)</b> 🚨
 
-👤 <b>Vận động viên:</b> <b>${data.nickName}</b>${data.fullName ? ` (${data.fullName})` : ''}
-📌 <b>Bài chạy:</b> <a href="${stravaUrl}">${data.activityName}</a> (ID: <code>${actIdStr}</code>)
-❌ <b>Lý do vi phạm:</b> <code>${data.reason}</code>
+👤 <b>Vận động viên:</b> <b>${safeNick}</b>${safeFull}
+📌 <b>Bài chạy:</b> <a href="${stravaUrl}">${safeActName}</a> (ID: <code>${actIdStr}</code>)
+❌ <b>Lý do vi phạm:</b> <code>${safeReason}</code>
 
 ⚠️ <i>Bài chạy này tạm thời bị loại (isLegit = false). Ban Tổ Chức bấm nút bên dưới để duyệt hoặc giữ nguyên:</i>`;
 
@@ -109,19 +144,7 @@ export async function notifyCheatingAlert(data: {
     ]
   };
 
-  try {
-    const url = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`;
-    await axios.post(url, {
-      chat_id: env.TELEGRAM_GROUP_ID,
-      text: message,
-      parse_mode: 'HTML',
-      reply_markup: replyMarkup
-    });
-    return true;
-  } catch (error: any) {
-    console.error('[Telegram] Failed to send cheating alert with buttons:', error?.response?.data || error.message);
-    return false;
-  }
+  return await sendTelegramMessage(env.TELEGRAM_GROUP_ID, message, replyMarkup);
 }
 
 /**
@@ -136,11 +159,15 @@ export async function notifyActivityDeleted(data: {
   newTotalKm: number;
 }) {
   const stravaUrl = `https://www.strava.com/activities/${data.stravaActivityId}`;
+  const safeNick = escapeHtml(data.nickName);
+  const safeFull = data.fullName ? ` (${escapeHtml(data.fullName)})` : '';
+  const safeActName = escapeHtml(data.activityName);
+
   const message = 
 `🗑️ <b>[THÔNG BÁO XÓA BÀI CHẠY TỪ STRAVA]</b> 🗑️
 
-👤 <b>VĐV:</b> <b>${data.nickName}</b>${data.fullName ? ` (${data.fullName})` : ''}
-📌 <b>Bài chạy:</b> <a href="${stravaUrl}">${data.activityName}</a> (ID: <code>${data.stravaActivityId}</code>)
+👤 <b>VĐV:</b> <b>${safeNick}</b>${safeFull}
+📌 <b>Bài chạy:</b> <a href="${stravaUrl}">${safeActName}</a> (ID: <code>${data.stravaActivityId}</code>)
 🏃 <b>Số km vừa xóa:</b> <code>${data.deletedKm.toFixed(2)} km</code>
 📊 <b>Tổng km tích lũy mới:</b> <code>${data.newTotalKm.toFixed(2)} km</code> (Đã tự động trừ bớt)`;
 
@@ -162,11 +189,15 @@ export async function notifyActivityUpdated(data: {
 }) {
   const stravaUrl = `https://www.strava.com/activities/${data.stravaActivityId}`;
   const statusStr = data.isLegit ? '✅ Hợp lệ' : '❌ Phạm quy';
+  const safeNick = escapeHtml(data.nickName);
+  const safeFull = data.fullName ? ` (${escapeHtml(data.fullName)})` : '';
+  const safeActName = escapeHtml(data.activityName);
+
   const message = 
 `✏️ <b>[THÔNG BÁO SỬA BÀI CHẠY TỪ STRAVA]</b> ✏️
 
-👤 <b>VĐV:</b> <b>${data.nickName}</b>${data.fullName ? ` (${data.fullName})` : ''}
-📌 <b>Bài chạy:</b> <a href="${stravaUrl}">${data.activityName}</a> (ID: <code>${data.stravaActivityId}</code>)
+👤 <b>VĐV:</b> <b>${safeNick}</b>${safeFull}
+📌 <b>Bài chạy:</b> <a href="${stravaUrl}">${safeActName}</a> (ID: <code>${data.stravaActivityId}</code>)
 📊 <b>Thay đổi khoảng cách:</b> <code>${data.oldKm.toFixed(2)} km ➔ ${data.newKm.toFixed(2)} km</code> (${statusStr})
 🏃 <b>Tổng km tích lũy mới:</b> <code>${data.newTotalKm.toFixed(2)} km</code>`;
 
@@ -183,10 +214,13 @@ export async function notifyActivityDeletedBatch(data: {
   deletedKm: number;
   newTotalKm: number;
 }) {
+  const safeNick = escapeHtml(data.nickName);
+  const safeFull = data.fullName ? ` (${escapeHtml(data.fullName)})` : '';
+
   const message = 
 `🧹 <b>[ĐỒNG BỘ: DỌN DẸP BÀI CHẠY ĐÃ XÓA TỪ STRAVA]</b> 🧹
 
-👤 <b>VĐV:</b> <b>${data.nickName}</b>${data.fullName ? ` (${data.fullName})` : ''}
+👤 <b>VĐV:</b> <b>${safeNick}</b>${safeFull}
 🗑️ <b>Số bài đã xóa trên Strava:</b> <code>${data.deletedCount} bài</code>
 🏃 <b>Tổng số km đã trừ:</b> <code>${data.deletedKm.toFixed(2)} km</code>
 📊 <b>Tổng km tích lũy mới:</b> <code>${data.newTotalKm.toFixed(2)} km</code>`;

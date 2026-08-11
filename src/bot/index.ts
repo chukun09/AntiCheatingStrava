@@ -3,9 +3,9 @@ import { db } from '../config/db';
 import { env } from '../config/env';
 import { TEAMS, getTeamName } from '../services/team.service';
 import { calculatePenalties } from '../services/penalty.service';
-import { formatPace, formatVietnamDateTime } from '../services/telegram.service';
+import { formatPace, formatVietnamDateTime, sendTelegramMessage } from '../services/telegram.service';
 import { syncAllUsersPastActivities } from '../services/sync.service';
-import { overrideActivityStatus } from '../services/override.service';
+import { overrideActivityStatus, recalculateUserStats } from '../services/override.service';
 import { 
   getWeek1TeamAward, 
   getWeek2TeamAward, 
@@ -14,6 +14,7 @@ import {
   getWeek4TeamAward 
 } from '../services/awards.service';
 import { exportViolationsToExcelBuffer } from '../services/excel.service';
+import { reconcileAllUsers } from '../services/reconcile.service';
 
 let bot: Telegraf | null = null;
 
@@ -47,8 +48,7 @@ export function initTelegramBot(): Telegraf | null {
           const validCommands = [
             'start', 'help', 'bxh_canhan', 'bxh_doi', 'doi', 'bxh_phong', 'bxh_phongban', 'phong',
             'lichsu', 'chitiet', 'speed_tuan1', 'giai_tuan1', 'giai_tuan2', 
-            'giai_tuan3', 'giai_tuan4', 'phat', 'sync', 'excel_vipham', 'vipham_excel',
-            'duyet', 'huy', 'duyet_tatca', 'huy_tatca'
+            'giai_tuan3', 'giai_tuan4', 'phat', 'excel_vipham', 'vipham_excel'
           ];
           if (validCommands.includes(cmdName)) {
             // Normalize command prefix while keeping trailing args
@@ -359,77 +359,41 @@ Danh sách lệnh hỗ trợ:
       }
     });
 
-    // Command /duyet [strava_activity_id] - Manually approve activity
-    bot.command('duyet', async (ctx) => {
-      try {
-        const parts = ctx.message.text.trim().split(/\s+/);
-        if (parts.length < 2) {
-          return ctx.replyWithHTML('⚠️ <b>Cú pháp sai!</b> Vui lòng gõ: <code>/duyet [ID_Bai_Chay_Strava]</code>\nVí dụ: <code>/duyet 19623991159</code>');
-        }
 
-        const activityId = parts[1];
-        const res = await overrideActivityStatus(activityId, true);
 
-        const text = 
-`✅ <b>ĐÃ DUYỆT THÀNH CÔNG BÀI CHẠY!</b> ✅
-
-📌 ID Bài chạy: <code>${res.stravaActivityId}</code>
-👤 VĐV: <b>${res.userName}</b>
-📊 Tổng tích lũy mới: <code>${res.newTotalKm} km</code>
-📝 Trạng thái: <b>Hợp lệ (Legit)</b>`;
-
-        return ctx.replyWithHTML(text);
-      } catch (error: any) {
-        console.error('[Bot /duyet] Error:', error);
-        return ctx.reply(`Lỗi khi duyệt bài chạy: ${error.message}`);
-      }
-    });
-
-    // Command /huy [strava_activity_id] [lý do] - Manually reject activity
-    bot.command('huy', async (ctx) => {
-      try {
-        const parts = ctx.message.text.trim().split(/\s+/);
-        if (parts.length < 2) {
-          return ctx.replyWithHTML('⚠️ <b>Cú pháp sai!</b> Vui lòng gõ: <code>/huy [ID_Bai_Chay_Strava] [Lý do]</code>\nVí dụ: <code>/huy 19623991159 Pace quá nhanh</code>');
-        }
-
-        const activityId = parts[1];
-        const reason = parts.slice(2).join(' ') || 'Ban Tổ Chức từ chối thủ công';
-        const res = await overrideActivityStatus(activityId, false, reason);
-
-        const text = 
-`❌ <b>ĐÃ TỪ CHỐI BÀI CHẠY!</b> ❌
-
-📌 ID Bài chạy: <code>${res.stravaActivityId}</code>
-👤 VĐV: <b>${res.userName}</b>
-📊 Tổng tích lũy mới: <code>${res.newTotalKm} km</code>
-📝 Lý do: <i>${res.reason}</i>`;
-
-        return ctx.replyWithHTML(text);
-      } catch (error: any) {
-        console.error('[Bot /huy] Error:', error);
-        return ctx.reply(`Lỗi khi từ chối bài chạy: ${error.message}`);
-      }
-    });
-
-    // Command /sync - Active Manual Sync for all athletes
+    // Command /sync - Active Manual Sync for all athletes (Async Non-Blocking)
     bot.command('sync', async (ctx) => {
       try {
-        await ctx.replyWithHTML('⏳ <i>Đang kích hoạt đồng bộ dữ liệu bài chạy từ Strava... Vui lòng chờ trong giây lát!</i>');
-        const res = await syncAllUsersPastActivities();
-        const text = 
-`🔄 <b>ĐỒNG BỘ DỮ LIỆU THÀNH CÔNG!</b> 🔄
+        await ctx.replyWithHTML('⏳ <b>ĐÃ KÍCH HOẠT ĐỒNG BỘ NỀN!</b>\n\nTiến trình đồng bộ dữ liệu bài chạy quá khứ cho toàn bộ VĐV đang được thực thi trong nền (background). Hệ thống sẽ gửi tin nhắn báo cáo tổng kết ngay khi hoàn tất.');
+        
+        // Trigger background sync asynchronously without blocking Telegraf handler
+        syncAllUsersPastActivities().then(async (res) => {
+          if (res.isAlreadyRunning) {
+            await sendTelegramMessage(
+              env.TELEGRAM_GROUP_ID,
+              '⚠️ <b>THÔNG BÁO:</b> Tiến trình đồng bộ dữ liệu toàn bộ VĐV hiện đang chạy. Vui lòng chờ tiến trình trước hoàn tất!'
+            );
+            return;
+          }
 
-📊 Đã đối soát <b>${res.totalUsers}</b> vận động viên.
-🏃 Đã nạp & xử lý: <b>${res.totalSynced}</b> bài chạy active từ Strava.
+          const text = 
+`🔄 <b>ĐỒNG BỘ DỮ LIỆU HOÀN TẤT!</b> 🔄
+
+📊 Đã đối soát: <b>${res.totalUsers}</b> vận động viên.
+🏃 Đã nạp & xử lý mới: <b>${res.totalSynced}</b> bài chạy active từ Strava.
 🧹 Đã dọn dẹp & trừ km: <b>${res.totalDeleted}</b> bài đã bị xóa trên Strava.
 
 Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp hạng mới nhất!`;
 
-        return ctx.replyWithHTML(text);
+          await sendTelegramMessage(env.TELEGRAM_GROUP_ID, text);
+        }).catch((err) => {
+          console.error('[Bot /sync Background] Error:', err);
+        });
+
+        return;
       } catch (error) {
-        console.error('[Bot /sync] Error syncing data:', error);
-        return ctx.reply('Lỗi khi thực hiện đồng bộ dữ liệu.');
+        console.error('[Bot /sync] Error triggering sync:', error);
+        return ctx.reply('Lỗi khi kích hoạt đồng bộ dữ liệu.');
       }
     });
 
@@ -672,6 +636,46 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
     bot.command('excel_vipham', handleExcelExport);
     bot.command('vipham_excel', handleExcelExport);
 
+    // Command /doisoat [fix] - Audit & Reconcile User Total Distance
+    bot.command('doisoat', async (ctx) => {
+      try {
+        const text = (ctx.message?.text || '').trim();
+        const isFix = text.toLowerCase().includes('fix');
+
+        await ctx.replyWithHTML(`⏳ <i>Đang chạy đối soát tổng quãng đường tất cả VĐV (${isFix ? 'SỬA THẬT' : 'DRY-RUN KIỂM TRA'})...</i>`);
+
+        const res = await reconcileAllUsers({ dryRun: !isFix });
+
+        if (res.diffs.length === 0) {
+          return ctx.replyWithHTML(`✅ <b>HỆ THỐNG HOÀN HẢO!</b>\n\nToàn bộ <b>${res.checkedCount} VĐV</b> đều có tổng số km tích lũy khớp 100% với lịch sử bài chạy hợp lệ.`);
+        }
+
+        let msg = `🔍 <b>KẾT QUẢ ĐỐI SOÁT DỮ LIỆU (${isFix ? 'ĐÃ SỬA THÀNH CÔNG' : 'BÁO CÁO DRY-RUN'})</b> 🔍\n\n`;
+        msg += `📊 <b>Tổng VĐV kiểm tra:</b> ${res.checkedCount}\n`;
+        msg += `⚠️ <b>Số VĐV bị lệch km:</b> <code>${res.diffs.length} người</code>\n`;
+        msg += `📉 <b>Tổng km chênh lệch:</b> <code>${res.totalDriftKm} km</code>\n\n`;
+
+        res.diffs.slice(0, 15).forEach((d, idx) => {
+          msg += `${idx + 1}. <b>${d.nickName}</b>: DB <code>${d.dbTotalKm}km</code> ➔ Đúng: <code>${d.calculatedLegitKm}km</code> (Lệch <code>${d.driftKm}km</code>)\n`;
+        });
+
+        if (res.diffs.length > 15) {
+          msg += `\n... và ${res.diffs.length - 15} VĐV khác.\n`;
+        }
+
+        if (!isFix) {
+          msg += `\n💡 <i>Để cập nhật chính xác các số liệu bị lệch vào CSDL, hãy gõ lệnh:</i>\n<code>/doisoat fix</code>`;
+        } else {
+          msg += `\n✅ <i>Đã cập nhật lại tổng số km và mốc thời gian hoàn thành chính xác cho toàn bộ VĐV bị lệch!</i>`;
+        }
+
+        return ctx.replyWithHTML(msg);
+      } catch (error: any) {
+        console.error('[Bot /doisoat] Error:', error);
+        return ctx.reply('Lỗi khi chạy đối soát dữ liệu: ' + (error?.message || error));
+      }
+    });
+
     // Command /duyet <ID1> <ID2> ... - Exact List ID Bulk Approval
     bot.command('duyet', async (ctx) => {
       try {
@@ -687,17 +691,28 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
         }
 
         const ids = matches.map((idStr: string) => BigInt(idStr));
+        
+        // Find affected user IDs before updating
+        const affectedActivities = await db.activity.findMany({
+          where: { stravaActivityId: { in: ids } },
+          select: { userId: true }
+        });
+        const affectedUserIds = Array.from(new Set(affectedActivities.map(a => a.userId)));
+
         const res = await db.activity.updateMany({
-          where: {
-            stravaActivityId: { in: ids }
-          },
+          where: { stravaActivityId: { in: ids } },
           data: {
             isLegit: true,
-            flagReason: 'Đã duyệt hàng loạt theo danh sách IDs bởi BTC'
+            flagReason: '[BTC] Đã duyệt hàng loạt theo danh sách IDs bởi BTC'
           }
         });
 
-        return ctx.replyWithHTML(`🟢 <b>DUYỆT THEO DANH SÁCH THÀNH CÔNG!</b>\n\n✅ Đã cập nhật trạng thái Hợp Lệ cho <b>${res.count} / ${ids.length}</b> bài chạy được chỉ định.`);
+        // Recalculate stats for all affected users
+        for (const uId of affectedUserIds) {
+          await recalculateUserStats(uId);
+        }
+
+        return ctx.replyWithHTML(`🟢 <b>DUYỆT THEO DANH SÁCH THÀNH CÔNG!</b>\n\n✅ Đã cập nhật trạng thái Hợp Lệ và tính lại thành tích cho <b>${res.count} / ${ids.length}</b> bài chạy được chỉ định.`);
       } catch (error: any) {
         console.error('[Bot /duyet] Error:', error);
         return ctx.reply('Lỗi khi duyệt hàng loạt theo danh sách: ' + (error?.message || error));
@@ -718,17 +733,28 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
         }
 
         const ids = matches.map((idStr: string) => BigInt(idStr));
+
+        // Find affected user IDs before updating
+        const affectedActivities = await db.activity.findMany({
+          where: { stravaActivityId: { in: ids } },
+          select: { userId: true }
+        });
+        const affectedUserIds = Array.from(new Set(affectedActivities.map(a => a.userId)));
+
         const res = await db.activity.updateMany({
-          where: {
-            stravaActivityId: { in: ids }
-          },
+          where: { stravaActivityId: { in: ids } },
           data: {
             isLegit: false,
-            flagReason: 'Xác nhận giữ loại hàng loạt theo danh sách IDs bởi BTC'
+            flagReason: '[BTC] Xác nhận giữ loại hàng loạt theo danh sách IDs bởi BTC'
           }
         });
 
-        return ctx.replyWithHTML(`🔴 <b>HỦY THEO DANH SÁCH THÀNH CÔNG!</b>\n\n❌ Đã xác nhận loại <b>${res.count} / ${ids.length}</b> bài chạy được chỉ định.`);
+        // Recalculate stats for all affected users
+        for (const uId of affectedUserIds) {
+          await recalculateUserStats(uId);
+        }
+
+        return ctx.replyWithHTML(`🔴 <b>HỦY THEO DANH SÁCH THÀNH CÔNG!</b>\n\n❌ Đã xác nhận loại và tính lại thành tích cho <b>${res.count} / ${ids.length}</b> bài chạy được chỉ định.`);
       } catch (error: any) {
         console.error('[Bot /huy] Error:', error);
         return ctx.reply('Lỗi khi hủy hàng loạt theo danh sách: ' + (error?.message || error));
@@ -738,11 +764,18 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
     // Command /duyet_tatca - Bulk approve ALL non-legit activities
     bot.command('duyet_tatca', async (ctx) => {
       try {
+        const nonLegitActivities = await db.activity.findMany({
+          where: { isLegit: false },
+          select: { userId: true },
+          distinct: ['userId']
+        });
+        const affectedUserIds = nonLegitActivities.map(a => a.userId);
+
         const res = await db.activity.updateMany({
           where: { isLegit: false },
           data: {
             isLegit: true,
-            flagReason: 'Đã duyệt toàn bộ bởi BTC'
+            flagReason: '[BTC] Đã duyệt toàn bộ bởi BTC'
           }
         });
 
@@ -750,7 +783,12 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
           return ctx.replyWithHTML('🎉 <b>THÔNG BÁO:</b> Hiện tại không có bài chạy vi phạm nào cần duyệt.');
         }
 
-        return ctx.replyWithHTML(`🟢 <b>DUYỆT TOÀN BỘ THÀNH CÔNG!</b>\n\n✅ Đã chuyển trạng thái Hợp Lệ cho tất cả <b>${res.count} bài chạy</b> vi phạm trong CSDL.`);
+        // Recalculate stats for all affected users
+        for (const uId of affectedUserIds) {
+          await recalculateUserStats(uId);
+        }
+
+        return ctx.replyWithHTML(`🟢 <b>DUYỆT TOÀN BỘ THÀNH CÔNG!</b>\n\n✅ Đã chuyển trạng thái Hợp Lệ và tính lại thành tích cho tất cả <b>${res.count} bài chạy</b> vi phạm trong CSDL.`);
       } catch (error: any) {
         console.error('[Bot /duyet_tatca] Error:', error);
         return ctx.reply('Lỗi khi duyệt toàn bộ bài vi phạm.');
@@ -765,7 +803,7 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
           return ctx.replyWithHTML('🎉 <b>THÔNG BÁO:</b> Hiện tại không có bài chạy vi phạm nào trong danh sách.');
         }
 
-        return ctx.replyWithHTML(`🔴 <b>XÁC NHẬN HỦY TOÀN BỘ!</b>\n\n❌ Đã giữ nguyên trạng thái Loại Bỏ đối với tất cả <b>${count} bài chạy</b> vi phạm.`);
+        return ctx.replyWithHTML(`📊 <b>THỐNG KÊ BÀI CHẠY VI PHẠM:</b>\n\nHệ thống đang lưu trữ <b>${count} bài chạy</b> vi phạm giữ nguyên trạng thái bị loại Bỏ.`);
       } catch (error: any) {
         console.error('[Bot /huy_tatca] Error:', error);
         return ctx.reply('Lỗi khi xác nhận hủy toàn bộ.');

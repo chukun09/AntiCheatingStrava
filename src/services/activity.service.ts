@@ -26,24 +26,30 @@ export async function processActivityQueueItem(
     return;
   }
 
-  const existingActivity = await db.activity.findUnique({
-    where: { stravaActivityId: stravaActivityIdBigInt }
-  });
-
   const targetDistanceMeters = user.gender === 'FEMALE' ? 15000 : 30000;
 
   // ----------------------------------------------------
   // CASE A: ASPECT TYPE = 'DELETE'
   // ----------------------------------------------------
   if (aspectType === 'delete') {
-    if (!existingActivity) {
-      console.log(`[Queue Worker] Activity ${activityId} to delete was not found in DB. Skipping.`);
-      return;
-    }
-
-    console.log(`[Queue Worker] Deleting activity ${activityId} for ${user.nickName}...`);
+    let deletedActivityName = 'Bài chạy';
+    let deletedDistanceKm = 0;
     let newTotalKm = 0;
+    let wasDeleted = false;
+
     await db.$transaction(async (tx) => {
+      const existingActivity = await tx.activity.findUnique({
+        where: { stravaActivityId: stravaActivityIdBigInt }
+      });
+
+      if (!existingActivity) {
+        return;
+      }
+
+      wasDeleted = true;
+      deletedActivityName = existingActivity.name;
+      deletedDistanceKm = existingActivity.distance / 1000;
+
       if (existingActivity.isLegit) {
         const updatedUser = await tx.user.update({
           where: { id: user.id },
@@ -70,15 +76,20 @@ export async function processActivityQueueItem(
       });
     });
 
+    if (!wasDeleted) {
+      console.log(`[Queue Worker] Activity ${activityId} to delete was not found in DB. Skipping.`);
+      return;
+    }
+
     console.log(`[Queue Worker] Deleted activity ${activityId} successfully.`);
 
     // Send Telegram alert to BTC group
     await notifyActivityDeleted({
       nickName: user.nickName,
       fullName: user.fullName,
-      activityName: existingActivity.name,
+      activityName: deletedActivityName,
       stravaActivityId: activityId,
-      deletedKm: existingActivity.distance / 1000,
+      deletedKm: deletedDistanceKm,
       newTotalKm
     });
 
@@ -88,10 +99,6 @@ export async function processActivityQueueItem(
   // ----------------------------------------------------
   // CASE B: ASPECT TYPE = 'CREATE' OR 'UPDATE'
   // ----------------------------------------------------
-  if (aspectType === 'create' && existingActivity) {
-    console.log(`[Queue Worker] Activity ${activityId} already exists in DB for 'create'. Skipping.`);
-    return;
-  }
 
   // Get valid access token
   const accessToken = await getValidAccessToken(user);
@@ -103,8 +110,12 @@ export async function processActivityQueueItem(
   // Fetch activity detail from Strava
   let activityData: any;
   try {
-    activityData = await fetchStravaActivityDetail(activityId, accessToken);
-  } catch (error) {
+    activityData = await fetchStravaActivityDetail(activityId, accessToken, 0, user.appClientId);
+  } catch (error: any) {
+    if (error?.name === 'StravaDailyQuotaError') {
+      console.warn(`[Queue Worker] Daily quota limit reached for App Client ${user.appClientId}. Skipping activity ${activityId} to free worker slot.`);
+      return;
+    }
     console.error(`[Queue Worker] Failed to fetch activity detail for ${activityId}. Aborting.`);
     return;
   }
@@ -118,9 +129,25 @@ export async function processActivityQueueItem(
 
   let isNewWinner = false;
   let reachedAtDate: Date | null = null;
+  let isExisting = false;
+  let oldDistanceKm = 0;
 
   // Atomic DB Transaction
   await db.$transaction(async (tx) => {
+    const existingActivity = await tx.activity.findUnique({
+      where: { stravaActivityId: stravaActivityIdBigInt }
+    });
+
+    isExisting = !!existingActivity;
+    if (existingActivity) {
+      oldDistanceKm = existingActivity.distance / 1000;
+    }
+
+    if (aspectType === 'create' && existingActivity) {
+      console.log(`[Queue Worker] Activity ${activityId} already exists in DB for 'create'. Skipping.`);
+      return;
+    }
+
     if (existingActivity) {
       // UPDATE EXISTING ACTIVITY
       const oldLegitMeters = existingActivity.isLegit ? existingActivity.distance : 0;
@@ -144,7 +171,7 @@ export async function processActivityQueueItem(
           externalId: activityData.external_id || null,
           isLegit: validation.isLegit,
           flagReason: validation.reason || null,
-          startDate: new Date(activityData.start_date || Date.now())
+          startDate: new Date(activityData.start_date || activityData.start_date_local || Date.now())
         }
       });
 
@@ -155,7 +182,7 @@ export async function processActivityQueueItem(
         });
 
         if (updatedUser.totalDistance >= targetDistanceMeters && updatedUser.reachedTargetAt === null) {
-          reachedAtDate = new Date(activityData.start_date || Date.now());
+          reachedAtDate = new Date(activityData.start_date || activityData.start_date_local || Date.now());
           isNewWinner = true;
           await tx.user.update({
             where: { id: user.id },
@@ -188,7 +215,7 @@ export async function processActivityQueueItem(
           externalId: activityData.external_id || null,
           isLegit: validation.isLegit,
           flagReason: validation.reason || null,
-          startDate: new Date(activityData.start_date || Date.now())
+          startDate: new Date(activityData.start_date || activityData.start_date_local || Date.now())
         }
       });
 
@@ -200,7 +227,7 @@ export async function processActivityQueueItem(
         });
 
         if (updatedUser.totalDistance >= targetDistanceMeters && updatedUser.reachedTargetAt === null) {
-          reachedAtDate = new Date(activityData.start_date || Date.now());
+          reachedAtDate = new Date(activityData.start_date || activityData.start_date_local || Date.now());
           isNewWinner = true;
           await tx.user.update({
             where: { id: user.id },
@@ -212,14 +239,14 @@ export async function processActivityQueueItem(
   });
 
   // Telegram Notifications
-  if (aspectType === 'update' && existingActivity) {
+  if (aspectType === 'update' && isExisting) {
     const updatedUser = await db.user.findUnique({ where: { id: user.id } });
     await notifyActivityUpdated({
       nickName: user.nickName,
       fullName: user.fullName,
       activityName: activityData.name || 'Bài chạy',
       stravaActivityId: activityId,
-      oldKm: existingActivity.distance / 1000,
+      oldKm: oldDistanceKm,
       newKm: (activityData.distance || 0) / 1000,
       newTotalKm: ((updatedUser?.totalDistance || 0) / 1000),
       isLegit: validation.isLegit
