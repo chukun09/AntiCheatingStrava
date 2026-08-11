@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { env } from '../config/env';
-import { activityQueue, isActivityQueued, markActivityQueued } from '../utils/queue';
+import { activityQueue, isActivityQueued, markActivityQueued, unmarkActivityQueued } from '../utils/queue';
 import { processActivityQueueItem } from '../services/activity.service';
 
 /**
@@ -39,19 +39,26 @@ export async function handleWebhookEvent(req: Request, res: Response) {
 
     // Process 'activity' creation, update, AND delete events
     if (event.object_type === 'activity' && (event.aspect_type === 'create' || event.aspect_type === 'update' || event.aspect_type === 'delete')) {
-      const activityId = event.object_id;
+      const activityId = String(event.object_id);
       const athleteId = event.owner_id;
       const aspectType = event.aspect_type as 'create' | 'update' | 'delete';
 
       if (activityId && athleteId) {
-        if (isActivityQueued(String(activityId))) {
-          console.log(`[Webhook Event] Activity ${activityId} is already in processing queue. Skipping duplicate.`);
+        if (isActivityQueued(activityId, aspectType)) {
+          console.log(`[Webhook Event] Activity ${activityId} (${aspectType}) is already in processing queue. Skipping duplicate.`);
         } else {
-          markActivityQueued(String(activityId));
+          markActivityQueued(activityId, aspectType);
           
           // Push task into P-Queue asynchronously
-          activityQueue.add(() => processActivityQueueItem(activityId, athleteId, aspectType)).catch((err) => {
-            console.error(`[Queue Error] Error executing activity task ${activityId}:`, err);
+          activityQueue.add(async () => {
+            try {
+              await processActivityQueueItem(activityId, athleteId, aspectType);
+            } finally {
+              unmarkActivityQueued(activityId, aspectType);
+            }
+          }).catch((err) => {
+            console.error(`[Queue Error] Error executing activity task ${activityId} (${aspectType}):`, err);
+            unmarkActivityQueued(activityId, aspectType);
           });
 
           console.log(`[Webhook Event] Activity ${activityId} queued successfully (aspect_type=${aspectType}). Current queue length: ${activityQueue.size}`);

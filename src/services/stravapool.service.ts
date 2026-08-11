@@ -59,8 +59,8 @@ let roundRobinIndex = 0;
 const pendingCountMap = new Map<string, number>();
 
 /**
- * Selects an available Strava App from the pool using Round-Robin rotation.
- * Evenly distributes load across all apps with < 10 connected athletes to prevent overloading a single app.
+ * Selects an available Strava App from the pool using "Least Connected Users First" algorithm.
+ * Prioritizes apps with the minimum connected users (< 10) to evenly balance load from 0 -> 1 -> 2 -> 9 users.
  */
 export async function getAvailableStravaApp(): Promise<StravaAppCredentials> {
   const pool = getStravaAppPool();
@@ -80,26 +80,38 @@ export async function getAvailableStravaApp(): Promise<StravaAppCredentials> {
     countMap.set(cid, (countMap.get(cid) || 0) + 1);
   });
 
-  // Filter eligible apps that currently have < 10 total (DB connected + pending attempts)
-  const eligibleApps = pool.filter(app => {
+  // Calculate total load (DB connected + pending attempts) for each app
+  const appLoads = pool.map(app => {
     const dbCount = countMap.get(app.clientId) || 0;
     const pendingCount = pendingCountMap.get(app.clientId) || 0;
-    return (dbCount + pendingCount) < 10;
+    return {
+      app,
+      dbCount,
+      pendingCount,
+      totalLoad: dbCount + pendingCount
+    };
   });
+
+  // Filter eligible apps that currently have < 10 total users
+  const eligibleAppLoads = appLoads.filter(item => item.totalLoad < 10);
 
   let selectedApp: StravaAppCredentials;
 
-  if (eligibleApps.length > 0) {
-    // Select evenly via Round-Robin rotation
-    selectedApp = eligibleApps[roundRobinIndex % eligibleApps.length];
-    roundRobinIndex = (roundRobinIndex + 1) % eligibleApps.length;
+  if (eligibleAppLoads.length > 0) {
+    // Find the minimum load among eligible apps (Least Connected Users First)
+    const minLoad = Math.min(...eligibleAppLoads.map(item => item.totalLoad));
+    
+    // Get all candidate apps that share this minimum load
+    const candidateApps = eligibleAppLoads.filter(item => item.totalLoad === minLoad).map(item => item.app);
+
+    // Rotate evenly via Round-Robin among the least connected candidate apps
+    selectedApp = candidateApps[roundRobinIndex % candidateApps.length];
+    roundRobinIndex = (roundRobinIndex + 1) % candidateApps.length;
   } else {
-    // If all apps reached 10, select app with minimum total load
-    selectedApp = pool.reduce((best, current) => {
-      const bestCount = (countMap.get(best.clientId) || 0) + (pendingCountMap.get(best.clientId) || 0);
-      const currentCount = (countMap.get(current.clientId) || 0) + (pendingCountMap.get(current.clientId) || 0);
-      return currentCount < bestCount ? current : best;
-    }, pool[0]);
+    // If ALL apps reached 10, pick the app with absolute minimum load
+    selectedApp = appLoads.reduce((best, current) => {
+      return current.totalLoad < best.totalLoad ? current : best;
+    }, appLoads[0]).app;
   }
 
   // Track pending registration attempt
@@ -116,7 +128,7 @@ export async function getAvailableStravaApp(): Promise<StravaAppCredentials> {
 
   const dbCount = countMap.get(selectedApp.clientId) || 0;
   const pendingCount = pendingCountMap.get(selectedApp.clientId) || 0;
-  console.log(`[Strava App Pool] Selected App Client ID: ${selectedApp.clientId} (DB: ${dbCount}, Pending: ${pendingCount}, Total: ${dbCount + pendingCount}/10)`);
+  console.log(`[Strava App Pool] Selected App Client ID: ${selectedApp.clientId} (DB: ${dbCount}, Pending: ${pendingCount}, Total: ${dbCount + pendingCount}/10) [Least-Connected First]`);
 
   return selectedApp;
 }

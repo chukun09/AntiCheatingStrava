@@ -410,8 +410,9 @@ Danh sách lệnh hỗ trợ:
         const text = 
 `🔄 <b>ĐỒNG BỘ DỮ LIỆU THÀNH CÔNG!</b> 🔄
 
-📊 Đã kiểm tra <b>${res.totalUsers}</b> vận động viên.
-🏃 Đã nạp & xử lý <b>${res.totalSynced}</b> bài chạy mới nhất từ Strava.
+📊 Đã đối soát <b>${res.totalUsers}</b> vận động viên.
+🏃 Đã nạp & xử lý: <b>${res.totalSynced}</b> bài chạy active từ Strava.
+🧹 Đã dọn dẹp & trừ km: <b>${res.totalDeleted}</b> bài đã bị xóa trên Strava.
 
 Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp hạng mới nhất!`;
 

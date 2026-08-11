@@ -84,7 +84,6 @@ export async function notifyCheatingAlert(data: {
 
 ⚠️ <i>Bài chạy này tạm thời bị loại (isLegit = false). Ban Tổ Chức bấm nút bên dưới để duyệt hoặc giữ nguyên:</i>`;
 
-  // Attach Inline Keyboard Buttons directly for Telegram Callback
   const replyMarkup = {
     inline_keyboard: [
       [
@@ -154,6 +153,27 @@ export async function notifyActivityUpdated(data: {
 📌 <b>Bài chạy:</b> <a href="${stravaUrl}">${data.activityName}</a> (ID: <code>${data.stravaActivityId}</code>)
 📊 <b>Thay đổi khoảng cách:</b> <code>${data.oldKm.toFixed(2)} km ➔ ${data.newKm.toFixed(2)} km</code> (${statusStr})
 🏃 <b>Tổng km tích lũy mới:</b> <code>${data.newTotalKm.toFixed(2)} km</code>`;
+
+  await sendTelegramMessage(env.TELEGRAM_GROUP_ID, message);
+}
+
+/**
+ * Send summary notification when batch activities are deleted during sync
+ */
+export async function notifyActivityDeletedBatch(data: {
+  nickName: string;
+  fullName?: string | null;
+  deletedCount: number;
+  deletedKm: number;
+  newTotalKm: number;
+}) {
+  const message = 
+`🧹 <b>[ĐỒNG BỘ: DỌN DẸP BÀI CHẠY ĐÃ XÓA TỪ STRAVA]</b> 🧹
+
+👤 <b>VĐV:</b> <b>${data.nickName}</b>${data.fullName ? ` (${data.fullName})` : ''}
+🗑️ <b>Số bài đã xóa trên Strava:</b> <code>${data.deletedCount} bài</code>
+🏃 <b>Tổng số km đã trừ:</b> <code>${data.deletedKm.toFixed(2)} km</code>
+📊 <b>Tổng km tích lũy mới:</b> <code>${data.newTotalKm.toFixed(2)} km</code>`;
 
   await sendTelegramMessage(env.TELEGRAM_GROUP_ID, message);
 }
