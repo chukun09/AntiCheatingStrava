@@ -3,6 +3,23 @@ import { env } from '../config/env';
 import { getTeamName } from './team.service';
 
 /**
+ * Format Date to UTC+7 (Asia/Ho_Chi_Minh) Vietnam String format: "HH:MM DD/MM/YYYY"
+ */
+export function formatVietnamDateTime(date: Date | string | null): string {
+  if (!date) return 'N/A';
+  const d = new Date(date);
+  return d.toLocaleString('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+}
+
+/**
  * Format seconds per km into MM:SS min/km string
  */
 export function formatPace(secPerKm: number): string {
@@ -46,8 +63,7 @@ export async function notifyReachedMilestone(data: {
   targetKm: number;
   reachedAt: Date;
 }) {
-  const timeStr = data.reachedAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-  const dateStr = data.reachedAt.toLocaleDateString('vi-VN');
+  const dateTimeStr = formatVietnamDateTime(data.reachedAt);
   const genderIcon = data.gender === 'FEMALE' ? '👩' : '👨';
 
   const message = 
@@ -55,7 +71,7 @@ export async function notifyReachedMilestone(data: {
 
 🌟 Vận động viên ${genderIcon} <b>${data.nickName}</b>${data.fullName ? ` (${data.fullName})` : ''} đã xuất sắc hoàn thành mốc <b>${data.targetKm}.0 KM TÍCH LŨY</b>!
 
-⏱ <b>Thời điểm cán đích:</b> ${timeStr} - ${dateStr}
+⏱ <b>Thời điểm cán đích (UTC+7):</b> ${dateTimeStr}
 
 👏 Xin chúc mừng chiến binh IRIS xuất sắc! Tiếp tục bứt phá cho giải thưởng tập thể nhé! 🔥💪`;
 

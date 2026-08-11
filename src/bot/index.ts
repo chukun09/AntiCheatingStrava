@@ -3,7 +3,7 @@ import { db } from '../config/db';
 import { env } from '../config/env';
 import { TEAMS, getTeamName } from '../services/team.service';
 import { calculatePenalties } from '../services/penalty.service';
-import { formatPace } from '../services/telegram.service';
+import { formatPace, formatVietnamDateTime } from '../services/telegram.service';
 import { syncAllUsersPastActivities } from '../services/sync.service';
 import { overrideActivityStatus } from '../services/override.service';
 import { 
@@ -279,11 +279,11 @@ Danh sách lệnh hỗ trợ:
         const totalKm = (user.totalDistance / 1000).toFixed(2);
         const teamName = getTeamName(user.teamId);
 
-        let message = `👤 <b>HỒ SƠ VẬN ĐỘNG VIÊN: ${user.nickName}</b> ${genderIcon}\n`;
-        message += `🛡️ <b>Đội thi đấu:</b> ${teamName}\n`;
-        message += `🏢 <b>Phòng ban:</b> ${user.department || 'N/A'}\n`;
+        let message = `👤 <b>HỒ SƠ VẬN ĐỘNG VIÊN: ${escapeHtml(user.nickName)}</b> ${genderIcon}\n`;
+        message += `🛡️ <b>Đội thi đấu:</b> ${escapeHtml(teamName)}\n`;
+        message += `🏢 <b>Phòng ban:</b> ${escapeHtml(user.department || 'N/A')}\n`;
         message += `📊 <b>Tổng km tích lũy:</b> <code>${totalKm} / ${targetKm} km</code>\n`;
-        message += `⚡ <b>Trạng thái mốc:</b> ${user.reachedTargetAt ? `✅ Đã đạt mốc (${new Date(user.reachedTargetAt).toLocaleDateString('vi-VN')})` : '⏳ Chưa đạt chỉ tiêu'}\n\n`;
+        message += `⚡ <b>Trạng thái mốc:</b> ${user.reachedTargetAt ? `✅ Đã đạt mốc lúc <code>${formatVietnamDateTime(user.reachedTargetAt)}</code> (UTC+7)` : '⏳ Chưa đạt chỉ tiêu'}\n\n`;
 
         message += `🏃 <b>DANH SÁCH BÀI CHẠY GẦN ĐÂY (${user.activities.length} bài):</b>\n`;
         if (user.activities.length === 0) {
@@ -291,13 +291,13 @@ Danh sách lệnh hỗ trợ:
         } else {
           user.activities.forEach((act, idx) => {
             const distKm = (act.distance / 1000).toFixed(2);
-            const dateStr = new Date(act.startDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+            const dateStr = formatVietnamDateTime(act.startDate);
             const paceStr = formatPace(act.averagePace);
             const statusIcon = act.isLegit ? '✅' : '❌ (Phạm quy)';
             const stravaUrl = `https://www.strava.com/activities/${act.stravaActivityId}`;
 
-            message += `<b>${idx + 1}.</b> <a href="${stravaUrl}">${act.name}</a> - ${statusIcon}\n`;
-            message += `   ⏱️ ${dateStr} | <code>${distKm} km</code> | Pace: <code>${paceStr}</code> (ID: <code>${act.stravaActivityId}</code>)\n`;
+            message += `<b>${idx + 1}.</b> <a href="${stravaUrl}">${escapeHtml(act.name)}</a> - ${statusIcon}\n`;
+            message += `   ⏱️ ${dateStr} (UTC+7) | <code>${distKm} km</code> | Pace: <code>${paceStr}</code> (ID: <code>${act.stravaActivityId}</code>)\n`;
             if (!act.isLegit && act.flagReason) {
               message += `   ⚠️ Lý do: <i>${act.flagReason}</i>\n`;
             }
@@ -502,10 +502,8 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
         } else {
           maleWinners.forEach((user, index) => {
             const rank = index === 0 ? '👑 GIẢI NHẤT (500k)' : `#${index + 1}`;
-            const timeStr = user.reachedTargetAt 
-              ? new Date(user.reachedTargetAt).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })
-              : 'N/A';
-            message += `${rank} - <b>${user.nickName}</b>: Cán mốc lúc <code>${timeStr}</code>\n`;
+            const timeStr = formatVietnamDateTime(user.reachedTargetAt);
+            message += `${rank} - <b>${escapeHtml(user.nickName)}</b>: Cán mốc lúc <code>${timeStr}</code> (UTC+7)\n`;
           });
         }
 
@@ -515,10 +513,8 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
         } else {
           femaleWinners.forEach((user, index) => {
             const rank = index === 0 ? '👑 GIẢI NHẤT (500k)' : `#${index + 1}`;
-            const timeStr = user.reachedTargetAt 
-              ? new Date(user.reachedTargetAt).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })
-              : 'N/A';
-            message += `${rank} - <b>${user.nickName}</b>: Cán mốc lúc <code>${timeStr}</code>\n`;
+            const timeStr = formatVietnamDateTime(user.reachedTargetAt);
+            message += `${rank} - <b>${escapeHtml(user.nickName)}</b>: Cán mốc lúc <code>${timeStr}</code> (UTC+7)\n`;
           });
         }
 

@@ -155,7 +155,7 @@ export async function processActivityQueueItem(
         });
 
         if (updatedUser.totalDistance >= targetDistanceMeters && updatedUser.reachedTargetAt === null) {
-          reachedAtDate = new Date();
+          reachedAtDate = new Date(activityData.start_date || Date.now());
           isNewWinner = true;
           await tx.user.update({
             where: { id: user.id },
@@ -200,7 +200,7 @@ export async function processActivityQueueItem(
         });
 
         if (updatedUser.totalDistance >= targetDistanceMeters && updatedUser.reachedTargetAt === null) {
-          reachedAtDate = new Date();
+          reachedAtDate = new Date(activityData.start_date || Date.now());
           isNewWinner = true;
           await tx.user.update({
             where: { id: user.id },
