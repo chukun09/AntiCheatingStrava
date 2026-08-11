@@ -1,11 +1,11 @@
 # Graph Report - Anti Cheating Strava  (2026-08-11)
 
 ## Corpus Check
-- 28 files · ~18,585 words
+- 28 files · ~18,586 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 158 nodes · 351 edges · 7 communities
+- 158 nodes · 352 edges · 7 communities
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 1 edges (avg confidence: 0.5)
 - Token cost: 0 input · 0 output
 
@@ -27,8 +27,8 @@
 1. `initTelegramBot()` - 19 edges
 2. `env` - 14 edges
 3. `processActivityQueueItem()` - 12 edges
-4. `compilerOptions` - 12 edges
-5. `sendTelegramMessage()` - 11 edges
+4. `sendTelegramMessage()` - 12 edges
+5. `compilerOptions` - 12 edges
 6. `syncUserPastActivities()` - 10 edges
 7. `getValidAccessToken()` - 8 edges
 8. `getAppCredentials()` - 7 edges
@@ -90,7 +90,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **Why does `xlsx` connect `devDependencies` to `index.ts`, `db.ts`?**
   _High betweenness centrality (0.264) - this node is a cross-community bridge._
 - **Why does `exportViolationsToExcelBuffer()` connect `index.ts` to `devDependencies`?**
-  _High betweenness centrality (0.184) - this node is a cross-community bridge._
+  _High betweenness centrality (0.185) - this node is a cross-community bridge._
 - **What connects `name`, `version`, `description` to the rest of the system?**
   _59 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `devDependencies` be split into smaller, more focused modules?**

@@ -2488,6 +2488,17 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/bot/index.ts",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "src_bot_index",
+      "target": "src_services_telegram_service_sendtelegrammessage",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",

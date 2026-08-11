@@ -1,10 +1,15 @@
 import { db } from '../config/db';
 import { env } from '../config/env';
+import { stravaRateLimiter } from '../utils/ratelimit';
 
 export interface StravaAppCredentials {
   clientId: string;
   clientSecret: string;
 }
+
+// Strict maximum ceiling of connected users per Strava App (Development mode cap is 10)
+// We cap at 9 to maximize capacity while leaving a 1-user safety margin for re-authorizations
+export const MAX_USERS_PER_APP = 9;
 
 /**
  * Returns all configured Strava Apps in the pool.
@@ -59,13 +64,27 @@ let roundRobinIndex = 0;
 const pendingCountMap = new Map<string, number>();
 
 /**
- * Selects an available Strava App from the pool using "Least Connected Users First" algorithm.
- * Prioritizes apps with the minimum connected users (< 10) to evenly balance load from 0 -> 1 -> 2 -> 9 users.
+ * Decrement pending count attempt when OAuth flow completes or fails
  */
-export async function getAvailableStravaApp(): Promise<StravaAppCredentials> {
+export function decrementPendingApp(clientId?: string | null): void {
+  if (!clientId) return;
+  const p = pendingCountMap.get(clientId) || 0;
+  if (p > 0) {
+    pendingCountMap.set(clientId, p - 1);
+  }
+}
+
+/**
+ * Selects an available Strava App from the pool.
+ * Features:
+ * 1. Hard cap at MAX_USERS_PER_APP (8 users) per App to prevent HTTP 403 Forbidden errors.
+ * 2. Rate Limit Filtering: Filters out apps currently at >= 90% usage.
+ * 3. Returns null if ALL apps in the pool reached the 8-user maximum capacity.
+ */
+export async function getAvailableStravaApp(): Promise<StravaAppCredentials | null> {
   const pool = getStravaAppPool();
 
-  if (pool.length <= 1) {
+  if (pool.length === 0) {
     return getAppCredentials();
   }
 
@@ -84,51 +103,55 @@ export async function getAvailableStravaApp(): Promise<StravaAppCredentials> {
   const appLoads = pool.map(app => {
     const dbCount = countMap.get(app.clientId) || 0;
     const pendingCount = pendingCountMap.get(app.clientId) || 0;
+    const isRateLimited = stravaRateLimiter.isRateLimited(app.clientId);
     return {
       app,
       dbCount,
       pendingCount,
-      totalLoad: dbCount + pendingCount
+      totalLoad: dbCount + pendingCount,
+      isRateLimited
     };
   });
 
-  // Filter eligible apps that currently have < 10 total users
-  const eligibleAppLoads = appLoads.filter(item => item.totalLoad < 10);
+  // Filter apps under MAX_USERS_PER_APP (8) AND NOT currently rate-limited
+  let eligibleAppLoads = appLoads.filter(item => item.totalLoad < MAX_USERS_PER_APP && !item.isRateLimited);
 
-  let selectedApp: StravaAppCredentials;
-
-  if (eligibleAppLoads.length > 0) {
-    // Find the minimum load among eligible apps (Least Connected Users First)
-    const minLoad = Math.min(...eligibleAppLoads.map(item => item.totalLoad));
-    
-    // Get all candidate apps that share this minimum load
-    const candidateApps = eligibleAppLoads.filter(item => item.totalLoad === minLoad).map(item => item.app);
-
-    // Rotate evenly via Round-Robin among the least connected candidate apps
-    selectedApp = candidateApps[roundRobinIndex % candidateApps.length];
-    roundRobinIndex = (roundRobinIndex + 1) % candidateApps.length;
-  } else {
-    // If ALL apps reached 10, pick the app with absolute minimum load
-    selectedApp = appLoads.reduce((best, current) => {
-      return current.totalLoad < best.totalLoad ? current : best;
-    }, appLoads[0]).app;
+  // Fallback: If all un-full apps are rate-limited, relax rate-limit filter but still enforce MAX_USERS_PER_APP (8)
+  if (eligibleAppLoads.length === 0) {
+    eligibleAppLoads = appLoads.filter(item => item.totalLoad < MAX_USERS_PER_APP);
   }
+
+  // HARD CAP SAFETY GUARD: If ALL apps in the pool reached MAX_USERS_PER_APP (8), return null to show friendly warning screen!
+  if (eligibleAppLoads.length === 0) {
+    console.warn(`[Strava App Pool WARNING] ALL ${pool.length} Strava Apps reached the maximum capacity of ${MAX_USERS_PER_APP} users!`);
+    return null;
+  }
+
+  // Find the minimum load among eligible apps (Least Connected Users First)
+  const minLoad = Math.min(...eligibleAppLoads.map(item => item.totalLoad));
+  
+  // Get all candidate apps that share this minimum load
+  const candidateApps = eligibleAppLoads.filter(item => item.totalLoad === minLoad).map(item => item.app);
+
+  // Rotate evenly via Round-Robin among the least connected candidate apps
+  const selectedApp = candidateApps[roundRobinIndex % candidateApps.length];
+  roundRobinIndex = (roundRobinIndex + 1) % candidateApps.length;
 
   // Track pending registration attempt
   const currentPending = pendingCountMap.get(selectedApp.clientId) || 0;
   pendingCountMap.set(selectedApp.clientId, currentPending + 1);
 
-  // Auto safety timeout: decrement pending count after 10 minutes
+  // Auto safety timeout: decrement pending count after 2 minutes
   setTimeout(() => {
-    const p = pendingCountMap.get(selectedApp.clientId) || 0;
-    if (p > 0) {
-      pendingCountMap.set(selectedApp.clientId, p - 1);
-    }
-  }, 10 * 60 * 1000);
+    decrementPendingApp(selectedApp.clientId);
+  }, 2 * 60 * 1000);
 
   const dbCount = countMap.get(selectedApp.clientId) || 0;
   const pendingCount = pendingCountMap.get(selectedApp.clientId) || 0;
-  console.log(`[Strava App Pool] Selected App Client ID: ${selectedApp.clientId} (DB: ${dbCount}, Pending: ${pendingCount}, Total: ${dbCount + pendingCount}/10) [Least-Connected First]`);
+  console.log(
+    `[Strava App Pool] Selected App Client ID: ${selectedApp.clientId} ` +
+    `(DB: ${dbCount}, Pending: ${pendingCount}, Total: ${dbCount + pendingCount}/${MAX_USERS_PER_APP})`
+  );
 
   return selectedApp;
 }

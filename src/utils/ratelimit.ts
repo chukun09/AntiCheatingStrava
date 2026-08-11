@@ -79,6 +79,16 @@ class StravaRateLimiter {
   }
 
   /**
+   * Check if a specific Client ID is currently rate limited (>= 90% 15-minute or daily usage)
+   */
+  public isRateLimited(clientId: string = 'default'): boolean {
+    const bucket = this.getBucket(clientId);
+    const is15mFull = bucket.read15mLimit > 0 && bucket.read15mUsage >= Math.floor(bucket.read15mLimit * 0.9);
+    const isDailyFull = bucket.readDailyLimit > 0 && bucket.readDailyUsage >= Math.floor(bucket.readDailyLimit * 0.9);
+    return is15mFull || isDailyFull;
+  }
+
+  /**
    * Acquire a slot before making a Strava API read request.
    * Throws StravaDailyQuotaError if daily limit is reached to IMMEDIATELY release worker slots.
    * Delays for up to 15 minutes if 15-minute window limit is reached.

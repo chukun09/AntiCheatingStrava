@@ -5,7 +5,7 @@ import { env } from '../config/env';
 import { getTeamName } from '../services/team.service';
 import { syncUserPastActivities, syncAllUsersPastActivities } from '../services/sync.service';
 import { overrideActivityStatus } from '../services/override.service';
-import { getAvailableStravaApp, getAppCredentials } from '../services/stravapool.service';
+import { getAvailableStravaApp, getAppCredentials, decrementPendingApp, MAX_USERS_PER_APP } from '../services/stravapool.service';
 
 /**
  * POST /auth/strava-link
@@ -34,8 +34,50 @@ export async function handleStravaLink(req: Request, res: Response) {
     const userGender = gender === 'FEMALE' ? 'FEMALE' : 'MALE';
     const userTeamId = parseInt(teamId || '1', 10);
 
-    // Auto select Strava App from Pool (< 10 athletes)
-    const selectedApp = await getAvailableStravaApp();
+    // If user already exists in DB with assigned appClientId, attempt to reuse existing App Client
+    let selectedApp = null;
+    const existingUser = await db.user.findUnique({
+      where: { nickName: trimmedNickName },
+      select: { appClientId: true }
+    });
+
+    if (existingUser?.appClientId) {
+      selectedApp = getAppCredentials(existingUser.appClientId);
+    } else {
+      // Auto select available Strava App from Pool (< 8 athletes)
+      selectedApp = await getAvailableStravaApp();
+    }
+
+    // Capacity Guard: If ALL apps in pool reached max 8 users
+    if (!selectedApp) {
+      return res.status(503).send(`
+        <!DOCTYPE html>
+        <html lang="vi">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Hệ thống tạm ngắt đăng ký - IRIS Running</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+        </head>
+        <body class="bg-slate-950 text-white min-h-screen flex items-center justify-center p-4">
+          <div class="max-w-md w-full bg-slate-900 border border-amber-500/30 rounded-2xl p-8 text-center shadow-2xl">
+            <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+            </div>
+            
+            <h1 class="text-xl font-bold text-amber-400 mb-2">HỆ THỐNG APP POOL ĐÃ ĐẠT TRẦN DUNG LƯỢNG!</h1>
+            <p class="text-slate-300 text-sm mb-6">Tất cả các Strava App hiện tại đều đã gánh đủ ${MAX_USERS_PER_APP} VĐV (theo quy định giới hạn của Strava Developer Platform). Vui lòng thông báo cho Ban Tổ Chức để thêm App Client ID mới vào file cấu hình!</p>
+            
+            <a href="/" class="inline-block w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-xl transition duration-200">
+              Thử lại sau
+            </a>
+          </div>
+        </body>
+        </html>
+      `);
+    }
 
     const statePayload = JSON.stringify({
       nickName: trimmedNickName,
@@ -103,6 +145,9 @@ export async function handleStravaCallback(req: Request, res: Response) {
       code: String(code),
       grant_type: 'authorization_code'
     });
+
+    // Release pending counter slot
+    decrementPendingApp(stateData.appClientId);
 
     const { access_token, refresh_token, expires_at, athlete } = tokenResponse.data;
     const stravaAthleteId = BigInt(athlete.id);
