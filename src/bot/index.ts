@@ -620,8 +620,8 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
     const handleExcelExport = async (ctx: any) => {
       try {
         const text = ctx.message?.text || '';
-        const parts = text.split(/\s+/);
-        const param = parts.length > 1 ? parts[1] : 'tatca';
+        const parts = text.trim().split(/\s+/);
+        const param = parts.length > 1 ? parts.slice(1).join(' ') : 'tatca';
 
         await ctx.reply(`📊 Đang trích xuất báo cáo Excel vi phạm theo bộ lọc "${param}"... Vui lòng đợi trong giây lát.`);
 
@@ -647,8 +647,8 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
     const handleLeaderboardExcelExport = async (ctx: any) => {
       try {
         const text = ctx.message?.text || '';
-        const parts = text.split(/\s+/);
-        const param = parts.length > 1 ? parts[1] : 'tatca';
+        const parts = text.trim().split(/\s+/);
+        const param = parts.length > 1 ? parts.slice(1).join(' ') : 'tatca';
 
         await ctx.reply(`📊 Đang trích xuất Bảng Xếp Hạng Excel theo bộ lọc "${param}"... Vui lòng đợi trong giây lát.`);
 
