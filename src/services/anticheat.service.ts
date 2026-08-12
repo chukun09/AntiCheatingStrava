@@ -31,12 +31,12 @@ export function validateActivity(activity: any): ValidationResult {
     }
   }
 
-  // 1. Check Activity Type (Only Run or TrailRun)
-  const allowedTypes = ['Run', 'TrailRun'];
+  // 1. Check Activity Type (Only Run, TrailRun, or VirtualRun)
+  const allowedTypes = ['Run', 'TrailRun', 'VirtualRun'];
   if (!activity.type || !allowedTypes.includes(activity.type)) {
     return {
       isLegit: false,
-      reason: `Loại vận động không hợp lệ: ${activity.type || 'Không xác định'} (Chỉ tính Run / TrailRun)`
+      reason: `Loại vận động không hợp lệ: ${activity.type || 'Không xác định'} (Chỉ tính Run / TrailRun / VirtualRun)`
     };
   }
 

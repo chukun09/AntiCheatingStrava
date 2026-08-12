@@ -106,14 +106,14 @@ Danh sách lệnh hỗ trợ:
           });
 
           if (usersInDept.length === 0) {
-            return ctx.replyWithHTML(`⚠️ Không tìm thấy phòng ban nào chứa tên <b>"${searchDept}"</b>.`);
+            return ctx.replyWithHTML(`⚠️ Không tìm thấy phòng ban nào chứa tên <b>"${escapeHtml(searchDept)}"</b>.`);
           }
 
           const actualDeptName = usersInDept[0].department || searchDept;
           const totalMeters = usersInDept.reduce((sum, u) => sum + u.totalDistance, 0);
           const avgKm = (totalMeters / 1000) / usersInDept.length;
 
-          let message = `🏢 <b>CHI TIẾT PHÒNG BAN: ${actualDeptName.toUpperCase()}</b> 🏢\n\n`;
+          let message = `🏢 <b>CHI TIẾT PHÒNG BAN: ${escapeHtml(actualDeptName.toUpperCase())}</b> 🏢\n\n`;
           message += `📊 <b>Trung bình phòng:</b> <code>${avgKm.toFixed(2)} km/người</code>\n`;
           message += `🏃 <b>Tổng quãng đường:</b> <code>${(totalMeters / 1000).toFixed(1)} km</code> (${usersInDept.length} VĐV)\n\n`;
           message += `👥 <b>DANH SÁCH CHI TIẾT TỪNG VĐV TRONG PHÒNG:</b>\n`;
@@ -125,7 +125,7 @@ Danh sách lệnh hỗ trợ:
             const targetMeters = user.gender === 'FEMALE' ? 15000 : 30000;
             const doneTag = user.totalDistance >= targetMeters ? ' ⚡ (Đã đạt)' : '';
 
-            message += `${medal} ${genderIcon} <b>${user.nickName}</b> (${getTeamName(user.teamId)}): <code>${distKm} km</code>${doneTag}\n`;
+            message += `${medal} ${genderIcon} <b>${escapeHtml(user.nickName)}</b> (${escapeHtml(getTeamName(user.teamId))}): <code>${distKm} km</code>${doneTag}\n`;
           });
 
           return ctx.replyWithHTML(message);
@@ -156,7 +156,7 @@ Danh sách lệnh hỗ trợ:
         } else {
           deptList.forEach((dept, index) => {
             const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>#${index + 1}</b>`;
-            message += `${medal} <b>${dept.deptName}</b>\n`;
+            message += `${medal} <b>${escapeHtml(dept.deptName)}</b>\n`;
             message += `   📊 Trung bình: <code>${dept.avgKm.toFixed(2)} km/người</code> (Tổng ${dept.totalKm.toFixed(1)}km - ${dept.memberCount} VĐV)\n`;
           });
         }
@@ -246,7 +246,7 @@ Danh sách lệnh hỗ trợ:
 
         teamList.forEach((team, index) => {
           const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>#${index + 1}.</b>`;
-          message += `${medal} <b>${team.name}</b>\n`;
+          message += `${medal} <b>${escapeHtml(team.name)}</b>\n`;
           message += `   📊 Trung bình: <code>${team.avgKm.toFixed(2)} km/người</code> (Tổng: ${team.totalKm.toFixed(1)}km - ${team.memberCount} thành viên)\n`;
         });
 
@@ -549,13 +549,13 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
         let message = `🚀 <b>GIẢI TUẦN 3: TĂNG TỐC & BỨT PHÁ GIỚI HẠN</b> 🚀\n\n`;
 
         message += `🏆 <b>CÁ NHÂN BỨT PHÁ (KM TUẦN 3 CAO NHẤT):</b>\n`;
-        message += `👨 <b>Nam:</b> ${ind.males[0] ? `<b>${ind.males[0].user?.nickName}</b> (<code>${ind.males[0].totalKm.toFixed(1)} km</code>)` : 'Chưa có dữ liệu'}\n`;
-        message += `👩 <b>Nữ:</b> ${ind.females[0] ? `<b>${ind.females[0].user?.nickName}</b> (<code>${ind.females[0].totalKm.toFixed(1)} km</code>)` : 'Chưa có dữ liệu'}\n\n`;
+        message += `👨 <b>Nam:</b> ${ind.males[0] ? `<b>${escapeHtml(ind.males[0].user?.nickName)}</b> (<code>${ind.males[0].totalKm.toFixed(1)} km</code>)` : 'Chưa có dữ liệu'}\n`;
+        message += `👩 <b>Nữ:</b> ${ind.females[0] ? `<b>${escapeHtml(ind.females[0].user?.nickName)}</b> (<code>${ind.females[0].totalKm.toFixed(1)} km</code>)` : 'Chưa có dữ liệu'}\n\n`;
 
         message += `🛡️ <b>TẬP THỂ TĂNG TỐC (AVG KM/NGƯỜI TUẦN 3):</b>\n`;
         teams.forEach((t, index) => {
           const medal = index === 0 ? '👑 TOP 1 (1.000.000đ)' : `#${index + 1}`;
-          message += `${medal} <b>${t.teamName}</b>: <code>${t.avgKmPerMember.toFixed(2)} km/người</code> (Tổng ${t.totalKmWeek3.toFixed(1)}km)\n`;
+          message += `${medal} <b>${escapeHtml(t.teamName)}</b>: <code>${t.avgKmPerMember.toFixed(2)} km/người</code> (Tổng ${t.totalKmWeek3.toFixed(1)}km)\n`;
         });
 
         return ctx.replyWithHTML(message);
@@ -573,7 +573,7 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
 
         teams.forEach((t, index) => {
           const medal = index === 0 ? '👑 GIẢI NHẤT TẬP THỂ (1.000.000đ)' : index === 1 ? '🥈 TOP 2' : index === 2 ? '🥉 TOP 3' : `<b>#${index + 1}</b>`;
-          message += `${medal} <b>${t.teamName}</b>\n`;
+          message += `${medal} <b>${escapeHtml(t.teamName)}</b>\n`;
           message += `   📊 TB cả giải: <code>${t.avgKmPerMember.toFixed(2)} km/người</code> (Tổng ${t.totalKmWholeContest.toFixed(1)}km)\n`;
         });
 
@@ -604,7 +604,7 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
           const genderIcon = p.gender === 'FEMALE' ? '👩' : '👨';
           const exemptTag = p.isExempt ? ' [Miễn phạt]' : '';
 
-          message += `${genderIcon} <b>${p.nickName}</b> (${getTeamName(p.teamId)}):\n`;
+          message += `${genderIcon} <b>${escapeHtml(p.nickName)}</b> (${escapeHtml(getTeamName(p.teamId))}):\n`;
           message += `   Đạt: ${p.totalKmAchieved.toFixed(1)}/${p.targetKm}km -> Thiếu: <b>${p.missingKm} km</b> -> Đóng góp: <code>${fineFormatted} VNĐ</code>${exemptTag}\n`;
         });
 
@@ -687,7 +687,7 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
         msg += `📉 <b>Tổng km chênh lệch:</b> <code>${res.totalDriftKm} km</code>\n\n`;
 
         res.diffs.slice(0, 15).forEach((d, idx) => {
-          msg += `${idx + 1}. <b>${d.nickName}</b>: DB <code>${d.dbTotalKm}km</code> ➔ Đúng: <code>${d.calculatedLegitKm}km</code> (Lệch <code>${d.driftKm}km</code>)\n`;
+          msg += `${idx + 1}. <b>${escapeHtml(d.nickName)}</b>: DB <code>${d.dbTotalKm}km</code> ➔ Đúng: <code>${d.calculatedLegitKm}km</code> (Lệch <code>${d.driftKm}km</code>)\n`;
         });
 
         if (res.diffs.length > 15) {
