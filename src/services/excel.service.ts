@@ -155,7 +155,12 @@ export async function exportViolationsToExcelBuffer(param?: string): Promise<Exc
  * Supports filtering by Week ('tuan1', 'tuan2', 'tuan3', 'tuan4') or All Time ('tatca').
  */
 export async function exportLeaderboardToExcelBuffer(param?: string): Promise<ExcelExportResult> {
-  const cleanParam = (param || 'tatca').trim().toLowerCase();
+  let cleanParam = (param || 'tatca').trim().toLowerCase().replace(/[\s_]+/g, '');
+  if (cleanParam === '1' || cleanParam === 'w1' || cleanParam === 'tuần1') cleanParam = 'tuan1';
+  if (cleanParam === '2' || cleanParam === 'w2' || cleanParam === 'tuần2') cleanParam = 'tuan2';
+  if (cleanParam === '3' || cleanParam === 'w3' || cleanParam === 'tuần3') cleanParam = 'tuan3';
+  if (cleanParam === '4' || cleanParam === 'w4' || cleanParam === 'tuần4') cleanParam = 'tuan4';
+
   let filterTitle = 'Bảng Xếp Hạng Toàn Bộ VĐV (Cả Giải)';
   const selectedWeek = WEEK_RANGES[cleanParam];
 
@@ -217,7 +222,12 @@ export async function exportLeaderboardToExcelBuffer(param?: string): Promise<Ex
       targetKm,
       isTargetReached
     };
-  }).sort((a, b) => b.totalKm - a.totalKm);
+  }).sort((a, b) => {
+    if (Math.abs(b.totalKm - a.totalKm) > 0.001) {
+      return b.totalKm - a.totalKm;
+    }
+    return a.avgPaceSec - b.avgPaceSec;
+  });
 
   const rows = leaderboardList.map((item, index) => {
     const u = item.user;
