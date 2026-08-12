@@ -1,7 +1,8 @@
 import * as XLSX from 'xlsx';
 import { db } from '../config/db';
-
 import { env } from '../config/env';
+import { getTeamName } from './team.service';
+import { formatVietnamDateTime, formatPace } from './telegram.service';
 
 const week1StartDate = env.ALLOW_TEST_DATE ? new Date('2026-07-01T00:00:00+07:00') : new Date('2026-08-03T00:00:00+07:00');
 
@@ -37,11 +38,6 @@ export interface ExcelExportResult {
 
 /**
  * Generates an Excel (.xlsx) Buffer containing violation/flagged activities based on optional filters.
- * Filters supported:
- * - 'tatca' or empty: All violations
- * - 'tuan1', 'tuan2', 'tuan3', 'tuan4': Specific week date window
- * - 'doi1', 'doi2'...'doi8': Specific Team ID
- * - Any string: Search by user Nickname or Full Name
  */
 export async function exportViolationsToExcelBuffer(param?: string): Promise<ExcelExportResult> {
   const cleanParam = (param || 'tatca').trim().toLowerCase();
@@ -49,7 +45,6 @@ export async function exportViolationsToExcelBuffer(param?: string): Promise<Exc
   let dateWhere: any = {};
   let userWhere: any = {};
 
-  // 1. Check if filter is by Week (tuan1 -> tuan4)
   if (WEEK_RANGES[cleanParam]) {
     const week = WEEK_RANGES[cleanParam];
     filterTitle = `Các bài vi phạm trong ${week.name}`;
@@ -59,15 +54,11 @@ export async function exportViolationsToExcelBuffer(param?: string): Promise<Exc
         lte: week.end
       }
     };
-  }
-  // 2. Check if filter is by Team (doi1 -> doi8)
-  else if (/^doi[1-8]$/.test(cleanParam)) {
+  } else if (/^doi[1-8]$/.test(cleanParam)) {
     const teamNum = parseInt(cleanParam.replace('doi', ''), 10);
     filterTitle = `Các bài vi phạm thuộc Đội ${teamNum}`;
     userWhere = { teamId: teamNum };
-  }
-  // 3. Check if filter is by Nickname or Name
-  else if (cleanParam !== 'tatca' && cleanParam !== 'all') {
+  } else if (cleanParam !== 'tatca' && cleanParam !== 'all') {
     filterTitle = `Các bài vi phạm của VĐV khớp từ khóa "${param}"`;
     userWhere = {
       OR: [
@@ -77,7 +68,6 @@ export async function exportViolationsToExcelBuffer(param?: string): Promise<Exc
     };
   }
 
-  // Query database for non-legit activities matching filters
   const activities = await db.activity.findMany({
     where: {
       isLegit: false,
@@ -88,18 +78,13 @@ export async function exportViolationsToExcelBuffer(param?: string): Promise<Exc
     orderBy: { startDate: 'desc' }
   });
 
-  // Prepare Excel rows
   const rows = activities.map((act, index) => {
     const distKm = (act.distance / 1000).toFixed(2);
     const movingMin = (act.movingTime / 60).toFixed(1);
 
     const paceSec = act.distance > 0 ? act.movingTime / (act.distance / 1000) : 0;
-    const paceMinStr = Math.floor(paceSec / 60);
-    const paceSecStr = Math.round(paceSec % 60);
-    const paceFormatted = `${paceMinStr}:${paceSecStr < 10 ? '0' : ''}${paceSecStr}`;
-
     const maxSpeedKmH = (act.maxSpeed * 3.6).toFixed(1);
-    const dateFormatted = new Date(act.startDate).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+    const dateFormatted = formatVietnamDateTime(act.startDate);
 
     const rpm = act.averageCadence || 0;
     const spm = Math.round(rpm * 2);
@@ -111,13 +96,13 @@ export async function exportViolationsToExcelBuffer(param?: string): Promise<Exc
       'Họ và Tên VĐV': act.user.fullName || act.user.nickName,
       'Nickname': act.user.nickName,
       'Giới tính': act.user.gender === 'FEMALE' ? 'Nữ' : 'Nam',
-      'Đội thi đấu': `Đội ${act.user.teamId}`,
+      'Đội thi đấu': getTeamName(act.user.teamId),
       'Phòng Ban': act.user.department || 'N/A',
       'Ngày giờ chạy (UTC+7)': dateFormatted,
       'Tên bài chạy': act.name,
       'Quãng đường (km)': parseFloat(distKm),
       'Thời gian (phút)': parseFloat(movingMin),
-      'Pace (min/km)': paceFormatted,
+      'Pace (min/km)': formatPace(paceSec),
       'Max Speed (km/h)': parseFloat(maxSpeedKmH),
       'Thiết bị (Device)': act.deviceName || 'N/A',
       'Bước chân (Cadence)': spm > 0 ? `${spm} bước/phút` : 'Không có',
@@ -127,17 +112,15 @@ export async function exportViolationsToExcelBuffer(param?: string): Promise<Exc
     };
   });
 
-  // Create Worksheet & Workbook using SheetJS
   const worksheet = XLSX.utils.json_to_sheet(rows);
 
-  // Set column widths for readability
   worksheet['!cols'] = [
     { wch: 6 },   // STT
     { wch: 22 },  // Activity ID
     { wch: 24 },  // Họ tên
     { wch: 18 },  // Nickname
     { wch: 10 },  // Giới tính
-    { wch: 12 },  // Đội
+    { wch: 30 },  // Đội
     { wch: 20 },  // Phòng ban
     { wch: 22 },  // Ngày giờ
     { wch: 30 },  // Tên bài
@@ -163,6 +146,125 @@ export async function exportViolationsToExcelBuffer(param?: string): Promise<Exc
     buffer,
     filename,
     totalRecords: activities.length,
+    filterTitle
+  };
+}
+
+/**
+ * Generates an Excel (.xlsx) Buffer containing Leaderboard / User Rankings for ALL users.
+ * Supports filtering by Week ('tuan1', 'tuan2', 'tuan3', 'tuan4') or All Time ('tatca').
+ */
+export async function exportLeaderboardToExcelBuffer(param?: string): Promise<ExcelExportResult> {
+  const cleanParam = (param || 'tatca').trim().toLowerCase();
+  let filterTitle = 'Bảng Xếp Hạng Toàn Bộ VĐV (Cả Giải)';
+  const selectedWeek = WEEK_RANGES[cleanParam];
+
+  const users = await db.user.findMany({
+    orderBy: { teamId: 'asc' }
+  });
+
+  let userStatsMap = new Map<string, { totalDistanceMeters: number; validCount: number; totalMovingTimeSec: number }>();
+
+  if (selectedWeek) {
+    filterTitle = `Bảng Xếp Hạng VĐV trong ${selectedWeek.name}`;
+    
+    // Group legit activities within week window
+    const activities = await db.activity.findMany({
+      where: {
+        isLegit: true,
+        startDate: { gte: selectedWeek.start, lte: selectedWeek.end }
+      }
+    });
+
+    activities.forEach(act => {
+      const current = userStatsMap.get(act.userId) || { totalDistanceMeters: 0, validCount: 0, totalMovingTimeSec: 0 };
+      current.totalDistanceMeters += act.distance;
+      current.validCount += 1;
+      current.totalMovingTimeSec += act.movingTime;
+      userStatsMap.set(act.userId, current);
+    });
+  } else {
+    // Whole contest aggregated stats
+    const activitiesGrouped = await db.activity.groupBy({
+      by: ['userId'],
+      where: { isLegit: true },
+      _sum: { distance: true, movingTime: true },
+      _count: { id: true }
+    });
+
+    activitiesGrouped.forEach(g => {
+      userStatsMap.set(g.userId, {
+        totalDistanceMeters: g._sum.distance || 0,
+        validCount: g._count.id || 0,
+        totalMovingTimeSec: g._sum.movingTime || 0
+      });
+    });
+  }
+
+  // Build combined leaderboard data
+  const leaderboardList = users.map(user => {
+    const stats = userStatsMap.get(user.id) || { totalDistanceMeters: 0, validCount: 0, totalMovingTimeSec: 0 };
+    const distKm = stats.totalDistanceMeters / 1000;
+    const avgPaceSec = distKm > 0 ? stats.totalMovingTimeSec / distKm : 0;
+    const targetKm = user.gender === 'FEMALE' ? 15 : 30;
+    const isTargetReached = user.totalDistance >= (targetKm * 1000);
+
+    return {
+      user,
+      totalKm: distKm,
+      validCount: stats.validCount,
+      avgPaceSec,
+      targetKm,
+      isTargetReached
+    };
+  }).sort((a, b) => b.totalKm - a.totalKm);
+
+  const rows = leaderboardList.map((item, index) => {
+    const u = item.user;
+    return {
+      'Hạng (Rank)': index + 1,
+      'Họ và Tên VĐV': u.fullName || u.nickName,
+      'Nickname': u.nickName,
+      'Giới tính': u.gender === 'FEMALE' ? 'Nữ' : 'Nam',
+      'Đội thi đấu': getTeamName(u.teamId),
+      'Phòng Ban': u.department || 'N/A',
+      'Tổng Quãng đường (km)': parseFloat(item.totalKm.toFixed(2)),
+      'Số bài chạy hợp lệ': item.validCount,
+      'Pace trung bình': formatPace(item.avgPaceSec),
+      'Chỉ tiêu cá nhân (km)': item.targetKm,
+      'Trạng thái mốc chỉ tiêu': item.isTargetReached ? '⚡ Đã đạt' : '⏳ Chưa đạt',
+      'Thời điểm cán mốc (UTC+7)': u.reachedTargetAt ? formatVietnamDateTime(u.reachedTargetAt) : 'Chưa đạt'
+    };
+  });
+
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+
+  worksheet['!cols'] = [
+    { wch: 12 },  // Rank
+    { wch: 24 },  // Họ tên
+    { wch: 18 },  // Nickname
+    { wch: 10 },  // Giới tính
+    { wch: 30 },  // Đội
+    { wch: 20 },  // Phòng ban
+    { wch: 22 },  // Tổng km
+    { wch: 18 },  // Số bài hợp lệ
+    { wch: 16 },  // Pace
+    { wch: 20 },  // Chỉ tiêu km
+    { wch: 22 },  // Trạng thái mốc
+    { wch: 24 }   // Thời điểm cán mốc
+  ];
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Bang_Xep_Hang');
+
+  const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+  const nowStr = new Date().toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }).replace(/\//g, '_');
+  const filename = `BANG_XEP_HANG_${cleanParam.toUpperCase()}_${nowStr}.xlsx`;
+
+  return {
+    buffer,
+    filename,
+    totalRecords: leaderboardList.length,
     filterTitle
   };
 }

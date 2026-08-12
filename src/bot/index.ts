@@ -13,7 +13,7 @@ import {
   getWeek3TeamAward, 
   getWeek4TeamAward 
 } from '../services/awards.service';
-import { exportViolationsToExcelBuffer } from '../services/excel.service';
+import { exportViolationsToExcelBuffer, exportLeaderboardToExcelBuffer } from '../services/excel.service';
 import { reconcileAllUsers } from '../services/reconcile.service';
 
 let bot: Telegraf | null = null;
@@ -48,7 +48,8 @@ export function initTelegramBot(): Telegraf | null {
           const validCommands = [
             'start', 'help', 'bxh_canhan', 'bxh_doi', 'doi', 'bxh_phong', 'bxh_phongban', 'phong',
             'lichsu', 'chitiet', 'speed_tuan1', 'giai_tuan1', 'giai_tuan2', 
-            'giai_tuan3', 'giai_tuan4', 'phat', 'excel_vipham', 'vipham_excel'
+            'giai_tuan3', 'giai_tuan4', 'phat', 'sync', 'excel_vipham', 'vipham_excel',
+            'excel_bxh', 'bxh_excel', 'doisoat', 'duyet', 'huy', 'duyet_tatca', 'huy_tatca'
           ];
           if (validCommands.includes(cmdName)) {
             // Normalize command prefix while keeping trailing args
@@ -77,10 +78,11 @@ Danh sách lệnh hỗ trợ:
 🏃 <code>/giai_tuan2</code> - Xem BXH Giải Tập Thể Tuần 2 (Pace Đội - Ưu đãi Nữ -1 min/km).
 🚀 <code>/giai_tuan3</code> - Xem BXH Giải Tuần 3 (Bứt phá Cá nhân & Tập thể).
 🏁 <code>/giai_tuan4</code> - Xem BXH Giải Tập Thể Về Đích (Avg Km Cả Giải).
-💸 <code>/phat</code> - Thống kê dự kiến đóng góp quỹ cho thành viên chưa đạt chỉ tiêu.
+📊 <code>/excel_bxh [tuan1-4/tatca]</code> - Trích xuất file Excel Bảng xếp hạng VĐV theo tuần.
+📄 <code>/excel_vipham [tuan1-4/doi1-8/tatca]</code> - Trích xuất file Excel danh sách bài vi phạm.
 🔄 <code>/sync</code> - Kích hoạt đồng bộ bài chạy mới nhất từ Strava cho tất cả VĐV.
-✅ <code>/duyet [ID_Bai_Chay]</code> - BTC duyệt bài chạy thủ công.
-❌ <code>/huy [ID_Bai_Chay] [Lý do]</code> - BTC từ chối bài chạy phạm quy.
+✅ <code>/duyet [IDs]</code> - BTC duyệt bài chạy hợp lệ theo danh sách IDs.
+❌ <code>/huy [IDs]</code> - BTC từ chối bài chạy phạm quy theo danh sách IDs.
 ❓ <code>/help</code> - Hướng dẫn sử dụng Bot.
 
 🔗 <b>Trang đăng ký:</b> Truy cập <a href="${env.APP_BASE_URL}">${env.APP_BASE_URL}</a> để liên kết tài khoản Strava!`;
@@ -640,6 +642,30 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
 
     bot.command('excel_vipham', handleExcelExport);
     bot.command('vipham_excel', handleExcelExport);
+
+    // Command /excel_bxh & /bxh_excel - Leaderboard Excel Export (Week or All-time)
+    const handleLeaderboardExcelExport = async (ctx: any) => {
+      try {
+        const text = ctx.message?.text || '';
+        const parts = text.split(/\s+/);
+        const param = parts.length > 1 ? parts[1] : 'tatca';
+
+        await ctx.reply(`📊 Đang trích xuất Bảng Xếp Hạng Excel theo bộ lọc "${param}"... Vui lòng đợi trong giây lát.`);
+
+        const result = await exportLeaderboardToExcelBuffer(param);
+
+        await ctx.replyWithDocument(
+          { source: result.buffer, filename: result.filename },
+          { caption: `📄 <b>EXCEL BẢNG XẾP HẠNG VẬN ĐỘNG VIÊN</b>\n📌 <b>Bộ lọc:</b> ${result.filterTitle}\n📊 <b>Tổng số VĐV:</b> <code>${result.totalRecords} người</code>\n💡 <i>Mẹo: Gõ <code>/excel_bxh tuan1</code>, <code>/excel_bxh tuan2</code>, <code>/excel_bxh tuan3</code>, <code>/excel_bxh tuan4</code> hoặc <code>/excel_bxh tatca</code> để lọc theo tuần!</i>`, parse_mode: 'HTML' }
+        );
+      } catch (error: any) {
+        console.error('[Bot /excel_bxh] Error:', error);
+        return ctx.reply('Lỗi khi xuất tệp Excel Bảng xếp hạng: ' + (error?.message || error));
+      }
+    };
+
+    bot.command('excel_bxh', handleLeaderboardExcelExport);
+    bot.command('bxh_excel', handleLeaderboardExcelExport);
 
     // Command /doisoat [fix] - Audit & Reconcile User Total Distance
     bot.command('doisoat', async (ctx) => {
