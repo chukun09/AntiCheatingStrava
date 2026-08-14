@@ -108,10 +108,8 @@ export async function getTeamWeekDetail(teamId: number, weekNumber?: number | nu
 
     let isQualified = false;
     if (targetWeekObj) {
-      if (weekNumber === 1) {
+      if (weekNumber === 1 || weekNumber === 2) {
         isQualified = totalDistanceKm >= 3.0;
-      } else if (weekNumber === 2) {
-        isQualified = stat.runCount >= 1;
       } else {
         isQualified = totalDistanceKm > 0;
       }

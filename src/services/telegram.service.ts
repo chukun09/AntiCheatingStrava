@@ -24,8 +24,9 @@ export function formatVietnamDateTime(date: Date | string | null): string {
  */
 export function formatPace(secPerKm: number): string {
   if (!secPerKm || secPerKm <= 0 || !isFinite(secPerKm)) return 'N/A';
-  const min = Math.floor(secPerKm / 60);
-  const sec = Math.round(secPerKm % 60);
+  const totalSeconds = Math.round(secPerKm);
+  const min = Math.floor(totalSeconds / 60);
+  const sec = totalSeconds % 60;
   return `${min}:${sec < 10 ? '0' : ''}${sec} min/km`;
 }
 

@@ -84,8 +84,9 @@ export function validateActivity(activity: any): ValidationResult {
   // 5. Block abnormal Average Pace (< 4:00 min/km ~ 240 seconds/km per IRIS Rules)
   const averagePaceSecPerKm = activity.moving_time / (activity.distance / 1000);
   if (averagePaceSecPerKm < 240) {
-    const paceMin = Math.floor(averagePaceSecPerKm / 60);
-    const paceSec = Math.round(averagePaceSecPerKm % 60);
+    const totalSec = Math.round(averagePaceSecPerKm);
+    const paceMin = Math.floor(totalSec / 60);
+    const paceSec = totalSec % 60;
     const paceStr = `${paceMin}:${paceSec < 10 ? '0' : ''}${paceSec}`;
     return {
       isLegit: false,
@@ -127,8 +128,9 @@ export function validateActivity(activity: any): ValidationResult {
           const nextGap = nextPace > 0 ? nextPace - splitPaceSec : 0;
 
           if (prevGap > 135 || nextGap > 135) {
-            const minStr = Math.floor(splitPaceSec / 60);
-            const secStr = Math.round(splitPaceSec % 60);
+            const totalSec = Math.round(splitPaceSec);
+            const minStr = Math.floor(totalSec / 60);
+            const secStr = totalSec % 60;
             const spikePaceStr = `${minStr}:${secStr < 10 ? '0' : ''}${secStr}`;
             return {
               isLegit: false,
@@ -173,8 +175,9 @@ export function validateActivity(activity: any): ValidationResult {
     const stepsPerKm = distKm > 0 ? totalEstSteps / distKm : 0;
     const strideLengthMeters = totalEstSteps > 0 ? activity.distance / totalEstSteps : 0;
 
-    const paceMin = Math.floor(averagePaceSecPerKm / 60);
-    const paceSec = Math.round(averagePaceSecPerKm % 60);
+    const totalSec = Math.round(averagePaceSecPerKm);
+    const paceMin = Math.floor(totalSec / 60);
+    const paceSec = totalSec % 60;
     const paceStr = `${paceMin}:${paceSec < 10 ? '0' : ''}${paceSec}`;
 
     // 10a. Low Cadence Check (< 100 spm while moving < 7:00 min/km)
@@ -205,8 +208,9 @@ export function validateActivity(activity: any): ValidationResult {
   // 11. Detect Abnormally Low Heart Rate vs Physical Effort (when heart rate exists)
   const avgHr = activity.average_heartrate || null;
   if (activity.has_heartrate && avgHr && avgHr > 0) {
-    const paceMin = Math.floor(averagePaceSecPerKm / 60);
-    const paceSec = Math.round(averagePaceSecPerKm % 60);
+    const totalSec = Math.round(averagePaceSecPerKm);
+    const paceMin = Math.floor(totalSec / 60);
+    const paceSec = totalSec % 60;
     const paceStr = `${paceMin}:${paceSec < 10 ? '0' : ''}${paceSec}`;
 
     // 11a. Resting Heart Rate check (< 100 bpm while moving < 7:00 min/km)
