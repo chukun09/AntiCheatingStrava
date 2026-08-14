@@ -323,6 +323,7 @@ export async function getBestPaceActivities(options?: BestPaceQueryOptions) {
     where: {
       isLegit: true,
       averagePace: { gt: 0 },
+      distance: { gte: 3000 }, // Chỉ lọc bài chạy có quãng đường >= 3km (3000 mét)
       ...dateFilter
     },
     include: {

@@ -525,10 +525,10 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
         });
 
         if (res.activities.length === 0) {
-          return ctx.replyWithHTML(`🏃 <b>TOP BÀI CHẠY PACE TỐT NHẤT (${escapeHtml(res.weekTitle.toUpperCase())})</b>\n\n<i>Chưa có bài chạy hợp lệ nào trong khoảng thời gian này.</i>`);
+          return ctx.replyWithHTML(`🏃 <b>TOP BÀI CHẠY PACE TỐT NHẤT (${escapeHtml(res.weekTitle.toUpperCase())})</b>\n\n<i>Chưa có bài chạy hợp lệ từ 3km trở lên trong khoảng thời gian này.</i>`);
         }
 
-        const header = `⚡ <b>TOP ${res.activities.length} BÀI CHẠY PACE TỐT NHẤT (${escapeHtml(res.weekTitle.toUpperCase())})</b> ⚡\n\n`;
+        const header = `⚡ <b>TOP ${res.activities.length} BÀI CHẠY PACE TỐT NHẤT (${escapeHtml(res.weekTitle.toUpperCase())} - TỪ 3KM TRỞ LÊN)</b> ⚡\n\n`;
 
         const itemLines: string[] = [];
         res.activities.forEach((act, idx) => {
