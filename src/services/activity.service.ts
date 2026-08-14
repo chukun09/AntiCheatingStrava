@@ -2,6 +2,7 @@ import { db } from '../config/db';
 import { getValidAccessToken, fetchStravaActivityDetail } from './strava.service';
 import { validateActivity } from './anticheat.service';
 import { notifyReachedMilestone, notifyCheatingAlert, notifyActivityDeleted, notifyActivityUpdated } from './telegram.service';
+import { WEEKS } from './awards.service';
 
 /**
  * Worker function executed by P-Queue to process a Strava activity event (create, update, or delete)
@@ -281,3 +282,63 @@ export async function processActivityQueueItem(
     });
   }
 }
+
+export interface BestPaceQueryOptions {
+  week?: number | string;
+  limit?: number;
+}
+
+/**
+ * Retrieves the top fastest (best pace) legit activities within a specific week or across the whole contest.
+ */
+export async function getBestPaceActivities(options?: BestPaceQueryOptions) {
+  const limit = Math.min(Math.max(Number(options?.limit) || 10, 1), 100);
+
+  let dateFilter: any = {};
+  let weekTitle = 'Toàn bộ giải';
+  let weekNumber: number | null = null;
+
+  if (options?.week !== undefined && options?.week !== null && options?.week !== '') {
+    const rawWeek = String(options.week).trim().toLowerCase().replace(/[\s_]+/g, '');
+    const match = rawWeek.match(/\d+/);
+    if (match) {
+      const parsedWeek = parseInt(match[0], 10);
+      if (parsedWeek >= 1 && parsedWeek <= 4) {
+        weekNumber = parsedWeek;
+        const weekObj = WEEKS[parsedWeek - 1];
+        if (weekObj) {
+          dateFilter = {
+            startDate: {
+              gte: weekObj.start,
+              lt: weekObj.end
+            }
+          };
+          weekTitle = weekObj.name;
+        }
+      }
+    }
+  }
+
+  const activities = await db.activity.findMany({
+    where: {
+      isLegit: true,
+      averagePace: { gt: 0 },
+      ...dateFilter
+    },
+    include: {
+      user: true
+    },
+    orderBy: {
+      averagePace: 'asc' // Fastest pace (smallest seconds/km) first
+    },
+    take: limit
+  });
+
+  return {
+    weekNumber,
+    weekTitle,
+    limit,
+    activities
+  };
+}
+

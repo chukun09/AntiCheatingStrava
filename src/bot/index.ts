@@ -15,6 +15,7 @@ import {
 } from '../services/awards.service';
 import { exportViolationsToExcelBuffer, exportLeaderboardToExcelBuffer } from '../services/excel.service';
 import { reconcileAllUsers } from '../services/reconcile.service';
+import { getBestPaceActivities } from '../services/activity.service';
 
 let bot: Telegraf | null = null;
 
@@ -37,23 +38,23 @@ export function initTelegramBot(): Telegraf | null {
     bot = new Telegraf(env.TELEGRAM_BOT_TOKEN);
 
     // Middleware to support flexible mention formats:
-    // e.g. "@IRIS_Runner_Bot /bxh_canhan", "@IRIS_Runner_Bot bxh_canhan", "/bxh_canhan@IRIS_Runner_Bot"
+    // e.g. "@IRIS_Runner_Bot /best-pace", "@IRIS_Runner_Bot best-pace", "/best-pace@IRIS_Runner_Bot"
     bot.use(async (ctx, next) => {
       if (ctx.message && 'text' in ctx.message) {
         const rawText = (ctx.message.text || '').trim();
         // Match patterns like `@Bot /command`, `@Bot command`, `/command@Bot`, `/command`, `command`
-        const match = rawText.match(/^(?:@[\w_]+\s+)?\/?([a-zA-Z0-9_]+)(?:@[\w_]+)?(?:\s+.*)?$/);
+        const match = rawText.match(/^(?:@[\w_]+\s+)?\/?([a-zA-Z0-9_-]+)(?:@[\w_]+)?(?:\s+.*)?$/);
         if (match) {
           const cmdName = match[1].toLowerCase();
           const validCommands = [
             'start', 'help', 'bxh_canhan', 'bxh_doi', 'doi', 'bxh_phong', 'bxh_phongban', 'phong',
-            'lichsu', 'chitiet', 'speed_tuan1', 'giai_tuan1', 'giai_tuan2', 
+            'lichsu', 'chitiet', 'speed_tuan1', 'best-pace', 'best_pace', 'giai_tuan1', 'giai_tuan2', 
             'giai_tuan3', 'giai_tuan4', 'phat', 'sync', 'excel_vipham', 'vipham_excel',
             'excel_bxh', 'bxh_excel', 'doisoat', 'duyet', 'huy', 'duyet_tatca', 'huy_tatca'
           ];
           if (validCommands.includes(cmdName)) {
             // Normalize command prefix while keeping trailing args
-            const trailingArgs = rawText.replace(/^(?:@[\w_]+\s+)?\/?([a-zA-Z0-9_]+)(?:@[\w_]+)?/, '');
+            const trailingArgs = rawText.replace(/^(?:@[\w_]+\s+)?\/?([a-zA-Z0-9_-]+)(?:@[\w_]+)?/, '');
             ctx.message.text = `/${cmdName}${trailingArgs}`;
           }
         }
@@ -74,6 +75,7 @@ Danh sách lệnh hỗ trợ:
 🏢 <code>/bxh_phong [Tên_Phòng]</code> - Xem BXH Phòng Ban (Gõ <code>/bxh_phong Kỹ thuật</code> để xem chi tiết VĐV).
 📋 <code>/lichsu [Nickname]</code> - Xem hồ sơ & danh sách bài chạy chi tiết của 1 VĐV.
 🥇 <code>/speed_tuan1</code> - Vinh danh Giải Cá Nhân Tuần 1 (Nam 30km, Nữ 15km).
+⚡ <code>/best-pace [tuần] [top]</code> - Xem Top bài chạy Pace tốt nhất (VD: <code>/best-pace 1 50</code>).
 ⚡ <code>/giai_tuan1</code> - Xem BXH Giải Tập Thể Tuần 1 (Tỷ lệ % tham gia >= 3km).
 🏃 <code>/giai_tuan2</code> - Xem BXH Giải Tập Thể Tuần 2 (Pace Đội - Ưu đãi Nữ -1 min/km).
 🚀 <code>/giai_tuan3</code> - Xem BXH Giải Tuần 3 (Bứt phá Cá nhân & Tập thể).
@@ -495,6 +497,80 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
         return ctx.reply('Lỗi khi tải thông tin Giải Tuần 1.');
       }
     });
+
+    // Command /best-pace [tuần] [top_count] or /best_pace [tuần] [top_count]
+    const handleBestPace = async (ctx: any) => {
+      try {
+        const text = (ctx.message?.text || '').trim();
+        const parts = text.split(/\s+/);
+
+        let weekParam: string | number = '';
+        let limitParam = 10;
+
+        if (parts.length === 2) {
+          // e.g. /best-pace 1 or /best-pace tuan1
+          weekParam = parts[1];
+        } else if (parts.length >= 3) {
+          // e.g. /best-pace 1 50 or /best-pace tuan1 20
+          weekParam = parts[1];
+          const parsedLimit = parseInt(parts[2], 10);
+          if (!isNaN(parsedLimit) && parsedLimit > 0) {
+            limitParam = parsedLimit;
+          }
+        }
+
+        const res = await getBestPaceActivities({
+          week: weekParam,
+          limit: limitParam
+        });
+
+        if (res.activities.length === 0) {
+          return ctx.replyWithHTML(`🏃 <b>TOP BÀI CHẠY PACE TỐT NHẤT (${escapeHtml(res.weekTitle.toUpperCase())})</b>\n\n<i>Chưa có bài chạy hợp lệ nào trong khoảng thời gian này.</i>`);
+        }
+
+        const header = `⚡ <b>TOP ${res.activities.length} BÀI CHẠY PACE TỐT NHẤT (${escapeHtml(res.weekTitle.toUpperCase())})</b> ⚡\n\n`;
+
+        const itemLines: string[] = [];
+        res.activities.forEach((act, idx) => {
+          const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `<b>#${idx + 1}.</b>`;
+          const distKm = (act.distance / 1000).toFixed(2);
+          const paceStr = formatPace(act.averagePace);
+          const stravaUrl = `https://www.strava.com/activities/${act.stravaActivityId}`;
+          const athleteName = act.user.fullName || act.user.nickName;
+          const teamName = getTeamName(act.user.teamId);
+
+          let line = `${medal} <b>${escapeHtml(athleteName)}</b> (@${escapeHtml(act.user.nickName)} - ${escapeHtml(teamName)})\n`;
+          line += `   └─ <a href="${stravaUrl}">${escapeHtml(act.name)}</a> | <code>${distKm} km</code> | Pace: <b>${paceStr} min/km</b> (ID: <code>${act.stravaActivityId}</code>)\n`;
+          itemLines.push(line);
+        });
+
+        // Split message if exceeding Telegram max character limit
+        let currentMessage = header;
+        const messagesToSend: string[] = [];
+
+        for (const line of itemLines) {
+          if ((currentMessage + line).length > 3800) {
+            messagesToSend.push(currentMessage);
+            currentMessage = line;
+          } else {
+            currentMessage += line;
+          }
+        }
+        if (currentMessage.length > 0) {
+          messagesToSend.push(currentMessage);
+        }
+
+        for (const msg of messagesToSend) {
+          await ctx.replyWithHTML(msg, { disable_web_page_preview: true });
+        }
+      } catch (error: any) {
+        console.error('[Bot /best-pace] Error:', error);
+        return ctx.reply('Lỗi khi lấy danh sách bài chạy Pace tốt nhất: ' + (error?.message || error));
+      }
+    };
+
+    bot.command('best-pace', handleBestPace);
+    bot.command('best_pace', handleBestPace);
 
     // Command /giai_tuan1 - Week 1 Team Award (% Participation >= 3km + 3-tier tie-breakers)
     bot.command('giai_tuan1', async (ctx) => {
