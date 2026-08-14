@@ -108,9 +108,22 @@ export async function getWeek2TeamAward() {
     const totalMembers = teamMembers.length;
 
     const teamActs = teamActivitiesMap.get(team.id) || [];
-    const participantSet = new Set(teamActs.map(a => a.userId));
-    const participantCount = participantSet.size;
-    const is100PercentParticipated = totalMembers > 0 && participantCount >= totalMembers;
+
+    // Calculate total distance per user in Week 2 for this team
+    const userDistanceMap = new Map<string, number>();
+    teamActs.forEach(a => {
+      userDistanceMap.set(a.userId, (userDistanceMap.get(a.userId) || 0) + (a.distance / 1000));
+    });
+
+    let qualifiedMembers = 0;
+    teamMembers.forEach(u => {
+      const userKm = userDistanceMap.get(u.id) || 0;
+      if (userKm >= 3.0) {
+        qualifiedMembers++;
+      }
+    });
+
+    const is100PercentParticipated = totalMembers > 0 && qualifiedMembers >= totalMembers;
 
     let totalAdjustedSec = 0;
     let totalDistanceKm = 0;
@@ -134,7 +147,7 @@ export async function getWeek2TeamAward() {
       teamId: team.id,
       teamName: team.name,
       totalMembers,
-      participantCount,
+      participantCount: qualifiedMembers,
       is100PercentParticipated,
       totalDistanceKm,
       averagePaceSecPerKm

@@ -598,14 +598,14 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
       try {
         const teams = await getWeek2TeamAward();
         let message = `🏃 <b>GIẢI TẬP THỂ TUẦN 2: VƯỢT CHƯỚNG NGẠI VẬT (PACE ĐỘI)</b> 🏃\n`;
-        message += `<i>(ĐK cần: 100% VĐV tham gia | Ưu đãi Nữ: giảm 1 min/km khi tổng kết)</i>\n\n`;
+        message += `<i>(ĐK cần: 100% VĐV đạt >= 3km | Ưu đãi Nữ: giảm 1 min/km khi tổng kết)</i>\n\n`;
 
         teams.forEach((t, index) => {
           const medal = index === 0 ? '👑 TOP 1 (1.000.000đ)' : index === 1 ? '🥈 TOP 2' : index === 2 ? '🥉 TOP 3' : `<b>#${index + 1}</b>`;
-          const statusTag = t.is100PercentParticipated ? '✅ (100% Tham gia)' : `❌ (${t.participantCount}/${t.totalMembers} VĐV)`;
+          const statusTag = t.is100PercentParticipated ? '✅ (100% Đạt >= 3km)' : `❌ (${t.participantCount}/${t.totalMembers} VĐV đạt >= 3km)`;
           const paceStr = formatPace(t.averagePaceSecPerKm);
 
-          message += `${medal} <b>${t.teamName}</b> ${statusTag}\n`;
+          message += `${medal} <b>${escapeHtml(t.teamName)}</b> ${statusTag}\n`;
           message += `   ⚡ Pace trung bình: <code>${paceStr}</code> (Tổng chạy: ${t.totalDistanceKm.toFixed(1)}km)\n`;
         });
 
