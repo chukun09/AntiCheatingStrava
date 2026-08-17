@@ -18,6 +18,7 @@ import { reconcileAllUsers } from '../services/reconcile.service';
 import { getBestPaceActivities } from '../services/activity.service';
 import { getCompanySummaryStats } from '../services/stats.service';
 import { grantPickleballBonus, revokePickleballBonus } from '../services/bonus.service';
+import { getGrowthLeaderboard } from '../services/progress.service';
 
 let bot: Telegraf | null = null;
 
@@ -51,6 +52,7 @@ export function initTelegramBot(): Telegraf | null {
           const validCommands = [
             'start', 'help', 'bxh_canhan', 'bxh_doi', 'doi', 'bxh_phong', 'bxh_phongban', 'phong',
             'lichsu', 'chitiet', 'speed_tuan1', 'best-pace', 'best_pace', 'tonghop', 'thongke', 'summary',
+            'bxh_butpha', 'butpha', 'but_pha',
             'giai_tuan1', 'giai_tuan2', 'giai_tuan3', 'giai_tuan4', 'phat', 'sync', 'excel_vipham', 'vipham_excel',
             'excel_bxh', 'bxh_excel', 'doisoat', 'duyet', 'huy', 'duyet_tatca', 'huy_tatca',
             'cong_pickleball', 'bonus_pickleball', 'huy_pickleball'
@@ -78,6 +80,7 @@ Danh sách lệnh hỗ trợ:
 🏢 <code>/bxh_phong [Tên_Phòng]</code> - Xem BXH Phòng Ban (Gõ <code>/bxh_phong Kỹ thuật</code> để xem chi tiết VĐV).
 📋 <code>/lichsu [Nickname]</code> - Xem hồ sơ & danh sách bài chạy chi tiết của 1 VĐV.
 📊 <code>/tonghop [tuần/tatca]</code> - Báo cáo tổng hợp tỷ lệ tham gia & Pace toàn công ty.
+📈 <code>/bxh_butpha [tuần] [top]</code> - BXH VĐV bứt phá tiến bộ nhất (VD: <code>/bxh_butpha 3 20</code>).
 ⚡ <code>/best-pace [tuần] [top]</code> - Xem Top bài chạy Pace tốt nhất (VD: <code>/best-pace 1 50</code>).
 🥇 <code>/speed_tuan1</code> - Vinh danh Giải Cá Nhân Tuần 1 (Nam 30km, Nữ 15km).
 ⚡ <code>/giai_tuan1</code> - Xem BXH Giải Tập Thể Tuần 1 (Tỷ lệ % tham gia >= 3km).
@@ -619,6 +622,91 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
     };
 
     bot.command(['tonghop', 'thongke', 'summary'], handleCompanySummary);
+
+    // Command /bxh_butpha [tuần] [top] or /butpha or /but_pha - Distance Growth Leaderboard between weeks
+    const handleGrowthLeaderboard = async (ctx: any) => {
+      try {
+        const text = (ctx.message?.text || '').trim();
+        const parts = text.split(/\s+/).slice(1);
+
+        let targetWeek: string | number = 3;
+        let baseWeek: string | number | undefined = undefined;
+        let limit: string | number = 10;
+
+        if (parts.length === 1) {
+          const p1 = parseInt(parts[0], 10);
+          if (!isNaN(p1)) {
+            if (p1 >= 2 && p1 <= 4) {
+              targetWeek = p1;
+            } else if (p1 > 4) {
+              limit = p1;
+            }
+          }
+        } else if (parts.length >= 2) {
+          const p1 = parseInt(parts[0], 10);
+          const p2 = parseInt(parts[1], 10);
+          if (!isNaN(p1) && p1 >= 2 && p1 <= 4) {
+            targetWeek = p1;
+            if (!isNaN(p2)) {
+              if (parts.length >= 3) {
+                baseWeek = p2;
+                limit = parseInt(parts[2], 10) || 10;
+              } else {
+                limit = p2;
+              }
+            }
+          } else if (!isNaN(p1) && p1 > 4) {
+            limit = p1;
+          }
+        }
+
+        const res = await getGrowthLeaderboard({ targetWeek, baseWeek, limit });
+
+        if (res.rankings.length === 0) {
+          return ctx.replyWithHTML(`📈 <b>BẢNG XẾP HẠNG BỨT PHÁ (${escapeHtml(res.targetWeekName.toUpperCase())} vs ${escapeHtml(res.baseWeekName.toUpperCase())}):</b>\n\nℹ️ Chưa có VĐV nào có quãng đường tăng trưởng dương trong kỳ này.`);
+        }
+
+        const messagesToSend: string[] = [];
+        let currentMessage = `📈 <b>BẢNG XẾP HẠNG BỨT PHÁ TIẾN BỘ QUÃNG ĐƯỜNG</b> 📈\n`;
+        currentMessage += `<i>(So sánh: ${escapeHtml(res.targetWeekName)} vs ${escapeHtml(res.baseWeekName)} | Top ${res.limit} VĐV bứt phá nhất)</i>\n\n`;
+
+        res.rankings.forEach((item, index) => {
+          const medal = index === 0 ? '👑 TOP 1' : index === 1 ? '🥈 TOP 2' : index === 2 ? '🥉 TOP 3' : `<b>#${index + 1}</b>`;
+          const athleteName = escapeHtml(item.user.fullName || item.user.nickName);
+          const teamName = escapeHtml(getTeamName(item.user.teamId));
+          const deltaFormatted = item.deltaKm >= 0 ? `+${item.deltaKm.toFixed(2)}` : `${item.deltaKm.toFixed(2)}`;
+          const percentStr = item.growthPercent !== null ? ` (+${item.growthPercent.toFixed(0)}%)` : '';
+
+          let entry = `${medal} <b>${athleteName}</b> (@${escapeHtml(item.user.nickName)} - ${teamName})\n`;
+          entry += `   └─ 🚀 <b>Tăng: <code>${deltaFormatted} km</code></b>${percentStr} (T${res.targetWeekNum}: ${item.targetWeekKm.toFixed(1)}km | T${res.baseWeekNum}: ${item.baseWeekKm.toFixed(1)}km)\n`;
+
+          if (currentMessage.length + entry.length > 3800) {
+            messagesToSend.push(currentMessage);
+            currentMessage = entry;
+          } else {
+            currentMessage += entry;
+          }
+        });
+
+        const tip = `\n💡 <i>Mẹo: Gõ <code>/bxh_butpha 3 20</code> để xem Top 20 Tuần 3, hoặc <code>/bxh_butpha 2 10</code> để xem Tuần 2!</i>`;
+        if (currentMessage.length + tip.length > 3800) {
+          messagesToSend.push(currentMessage);
+          messagesToSend.push(tip);
+        } else {
+          currentMessage += tip;
+          messagesToSend.push(currentMessage);
+        }
+
+        for (const msg of messagesToSend) {
+          await ctx.replyWithHTML(msg, { disable_web_page_preview: true });
+        }
+      } catch (error: any) {
+        console.error('[Bot /bxh_butpha] Error:', error);
+        return ctx.reply('Lỗi khi tải Bảng xếp hạng bứt phá: ' + (error?.message || error));
+      }
+    };
+
+    bot.command(['bxh_butpha', 'butpha', 'but_pha'], handleGrowthLeaderboard);
 
     // Command /giai_tuan1 - Week 1 Team Award (% Participation >= 3km + 3-tier tie-breakers)
     bot.command('giai_tuan1', async (ctx) => {
