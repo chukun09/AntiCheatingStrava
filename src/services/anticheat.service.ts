@@ -64,6 +64,15 @@ export function validateActivity(activity: any): ValidationResult {
     };
   }
 
+  // Minimum Distance Check (Mỗi bài chạy phải đạt tối thiểu 3.00 km ~ 3000m theo Thể lệ giải IRIS)
+  if (activity.distance < 3000) {
+    const distKm = (activity.distance / 1000).toFixed(2);
+    return {
+      isLegit: false,
+      reason: `Quãng đường không đạt cự ly tối thiểu: ${distKm} km (Yêu cầu mỗi bài chạy phải đạt từ 3.00 km trở lên)`
+    };
+  }
+
   // Moving time guard check to prevent NaN in all pace calculations
   if (!activity.moving_time || typeof activity.moving_time !== 'number' || activity.moving_time <= 0 || !isFinite(activity.moving_time)) {
     return {
