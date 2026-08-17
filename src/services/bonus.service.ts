@@ -16,6 +16,55 @@ export interface BonusResult {
 export const PICKLEBALL_BONUS_PREFIX = '999903';
 
 /**
+ * Helper to flexibly find a user by exact/partial nickname or full name,
+ * with or without "IRIS" prefix, spaces, underscores, or hyphens.
+ */
+export async function findUserByFlexibleQuery(query: string) {
+  const clean = query.trim().replace(/^@/, '');
+  if (!clean) return null;
+
+  // 1. Exact match on nickName or fullName (case-insensitive)
+  let user = await db.user.findFirst({
+    where: {
+      OR: [
+        { nickName: { equals: clean, mode: 'insensitive' } },
+        { fullName: { equals: clean, mode: 'insensitive' } }
+      ]
+    }
+  });
+  if (user) return user;
+
+  // 2. Try variations with / without "IRIS" prefix
+  const withoutIris = clean.replace(/^iris[\s_-]*/i, '').trim();
+  const withIrisSpace = `IRIS ${withoutIris}`;
+  const withIrisNoSpace = `IRIS${withoutIris}`;
+  const withIrisUnderscore = `IRIS_${withoutIris}`;
+
+  user = await db.user.findFirst({
+    where: {
+      OR: [
+        { nickName: { equals: withoutIris, mode: 'insensitive' } },
+        { nickName: { equals: withIrisSpace, mode: 'insensitive' } },
+        { nickName: { equals: withIrisNoSpace, mode: 'insensitive' } },
+        { nickName: { equals: withIrisUnderscore, mode: 'insensitive' } }
+      ]
+    }
+  });
+  if (user) return user;
+
+  // 3. Substring contains search
+  user = await db.user.findFirst({
+    where: {
+      OR: [
+        { nickName: { contains: withoutIris || clean, mode: 'insensitive' } },
+        { fullName: { contains: withoutIris || clean, mode: 'insensitive' } }
+      ]
+    }
+  });
+  return user;
+}
+
+/**
  * Grant +5km (Male) or +3km (Female) Pickleball bonus in Week 3 to a list of athlete nicknames.
  */
 export async function grantPickleballBonus(nicknames: string[]): Promise<BonusResult[]> {
@@ -25,15 +74,8 @@ export async function grantPickleballBonus(nicknames: string[]): Promise<BonusRe
     const cleanNick = rawNick.trim().replace(/^@/, '');
     if (!cleanNick) continue;
 
-    // Search user by nickName (case-insensitive) or fullName
-    const user = await db.user.findFirst({
-      where: {
-        OR: [
-          { nickName: { equals: cleanNick, mode: 'insensitive' } },
-          { fullName: { equals: cleanNick, mode: 'insensitive' } }
-        ]
-      }
-    });
+    // Search user with flexible query logic
+    const user = await findUserByFlexibleQuery(cleanNick);
 
     if (!user) {
       results.push({
@@ -122,20 +164,13 @@ export async function revokePickleballBonus(nicknames: string[]): Promise<BonusR
     const cleanNick = rawNick.trim().replace(/^@/, '');
     if (!cleanNick) continue;
 
-    const user = await db.user.findFirst({
-      where: {
-        OR: [
-          { nickName: { equals: cleanNick, mode: 'insensitive' } },
-          { fullName: { equals: cleanNick, mode: 'insensitive' } }
-        ]
-      }
-    });
+    const user = await findUserByFlexibleQuery(cleanNick);
 
     if (!user) {
       results.push({
         success: false,
         nickname: cleanNick,
-        message: `Không tìm thấy VĐV với nickname "${cleanNick}".`
+        message: `Không tìm thấy VĐV với nickname hoặc họ tên "${cleanNick}".`
       });
       continue;
     }
