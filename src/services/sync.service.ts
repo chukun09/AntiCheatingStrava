@@ -77,8 +77,12 @@ export async function syncUserPastActivities(userId: string): Promise<{ syncedCo
       }
     });
 
-    // 3. High-Performance In-Memory Reconciliation: Find orphaned activities in DB
-    const deletedDbActivities = dbActivities.filter(a => !stravaActiveIds.has(String(a.stravaActivityId)));
+    // 3. High-Performance In-Memory Reconciliation: Find orphaned activities in DB (excluding system bonus activities)
+    const deletedDbActivities = dbActivities.filter(a => 
+      !stravaActiveIds.has(String(a.stravaActivityId)) && 
+      !String(a.stravaActivityId).startsWith('9999') &&
+      !a.name.toLowerCase().includes('pickleball')
+    );
 
     let deletedCount = 0;
     

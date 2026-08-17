@@ -17,6 +17,7 @@ import { exportViolationsToExcelBuffer, exportLeaderboardToExcelBuffer } from '.
 import { reconcileAllUsers } from '../services/reconcile.service';
 import { getBestPaceActivities } from '../services/activity.service';
 import { getCompanySummaryStats } from '../services/stats.service';
+import { grantPickleballBonus, revokePickleballBonus } from '../services/bonus.service';
 
 let bot: Telegraf | null = null;
 
@@ -51,7 +52,8 @@ export function initTelegramBot(): Telegraf | null {
             'start', 'help', 'bxh_canhan', 'bxh_doi', 'doi', 'bxh_phong', 'bxh_phongban', 'phong',
             'lichsu', 'chitiet', 'speed_tuan1', 'best-pace', 'best_pace', 'tonghop', 'thongke', 'summary',
             'giai_tuan1', 'giai_tuan2', 'giai_tuan3', 'giai_tuan4', 'phat', 'sync', 'excel_vipham', 'vipham_excel',
-            'excel_bxh', 'bxh_excel', 'doisoat', 'duyet', 'huy', 'duyet_tatca', 'huy_tatca'
+            'excel_bxh', 'bxh_excel', 'doisoat', 'duyet', 'huy', 'duyet_tatca', 'huy_tatca',
+            'cong_pickleball', 'bonus_pickleball', 'huy_pickleball'
           ];
           if (validCommands.includes(cmdName)) {
             // Normalize command prefix while keeping trailing args
@@ -82,6 +84,7 @@ Danh sách lệnh hỗ trợ:
 🏃 <code>/giai_tuan2</code> - Xem BXH Giải Tập Thể Tuần 2 (Pace Đội - Ưu đãi Nữ -1 min/km).
 🚀 <code>/giai_tuan3</code> - Xem BXH Giải Tuần 3 (Bứt phá Cá nhân & Tập thể).
 🏁 <code>/giai_tuan4</code> - Xem BXH Giải Tập Thể Về Đích (Avg Km Cả Giải).
+🏓 <code>/cong_pickleball [Nicknames...]</code> - BTC cộng điểm thưởng Pickleball (+5km Nam, +3km Nữ).
 📊 <code>/excel_bxh [tuan1-4/tatca]</code> - Trích xuất file Excel Bảng xếp hạng VĐV theo tuần.
 📄 <code>/excel_vipham [tuan1-4/doi1-8/tatca]</code> - Trích xuất file Excel danh sách bài vi phạm.
 🔄 <code>/sync</code> - Kích hoạt đồng bộ bài chạy mới nhất từ Strava cho tất cả VĐV.
@@ -952,14 +955,70 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
     bot.command('huy_tatca', async (ctx) => {
       try {
         const count = await db.activity.count({ where: { isLegit: false } });
-        if (count === 0) {
-          return ctx.replyWithHTML('🎉 <b>THÔNG BÁO:</b> Hiện tại không có bài chạy vi phạm nào trong danh sách.');
-        }
-
         return ctx.replyWithHTML(`📊 <b>THỐNG KÊ BÀI CHẠY VI PHẠM:</b>\n\nHệ thống đang lưu trữ <b>${count} bài chạy</b> vi phạm giữ nguyên trạng thái bị loại Bỏ.`);
       } catch (error: any) {
         console.error('[Bot /huy_tatca] Error:', error);
         return ctx.reply('Lỗi khi xác nhận hủy toàn bộ.');
+      }
+    });
+    // Command /cong_pickleball <Nick1> <Nick2> ... - Grant +5km (Male) or +3km (Female) Pickleball bonus in Week 3
+    const handlePickleballBonus = async (ctx: any) => {
+      try {
+        const text = (ctx.message?.text || '').trim();
+        const parts = text.split(/\s+/).slice(1);
+
+        if (parts.length === 0) {
+          let msg = `🏓 <b>HƯỚNG DẪN CỘNG ĐIỂM THƯỞNG PICKLEBALL TUẦN 3:</b>\n\n`;
+          msg += `BTC hãy nhập danh sách Nickname hoặc Họ tên VĐV sau câu lệnh <code>/cong_pickleball</code>.\n\n`;
+          msg += `<i>Quy tắc thưởng:</i>\n`;
+          msg += `   👨 <b>Nam:</b> <code>+5.00 km</code> (Pace 6:00)\n`;
+          msg += `   👩 <b>Nữ:</b> <code>+3.00 km</code> (Pace 6:00)\n\n`;
+          msg += `<i>Ví dụ:</i> <code>/cong_pickleball HanaMichi Badboyz BachHop</code>`;
+          return ctx.replyWithHTML(msg);
+        }
+
+        const results = await grantPickleballBonus(parts);
+
+        let msg = `🏓 <b>KẾT QUẢ CỘNG ĐIỂM THƯỞNG PICKLEBALL TUẦN 3:</b>\n\n`;
+        results.forEach((r, idx) => {
+          const icon = r.success ? '✅' : '⚠️';
+          msg += `${icon} <b>${escapeHtml(r.nickname)}</b>: ${escapeHtml(r.message)}\n`;
+        });
+
+        return ctx.replyWithHTML(msg);
+      } catch (error: any) {
+        console.error('[Bot /cong_pickleball] Error:', error);
+        return ctx.reply('Lỗi khi cộng điểm thưởng Pickleball: ' + (error?.message || error));
+      }
+    };
+
+    bot.command(['cong_pickleball', 'bonus_pickleball'], handlePickleballBonus);
+
+    // Command /huy_pickleball <Nick1> <Nick2> ... - Revoke Pickleball bonus in Week 3
+    bot.command('huy_pickleball', async (ctx) => {
+      try {
+        const text = (ctx.message?.text || '').trim();
+        const parts = text.split(/\s+/).slice(1);
+
+        if (parts.length === 0) {
+          let msg = `⚠️ <b>HƯỚNG DẪN THU HỒI ĐIỂM THƯỞNG PICKLEBALL:</b>\n\n`;
+          msg += `BTC hãy nhập danh sách Nickname cần thu hồi sau câu lệnh <code>/huy_pickleball</code>.\n`;
+          msg += `<i>Ví dụ:</i> <code>/huy_pickleball HanaMichi Badboyz</code>`;
+          return ctx.replyWithHTML(msg);
+        }
+
+        const results = await revokePickleballBonus(parts);
+
+        let msg = `🏓 <b>KẾT QUẢ THU HỒI ĐIỂM THƯỞNG PICKLEBALL:</b>\n\n`;
+        results.forEach((r, idx) => {
+          const icon = r.success ? '✅' : '⚠️';
+          msg += `${icon} <b>${escapeHtml(r.nickname)}</b>: ${escapeHtml(r.message)}\n`;
+        });
+
+        return ctx.replyWithHTML(msg);
+      } catch (error: any) {
+        console.error('[Bot /huy_pickleball] Error:', error);
+        return ctx.reply('Lỗi khi thu hồi điểm thưởng Pickleball: ' + (error?.message || error));
       }
     });
 
