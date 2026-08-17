@@ -34,9 +34,10 @@ export async function findUserByFlexibleQuery(query: string) {
   });
   if (user) return user;
 
-  // 2. Try variations with / without "IRIS" prefix
-  const withoutIris = clean.replace(/^iris[\s_-]*/i, '').trim();
-  const withIrisSpace = `IRIS ${withoutIris}`;
+  // 2. Try variations with / without "IRIS" prefix or suffix
+  const withoutIris = clean.replace(/\b(iris)\b/gi, '').replace(/[\s_-]+/g, ' ').trim();
+  const withIrisPrefix = `IRIS ${withoutIris}`;
+  const withIrisSuffix = `${withoutIris} IRIS`;
   const withIrisNoSpace = `IRIS${withoutIris}`;
   const withIrisUnderscore = `IRIS_${withoutIris}`;
 
@@ -44,15 +45,17 @@ export async function findUserByFlexibleQuery(query: string) {
     where: {
       OR: [
         { nickName: { equals: withoutIris, mode: 'insensitive' } },
-        { nickName: { equals: withIrisSpace, mode: 'insensitive' } },
+        { nickName: { equals: withIrisPrefix, mode: 'insensitive' } },
+        { nickName: { equals: withIrisSuffix, mode: 'insensitive' } },
         { nickName: { equals: withIrisNoSpace, mode: 'insensitive' } },
-        { nickName: { equals: withIrisUnderscore, mode: 'insensitive' } }
+        { nickName: { equals: withIrisUnderscore, mode: 'insensitive' } },
+        { fullName: { equals: withoutIris, mode: 'insensitive' } }
       ]
     }
   });
   if (user) return user;
 
-  // 3. Substring contains search
+  // 3. Substring contains search (both directions)
   user = await db.user.findFirst({
     where: {
       OR: [
