@@ -667,7 +667,8 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
         const ind = await getWeek3IndividualAward();
         const teams = await getWeek3TeamAward();
 
-        let message = `🚀 <b>GIẢI TUẦN 3: TĂNG TỐC & BỨT PHÁ GIỚI HẠN</b> 🚀\n\n`;
+        let message = `🚀 <b>GIẢI TUẦN 3: TĂNG TỐC & BỨT PHÁ GIỚI HẠN</b> 🚀\n`;
+        message += `<i>(Điều kiện hợp lệ: Mỗi bài chạy phải đạt tối thiểu >= 3.00 km)</i>\n\n`;
 
         message += `🏆 <b>CÁ NHÂN BỨT PHÁ (KM TUẦN 3 CAO NHẤT):</b>\n`;
         message += `👨 <b>Nam:</b> ${ind.males[0] ? `<b>${escapeHtml(ind.males[0].user?.nickName)}</b> (<code>${ind.males[0].totalKm.toFixed(1)} km</code>)` : 'Chưa có dữ liệu'}\n`;

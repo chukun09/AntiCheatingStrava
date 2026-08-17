@@ -162,6 +162,7 @@ export async function getWeek2TeamAward() {
 
 /**
  * Tuần 3: Giải Cá Nhân Bứt Phá Giới Hạn - Quãng đường Tuần 3 cao nhất (Nam & Nữ)
+ * Điều kiện: Chỉ tính các bài chạy hợp lệ có cự ly tối thiểu >= 3.00km (3000m)
  */
 export async function getWeek3IndividualAward() {
   const week3 = WEEKS[2];
@@ -170,6 +171,7 @@ export async function getWeek3IndividualAward() {
     by: ['userId'],
     where: {
       isLegit: true,
+      distance: { gte: 3000 },
       startDate: { gte: week3.start, lt: week3.end },
       user: { gender: 'MALE' }
     },
@@ -182,6 +184,7 @@ export async function getWeek3IndividualAward() {
     by: ['userId'],
     where: {
       isLegit: true,
+      distance: { gte: 3000 },
       startDate: { gte: week3.start, lt: week3.end },
       user: { gender: 'FEMALE' }
     },
@@ -208,6 +211,7 @@ export async function getWeek3IndividualAward() {
 
 /**
  * Tuần 3: Giải Tập Thể Tăng Tốc - Avg Km / người cao nhất trong Tuần 3
+ * Điều kiện: Chỉ tính các bài chạy hợp lệ có cự ly tối thiểu >= 3.00km (3000m)
  */
 export async function getWeek3TeamAward() {
   const week3 = WEEKS[2];
@@ -217,6 +221,7 @@ export async function getWeek3TeamAward() {
     by: ['userId'],
     where: {
       isLegit: true,
+      distance: { gte: 3000 },
       startDate: { gte: week3.start, lt: week3.end }
     },
     _sum: { distance: true }
