@@ -980,9 +980,10 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
         const results = await grantPickleballBonus(parts);
 
         let msg = `🏓 <b>KẾT QUẢ CỘNG ĐIỂM THƯỞNG PICKLEBALL TUẦN 3:</b>\n\n`;
-        results.forEach((r, idx) => {
+        results.forEach((r) => {
           const icon = r.success ? '✅' : '⚠️';
-          msg += `${icon} <b>${escapeHtml(r.nickname)}</b>: ${escapeHtml(r.message)}\n`;
+          const displayName = r.fullName ? `<b>${escapeHtml(r.fullName)}</b> (@${escapeHtml(r.nickname)})` : `<b>${escapeHtml(r.nickname)}</b>`;
+          msg += `${icon} ${displayName}: ${escapeHtml(r.message)}\n`;
         });
 
         return ctx.replyWithHTML(msg);
@@ -1010,9 +1011,10 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
         const results = await revokePickleballBonus(parts);
 
         let msg = `🏓 <b>KẾT QUẢ THU HỒI ĐIỂM THƯỞNG PICKLEBALL:</b>\n\n`;
-        results.forEach((r, idx) => {
+        results.forEach((r) => {
           const icon = r.success ? '✅' : '⚠️';
-          msg += `${icon} <b>${escapeHtml(r.nickname)}</b>: ${escapeHtml(r.message)}\n`;
+          const displayName = r.fullName ? `<b>${escapeHtml(r.fullName)}</b> (@${escapeHtml(r.nickname)})` : `<b>${escapeHtml(r.nickname)}</b>`;
+          msg += `${icon} ${displayName}: ${escapeHtml(r.message)}\n`;
         });
 
         return ctx.replyWithHTML(msg);
