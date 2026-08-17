@@ -16,6 +16,7 @@ import {
 import { exportViolationsToExcelBuffer, exportLeaderboardToExcelBuffer } from '../services/excel.service';
 import { reconcileAllUsers } from '../services/reconcile.service';
 import { getBestPaceActivities } from '../services/activity.service';
+import { getCompanySummaryStats } from '../services/stats.service';
 
 let bot: Telegraf | null = null;
 
@@ -48,8 +49,8 @@ export function initTelegramBot(): Telegraf | null {
           const cmdName = match[1].toLowerCase();
           const validCommands = [
             'start', 'help', 'bxh_canhan', 'bxh_doi', 'doi', 'bxh_phong', 'bxh_phongban', 'phong',
-            'lichsu', 'chitiet', 'speed_tuan1', 'best-pace', 'best_pace', 'giai_tuan1', 'giai_tuan2', 
-            'giai_tuan3', 'giai_tuan4', 'phat', 'sync', 'excel_vipham', 'vipham_excel',
+            'lichsu', 'chitiet', 'speed_tuan1', 'best-pace', 'best_pace', 'tonghop', 'thongke', 'summary',
+            'giai_tuan1', 'giai_tuan2', 'giai_tuan3', 'giai_tuan4', 'phat', 'sync', 'excel_vipham', 'vipham_excel',
             'excel_bxh', 'bxh_excel', 'doisoat', 'duyet', 'huy', 'duyet_tatca', 'huy_tatca'
           ];
           if (validCommands.includes(cmdName)) {
@@ -74,8 +75,9 @@ Danh sách lệnh hỗ trợ:
 🛡️ <code>/bxh_doi [1-8]</code> - Xem BXH 8 Đội Thi (Gõ <code>/bxh_doi 1</code> để xem chi tiết VĐV trong Đội 1).
 🏢 <code>/bxh_phong [Tên_Phòng]</code> - Xem BXH Phòng Ban (Gõ <code>/bxh_phong Kỹ thuật</code> để xem chi tiết VĐV).
 📋 <code>/lichsu [Nickname]</code> - Xem hồ sơ & danh sách bài chạy chi tiết của 1 VĐV.
-🥇 <code>/speed_tuan1</code> - Vinh danh Giải Cá Nhân Tuần 1 (Nam 30km, Nữ 15km).
+📊 <code>/tonghop [tuần/tatca]</code> - Báo cáo tổng hợp tỷ lệ tham gia & Pace toàn công ty.
 ⚡ <code>/best-pace [tuần] [top]</code> - Xem Top bài chạy Pace tốt nhất (VD: <code>/best-pace 1 50</code>).
+🥇 <code>/speed_tuan1</code> - Vinh danh Giải Cá Nhân Tuần 1 (Nam 30km, Nữ 15km).
 ⚡ <code>/giai_tuan1</code> - Xem BXH Giải Tập Thể Tuần 1 (Tỷ lệ % tham gia >= 3km).
 🏃 <code>/giai_tuan2</code> - Xem BXH Giải Tập Thể Tuần 2 (Pace Đội - Ưu đãi Nữ -1 min/km).
 🚀 <code>/giai_tuan3</code> - Xem BXH Giải Tuần 3 (Bứt phá Cá nhân & Tập thể).
@@ -571,6 +573,49 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
 
     bot.command('best-pace', handleBestPace);
     bot.command('best_pace', handleBestPace);
+
+    // Command /tonghop [tuần/tatca] or /thongke or /summary - Company-wide Summary Statistics
+    const handleCompanySummary = async (ctx: any) => {
+      try {
+        const text = (ctx.message?.text || '').trim();
+        const parts = text.split(/\s+/);
+        const weekParam = parts.length > 1 ? parts.slice(1).join(' ') : '';
+
+        await ctx.reply(`📊 Đang tổng hợp báo cáo thống kê ${weekParam ? `cho "${weekParam}"` : 'toàn chiến dịch'}... Vui lòng đợi trong giây lát.`);
+
+        const stats = await getCompanySummaryStats({ week: weekParam });
+
+        let message = `📊 <b>BÁO CÁO TỔNG HỢP: ${escapeHtml(stats.periodTitle.toUpperCase())}</b> 📊\n\n`;
+
+        message += `👥 <b>TỶ LỆ NHÂN SỰ ĐẠT CHUẨN (>= 3KM):</b>\n`;
+        message += `   🏢 <b>Toàn công ty:</b> <code>${stats.qualifiedUsersCount}/${stats.totalCompanyUsers} VĐV</code> (<b>${stats.qualifiedRatePercent.toFixed(1)}%</b>)\n`;
+        message += `   👨 <b>Nam:</b> <code>${stats.qualifiedMaleCount}/${stats.totalMaleUsers} người</code> (${stats.qualifiedMaleRatePercent.toFixed(1)}%)\n`;
+        message += `   👩 <b>Nữ:</b> <code>${stats.qualifiedFemaleCount}/${stats.totalFemaleUsers} người</code> (${stats.qualifiedFemaleRatePercent.toFixed(1)}%)\n\n`;
+
+        message += `⚡ <b>PACE TRUNG BÌNH (TÍNH TRÊN NHÓM VĐV >= 3KM):</b>\n`;
+        const companyPaceStr = isFinite(stats.companyAvgPaceSecPerKm) ? formatPace(stats.companyAvgPaceSecPerKm) : 'Chưa có dữ liệu';
+        const malePaceStr = isFinite(stats.maleAvgPaceSecPerKm) ? formatPace(stats.maleAvgPaceSecPerKm) : 'Chưa có dữ liệu';
+        const femalePaceStr = isFinite(stats.femaleAvgPaceSecPerKm) ? formatPace(stats.femaleAvgPaceSecPerKm) : 'Chưa có dữ liệu';
+
+        message += `   🏢 <b>Toàn công ty:</b> <code>${companyPaceStr}</code>\n`;
+        message += `   👨 <b>Nam (${stats.qualifiedMaleCount} người):</b> <code>${malePaceStr}</code>\n`;
+        message += `   👩 <b>Nữ (${stats.qualifiedFemaleCount} người):</b> <code>${femalePaceStr}</code>\n\n`;
+
+        message += `🏃 <b>TỔNG QUY MÔ VẬN ĐỘNG:</b>\n`;
+        message += `   └─ <b>Tổng quãng đường toàn công ty:</b> <code>${stats.totalDistanceKm.toFixed(1)} km</code>\n`;
+        message += `   └─ <b>Quãng đường nhóm đạt chuẩn:</b> <code>${stats.totalQualifiedDistanceKm.toFixed(1)} km</code>\n`;
+        message += `   └─ <b>Tổng số bài chạy hợp lệ:</b> <code>${stats.totalActivitiesCount} bài</code>\n\n`;
+
+        message += `💡 <i>Mẹo: Gõ <code>/tonghop 1</code>, <code>/tonghop 2</code>, <code>/tonghop 3</code>, <code>/tonghop 4</code> hoặc <code>/tonghop tatca</code> để xem theo từng tuần!</i>`;
+
+        return ctx.replyWithHTML(message);
+      } catch (error: any) {
+        console.error('[Bot /tonghop] Error:', error);
+        return ctx.reply('Lỗi khi tổng hợp báo cáo thống kê: ' + (error?.message || error));
+      }
+    };
+
+    bot.command(['tonghop', 'thongke', 'summary'], handleCompanySummary);
 
     // Command /giai_tuan1 - Week 1 Team Award (% Participation >= 3km + 3-tier tie-breakers)
     bot.command('giai_tuan1', async (ctx) => {
