@@ -120,7 +120,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "package_dependencies",
-      "community": 0,
+      "community": 1,
       "norm_label": "dependencies"
     },
     {
@@ -130,7 +130,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "package_dependencies_prisma_client",
-      "community": 0,
+      "community": 1,
       "norm_label": "@prisma/client"
     },
     {
@@ -140,7 +140,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "package_dependencies_axios",
-      "community": 0,
+      "community": 1,
       "norm_label": "axios"
     },
     {
@@ -150,7 +150,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "package_dependencies_cors",
-      "community": 0,
+      "community": 1,
       "norm_label": "cors"
     },
     {
@@ -160,7 +160,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "package_dependencies_dotenv",
-      "community": 0,
+      "community": 1,
       "norm_label": "dotenv"
     },
     {
@@ -170,7 +170,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "package_dependencies_express",
-      "community": 0,
+      "community": 1,
       "norm_label": "express"
     },
     {
@@ -180,7 +180,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "package_dependencies_node_cron",
-      "community": 0,
+      "community": 1,
       "norm_label": "node-cron"
     },
     {
@@ -190,7 +190,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "package_dependencies_p_queue",
-      "community": 0,
+      "community": 1,
       "norm_label": "p-queue"
     },
     {
@@ -200,7 +200,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "package_dependencies_telegraf",
-      "community": 0,
+      "community": 1,
       "norm_label": "telegraf"
     },
     {
@@ -357,7 +357,7 @@
       "label": "escapeHtml()",
       "file_type": "code",
       "source_file": "src/bot/index.ts",
-      "source_location": "L21",
+      "source_location": "L26",
       "_origin": "ast",
       "id": "src_bot_index_escapehtml",
       "community": 3,
@@ -367,7 +367,7 @@
       "label": "initTelegramBot()",
       "file_type": "code",
       "source_file": "src/bot/index.ts",
-      "source_location": "L30",
+      "source_location": "L35",
       "_origin": "ast",
       "id": "src_bot_index_inittelegrambot",
       "community": 3,
@@ -400,7 +400,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_config_db",
-      "community": 3,
+      "community": 8,
       "norm_label": "db.ts"
     },
     {
@@ -410,7 +410,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_config_db_globalforprisma",
-      "community": 3,
+      "community": 8,
       "norm_label": "globalforprisma"
     },
     {
@@ -470,7 +470,7 @@
       "source_location": "L298",
       "_origin": "ast",
       "id": "src_controllers_auth_controller_handlesyncall",
-      "community": 8,
+      "community": 7,
       "norm_label": "handlesyncall()"
     },
     {
@@ -480,7 +480,7 @@
       "source_location": "L319",
       "_origin": "ast",
       "id": "src_controllers_auth_controller_handleoverrideactivity",
-      "community": 3,
+      "community": 8,
       "norm_label": "handleoverrideactivity()"
     },
     {
@@ -570,7 +570,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_cron_weekly",
-      "community": 4,
+      "community": 2,
       "norm_label": "weekly.ts"
     },
     {
@@ -580,7 +580,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_cron_weekly_initweeklycronjob",
-      "community": 4,
+      "community": 2,
       "norm_label": "initweeklycronjob()"
     },
     {
@@ -590,7 +590,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_export_club_api_excel",
-      "community": 0,
+      "community": 4,
       "norm_label": "export-club-api-excel.ts"
     },
     {
@@ -600,7 +600,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_export_club_api_excel_contest_start_date",
-      "community": 0,
+      "community": 4,
       "norm_label": "contest_start_date"
     },
     {
@@ -610,7 +610,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_export_club_api_excel_formatduration",
-      "community": 0,
+      "community": 4,
       "norm_label": "formatduration()"
     },
     {
@@ -620,7 +620,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_export_club_api_excel_formatpace",
-      "community": 0,
+      "community": 4,
       "norm_label": "formatpace()"
     },
     {
@@ -630,7 +630,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_export_club_api_excel_exportclubapiactivities",
-      "community": 0,
+      "community": 4,
       "norm_label": "exportclubapiactivities()"
     },
     {
@@ -640,18 +640,38 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_activity_service",
-      "community": 4,
+      "community": 6,
       "norm_label": "activity.service.ts"
     },
     {
       "label": "processActivityQueueItem()",
       "file_type": "code",
       "source_file": "src/services/activity.service.ts",
-      "source_location": "L9",
+      "source_location": "L10",
       "_origin": "ast",
       "id": "src_services_activity_service_processactivityqueueitem",
-      "community": 4,
+      "community": 6,
       "norm_label": "processactivityqueueitem()"
+    },
+    {
+      "label": "BestPaceQueryOptions",
+      "file_type": "code",
+      "source_file": "src/services/activity.service.ts",
+      "source_location": "L286",
+      "_origin": "ast",
+      "id": "src_services_activity_service_bestpacequeryoptions",
+      "community": 6,
+      "norm_label": "bestpacequeryoptions"
+    },
+    {
+      "label": "getBestPaceActivities()",
+      "file_type": "code",
+      "source_file": "src/services/activity.service.ts",
+      "source_location": "L294",
+      "_origin": "ast",
+      "id": "src_services_activity_service_getbestpaceactivities",
+      "community": 3,
+      "norm_label": "getbestpaceactivities()"
     },
     {
       "label": "anticheat.service.ts",
@@ -660,7 +680,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_anticheat_service",
-      "community": 2,
+      "community": 6,
       "norm_label": "anticheat.service.ts"
     },
     {
@@ -670,7 +690,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_services_anticheat_service_validationresult",
-      "community": 2,
+      "community": 6,
       "norm_label": "validationresult"
     },
     {
@@ -680,7 +700,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_services_anticheat_service_contest_start",
-      "community": 2,
+      "community": 6,
       "norm_label": "contest_start"
     },
     {
@@ -690,7 +710,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_services_anticheat_service_contest_end",
-      "community": 2,
+      "community": 6,
       "norm_label": "contest_end"
     },
     {
@@ -700,7 +720,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_services_anticheat_service_validateactivity",
-      "community": 4,
+      "community": 6,
       "norm_label": "validateactivity()"
     },
     {
@@ -720,7 +740,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_services_awards_service_weeks",
-      "community": 3,
+      "community": 9,
       "norm_label": "weeks"
     },
     {
@@ -747,7 +767,7 @@
       "label": "getWeek3IndividualAward()",
       "file_type": "code",
       "source_file": "src/services/awards.service.ts",
-      "source_location": "L153",
+      "source_location": "L167",
       "_origin": "ast",
       "id": "src_services_awards_service_getweek3individualaward",
       "community": 3,
@@ -757,7 +777,7 @@
       "label": "getWeek3TeamAward()",
       "file_type": "code",
       "source_file": "src/services/awards.service.ts",
-      "source_location": "L199",
+      "source_location": "L216",
       "_origin": "ast",
       "id": "src_services_awards_service_getweek3teamaward",
       "community": 3,
@@ -767,11 +787,141 @@
       "label": "getWeek4TeamAward()",
       "file_type": "code",
       "source_file": "src/services/awards.service.ts",
-      "source_location": "L238",
+      "source_location": "L256",
       "_origin": "ast",
       "id": "src_services_awards_service_getweek4teamaward",
       "community": 3,
       "norm_label": "getweek4teamaward()"
+    },
+    {
+      "label": "bonus.service.ts",
+      "file_type": "code",
+      "source_file": "src/services/bonus.service.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_services_bonus_service",
+      "community": 12,
+      "norm_label": "bonus.service.ts"
+    },
+    {
+      "label": "BonusResult",
+      "file_type": "code",
+      "source_file": "src/services/bonus.service.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "id": "src_services_bonus_service_bonusresult",
+      "community": 12,
+      "norm_label": "bonusresult"
+    },
+    {
+      "label": "findUserByFlexibleQuery()",
+      "file_type": "code",
+      "source_file": "src/services/bonus.service.ts",
+      "source_location": "L22",
+      "_origin": "ast",
+      "id": "src_services_bonus_service_finduserbyflexiblequery",
+      "community": 12,
+      "norm_label": "finduserbyflexiblequery()"
+    },
+    {
+      "label": "grantPickleballBonus()",
+      "file_type": "code",
+      "source_file": "src/services/bonus.service.ts",
+      "source_location": "L73",
+      "_origin": "ast",
+      "id": "src_services_bonus_service_grantpickleballbonus",
+      "community": 12,
+      "norm_label": "grantpickleballbonus()"
+    },
+    {
+      "label": "revokePickleballBonus()",
+      "file_type": "code",
+      "source_file": "src/services/bonus.service.ts",
+      "source_location": "L163",
+      "_origin": "ast",
+      "id": "src_services_bonus_service_revokepickleballbonus",
+      "community": 12,
+      "norm_label": "revokepickleballbonus()"
+    },
+    {
+      "label": "department.service.ts",
+      "file_type": "code",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_services_department_service",
+      "community": 10,
+      "norm_label": "department.service.ts"
+    },
+    {
+      "label": "DepartmentSummaryItem",
+      "file_type": "code",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "id": "src_services_department_service_departmentsummaryitem",
+      "community": 10,
+      "norm_label": "departmentsummaryitem"
+    },
+    {
+      "label": "DepartmentLeaderboardResult",
+      "file_type": "code",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "src_services_department_service_departmentleaderboardresult",
+      "community": 10,
+      "norm_label": "departmentleaderboardresult"
+    },
+    {
+      "label": "DepartmentMemberDetail",
+      "file_type": "code",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L22",
+      "_origin": "ast",
+      "id": "src_services_department_service_departmentmemberdetail",
+      "community": 10,
+      "norm_label": "departmentmemberdetail"
+    },
+    {
+      "label": "DepartmentDetailResult",
+      "file_type": "code",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L34",
+      "_origin": "ast",
+      "id": "src_services_department_service_departmentdetailresult",
+      "community": 10,
+      "norm_label": "departmentdetailresult"
+    },
+    {
+      "label": "parseWeekParam()",
+      "file_type": "code",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L49",
+      "_origin": "ast",
+      "id": "src_services_department_service_parseweekparam",
+      "community": 10,
+      "norm_label": "parseweekparam()"
+    },
+    {
+      "label": "getDepartmentSummaryLeaderboard()",
+      "file_type": "code",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L65",
+      "_origin": "ast",
+      "id": "src_services_department_service_getdepartmentsummaryleaderboard",
+      "community": 10,
+      "norm_label": "getdepartmentsummaryleaderboard()"
+    },
+    {
+      "label": "getDepartmentMembersDetail()",
+      "file_type": "code",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L169",
+      "_origin": "ast",
+      "id": "src_services_department_service_getdepartmentmembersdetail",
+      "community": 10,
+      "norm_label": "getdepartmentmembersdetail()"
     },
     {
       "label": "excel.service.ts",
@@ -780,38 +930,48 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_excel_service",
-      "community": 3,
+      "community": 0,
       "norm_label": "excel.service.ts"
     },
     {
       "label": "WEEK_RANGES",
       "file_type": "code",
       "source_file": "src/services/excel.service.ts",
-      "source_location": "L8",
+      "source_location": "L9",
       "_origin": "ast",
       "id": "src_services_excel_service_week_ranges",
-      "community": 3,
+      "community": 0,
       "norm_label": "week_ranges"
     },
     {
       "label": "ExcelExportResult",
       "file_type": "code",
       "source_file": "src/services/excel.service.ts",
-      "source_location": "L31",
+      "source_location": "L32",
       "_origin": "ast",
       "id": "src_services_excel_service_excelexportresult",
-      "community": 3,
+      "community": 0,
       "norm_label": "excelexportresult"
     },
     {
       "label": "exportViolationsToExcelBuffer()",
       "file_type": "code",
       "source_file": "src/services/excel.service.ts",
-      "source_location": "L46",
+      "source_location": "L42",
       "_origin": "ast",
       "id": "src_services_excel_service_exportviolationstoexcelbuffer",
-      "community": 3,
+      "community": 0,
       "norm_label": "exportviolationstoexcelbuffer()"
+    },
+    {
+      "label": "exportLeaderboardToExcelBuffer()",
+      "file_type": "code",
+      "source_file": "src/services/excel.service.ts",
+      "source_location": "L157",
+      "_origin": "ast",
+      "id": "src_services_excel_service_exportleaderboardtoexcelbuffer",
+      "community": 0,
+      "norm_label": "exportleaderboardtoexcelbuffer()"
     },
     {
       "label": "override.service.ts",
@@ -820,7 +980,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_override_service",
-      "community": 3,
+      "community": 8,
       "norm_label": "override.service.ts"
     },
     {
@@ -830,7 +990,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_services_override_service_recalculateuserstatstx",
-      "community": 3,
+      "community": 8,
       "norm_label": "recalculateuserstatstx()"
     },
     {
@@ -840,7 +1000,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "src_services_override_service_recalculateuserstats",
-      "community": 3,
+      "community": 12,
       "norm_label": "recalculateuserstats()"
     },
     {
@@ -850,7 +1010,7 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "src_services_override_service_overrideactivitystatus",
-      "community": 3,
+      "community": 8,
       "norm_label": "overrideactivitystatus()"
     },
     {
@@ -882,6 +1042,56 @@
       "id": "src_services_penalty_service_calculatepenalties",
       "community": 3,
       "norm_label": "calculatepenalties()"
+    },
+    {
+      "label": "progress.service.ts",
+      "file_type": "code",
+      "source_file": "src/services/progress.service.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_services_progress_service",
+      "community": 9,
+      "norm_label": "progress.service.ts"
+    },
+    {
+      "label": "AthleteGrowthStat",
+      "file_type": "code",
+      "source_file": "src/services/progress.service.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "id": "src_services_progress_service_athletegrowthstat",
+      "community": 9,
+      "norm_label": "athletegrowthstat"
+    },
+    {
+      "label": "GrowthLeaderboardResult",
+      "file_type": "code",
+      "source_file": "src/services/progress.service.ts",
+      "source_location": "L19",
+      "_origin": "ast",
+      "id": "src_services_progress_service_growthleaderboardresult",
+      "community": 9,
+      "norm_label": "growthleaderboardresult"
+    },
+    {
+      "label": "GrowthQueryOptions",
+      "file_type": "code",
+      "source_file": "src/services/progress.service.ts",
+      "source_location": "L31",
+      "_origin": "ast",
+      "id": "src_services_progress_service_growthqueryoptions",
+      "community": 9,
+      "norm_label": "growthqueryoptions"
+    },
+    {
+      "label": "getGrowthLeaderboard()",
+      "file_type": "code",
+      "source_file": "src/services/progress.service.ts",
+      "source_location": "L40",
+      "_origin": "ast",
+      "id": "src_services_progress_service_getgrowthleaderboard",
+      "community": 9,
+      "norm_label": "getgrowthleaderboard()"
     },
     {
       "label": "reconcile.service.ts",
@@ -922,6 +1132,46 @@
       "id": "src_services_reconcile_service_reconcileallusers",
       "community": 2,
       "norm_label": "reconcileallusers()"
+    },
+    {
+      "label": "stats.service.ts",
+      "file_type": "code",
+      "source_file": "src/services/stats.service.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_services_stats_service",
+      "community": 9,
+      "norm_label": "stats.service.ts"
+    },
+    {
+      "label": "CompanySummaryStats",
+      "file_type": "code",
+      "source_file": "src/services/stats.service.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "id": "src_services_stats_service_companysummarystats",
+      "community": 9,
+      "norm_label": "companysummarystats"
+    },
+    {
+      "label": "SummaryQueryOptions",
+      "file_type": "code",
+      "source_file": "src/services/stats.service.ts",
+      "source_location": "L34",
+      "_origin": "ast",
+      "id": "src_services_stats_service_summaryqueryoptions",
+      "community": 9,
+      "norm_label": "summaryqueryoptions"
+    },
+    {
+      "label": "getCompanySummaryStats()",
+      "file_type": "code",
+      "source_file": "src/services/stats.service.ts",
+      "source_location": "L42",
+      "_origin": "ast",
+      "id": "src_services_stats_service_getcompanysummarystats",
+      "community": 9,
+      "norm_label": "getcompanysummarystats()"
     },
     {
       "label": "strava.service.ts",
@@ -1070,7 +1320,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_sync_service",
-      "community": 4,
+      "community": 7,
       "norm_label": "sync.service.ts"
     },
     {
@@ -1080,7 +1330,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_services_sync_service_contest_start",
-      "community": 4,
+      "community": 7,
       "norm_label": "contest_start"
     },
     {
@@ -1090,7 +1340,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_services_sync_service_sleep",
-      "community": 8,
+      "community": 7,
       "norm_label": "sleep()"
     },
     {
@@ -1107,10 +1357,10 @@
       "label": "syncAllUsersPastActivities()",
       "file_type": "code",
       "source_file": "src/services/sync.service.ts",
-      "source_location": "L194",
+      "source_location": "L198",
       "_origin": "ast",
       "id": "src_services_sync_service_syncalluserspastactivities",
-      "community": 8,
+      "community": 7,
       "norm_label": "syncalluserspastactivities()"
     },
     {
@@ -1120,7 +1370,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_team_service",
-      "community": 3,
+      "community": 11,
       "norm_label": "team.service.ts"
     },
     {
@@ -1130,7 +1380,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_services_team_service_teaminfo",
-      "community": 3,
+      "community": 11,
       "norm_label": "teaminfo"
     },
     {
@@ -1140,7 +1390,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_services_team_service_teams",
-      "community": 3,
+      "community": 11,
       "norm_label": "teams"
     },
     {
@@ -1150,7 +1400,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_services_team_service_getteamname",
-      "community": 3,
+      "community": 11,
       "norm_label": "getteamname()"
     },
     {
@@ -1160,7 +1410,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_services_team_service_memberweekstat",
-      "community": 3,
+      "community": 11,
       "norm_label": "memberweekstat"
     },
     {
@@ -1170,7 +1420,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_services_team_service_teamweekdetailresult",
-      "community": 3,
+      "community": 11,
       "norm_label": "teamweekdetailresult"
     },
     {
@@ -1180,7 +1430,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_services_team_service_getteamweekdetail",
-      "community": 3,
+      "community": 11,
       "norm_label": "getteamweekdetail()"
     },
     {
@@ -1190,7 +1440,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_telegram_service",
-      "community": 4,
+      "community": 6,
       "norm_label": "telegram.service.ts"
     },
     {
@@ -1200,7 +1450,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_services_telegram_service_formatvietnamdatetime",
-      "community": 4,
+      "community": 0,
       "norm_label": "formatvietnamdatetime()"
     },
     {
@@ -1210,77 +1460,77 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_services_telegram_service_formatpace",
-      "community": 3,
+      "community": 0,
       "norm_label": "formatpace()"
     },
     {
       "label": "telegramSendChain",
       "file_type": "code",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L33",
+      "source_location": "L34",
       "_origin": "ast",
       "id": "src_services_telegram_service_telegramsendchain",
-      "community": 4,
+      "community": 6,
       "norm_label": "telegramsendchain"
     },
     {
       "label": "sendTelegramMessage()",
       "file_type": "code",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L39",
+      "source_location": "L40",
       "_origin": "ast",
       "id": "src_services_telegram_service_sendtelegrammessage",
-      "community": 4,
+      "community": 6,
       "norm_label": "sendtelegrammessage()"
     },
     {
       "label": "notifyReachedMilestone()",
       "file_type": "code",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L87",
+      "source_location": "L88",
       "_origin": "ast",
       "id": "src_services_telegram_service_notifyreachedmilestone",
-      "community": 4,
+      "community": 6,
       "norm_label": "notifyreachedmilestone()"
     },
     {
       "label": "notifyCheatingAlert()",
       "file_type": "code",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L114",
+      "source_location": "L115",
       "_origin": "ast",
       "id": "src_services_telegram_service_notifycheatingalert",
-      "community": 4,
+      "community": 6,
       "norm_label": "notifycheatingalert()"
     },
     {
       "label": "notifyActivityDeleted()",
       "file_type": "code",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L153",
+      "source_location": "L154",
       "_origin": "ast",
       "id": "src_services_telegram_service_notifyactivitydeleted",
-      "community": 4,
+      "community": 6,
       "norm_label": "notifyactivitydeleted()"
     },
     {
       "label": "notifyActivityUpdated()",
       "file_type": "code",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L180",
+      "source_location": "L181",
       "_origin": "ast",
       "id": "src_services_telegram_service_notifyactivityupdated",
-      "community": 4,
+      "community": 6,
       "norm_label": "notifyactivityupdated()"
     },
     {
       "label": "notifyActivityDeletedBatch()",
       "file_type": "code",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L210",
+      "source_location": "L211",
       "_origin": "ast",
       "id": "src_services_telegram_service_notifyactivitydeletedbatch",
-      "community": 4,
+      "community": 6,
       "norm_label": "notifyactivitydeletedbatch()"
     },
     {
@@ -1290,7 +1540,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_utils_format",
-      "community": 4,
+      "community": 6,
       "norm_label": "format.ts"
     },
     {
@@ -1300,7 +1550,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_utils_format_escapehtml",
-      "community": 4,
+      "community": 6,
       "norm_label": "escapehtml()"
     },
     {
@@ -1470,7 +1720,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_utils_ratelimit_stravaratelimiter",
-      "community": 6,
+      "community": 4,
       "norm_label": "stravaratelimiter"
     },
     {
@@ -1480,7 +1730,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_utils_ratelimit_stravaratelimiter_getbucket",
-      "community": 6,
+      "community": 4,
       "norm_label": ".getbucket()"
     },
     {
@@ -1490,7 +1740,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "src_utils_ratelimit_stravaratelimiter_updatefromheaders",
-      "community": 6,
+      "community": 4,
       "norm_label": ".updatefromheaders()"
     },
     {
@@ -1500,7 +1750,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "src_utils_ratelimit_stravaratelimiter_isratelimited",
-      "community": 6,
+      "community": 4,
       "norm_label": ".isratelimited()"
     },
     {
@@ -1510,7 +1760,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "src_utils_ratelimit_stravaratelimiter_acquire",
-      "community": 6,
+      "community": 4,
       "norm_label": ".acquire()"
     },
     {
@@ -1882,7 +2132,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/excel.service.ts",
-      "source_location": "L158",
+      "source_location": "L270",
+      "weight": 1.0,
+      "source": "src_services_excel_service_exportleaderboardtoexcelbuffer",
+      "target": "package_dependencies_xlsx"
+    },
+    {
+      "relation": "references",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/services/excel.service.ts",
+      "source_location": "L141",
       "weight": 1.0,
       "source": "src_services_excel_service_exportviolationstoexcelbuffer",
       "target": "package_dependencies_xlsx"
@@ -2255,7 +2516,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/bot/index.ts",
-      "source_location": "L21",
+      "source_location": "L26",
       "weight": 1.0,
       "source": "src_bot_index",
       "target": "src_bot_index_escapehtml",
@@ -2265,7 +2526,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/bot/index.ts",
-      "source_location": "L30",
+      "source_location": "L35",
       "weight": 1.0,
       "source": "src_bot_index",
       "target": "src_bot_index_inittelegrambot",
@@ -2302,6 +2563,28 @@
       "weight": 1.0,
       "source": "src_bot_index",
       "target": "src_config_env_env",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/bot/index.ts",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "src_bot_index",
+      "target": "src_services_activity_service",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/bot/index.ts",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "src_bot_index",
+      "target": "src_services_activity_service_getbestpaceactivities",
       "confidence_score": 1.0
     },
     {
@@ -2375,10 +2658,87 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/bot/index.ts",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "src_bot_index",
+      "target": "src_services_bonus_service",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/bot/index.ts",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "src_bot_index",
+      "target": "src_services_bonus_service_grantpickleballbonus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/bot/index.ts",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "src_bot_index",
+      "target": "src_services_bonus_service_revokepickleballbonus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/bot/index.ts",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "src_bot_index",
+      "target": "src_services_department_service",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/bot/index.ts",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "src_bot_index",
+      "target": "src_services_department_service_getdepartmentmembersdetail",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/bot/index.ts",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "src_bot_index",
+      "target": "src_services_department_service_getdepartmentsummaryleaderboard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/bot/index.ts",
       "source_location": "L16",
       "weight": 1.0,
       "source": "src_bot_index",
       "target": "src_services_excel_service",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/bot/index.ts",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "src_bot_index",
+      "target": "src_services_excel_service_exportleaderboardtoexcelbuffer",
       "confidence_score": 1.0
     },
     {
@@ -2452,6 +2812,28 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/bot/index.ts",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "src_bot_index",
+      "target": "src_services_progress_service",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/bot/index.ts",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "src_bot_index",
+      "target": "src_services_progress_service_getgrowthleaderboard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/bot/index.ts",
       "source_location": "L17",
       "weight": 1.0,
       "source": "src_bot_index",
@@ -2467,6 +2849,28 @@
       "weight": 1.0,
       "source": "src_bot_index",
       "target": "src_services_reconcile_service_reconcileallusers",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/bot/index.ts",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "src_bot_index",
+      "target": "src_services_stats_service",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/bot/index.ts",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "src_bot_index",
+      "target": "src_services_stats_service_getcompanysummarystats",
       "confidence_score": 1.0
     },
     {
@@ -2584,7 +2988,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/bot/index.ts",
-      "source_location": "L208",
+      "source_location": "L155",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_bot_index_escapehtml",
@@ -2596,7 +3000,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L500",
+      "source_location": "L557",
+      "weight": 1.0,
+      "source": "src_bot_index_inittelegrambot",
+      "target": "src_services_activity_service_getbestpaceactivities"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/bot/index.ts",
+      "source_location": "L741",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek1teamaward"
@@ -2607,7 +3022,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L521",
+      "source_location": "L762",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek2teamaward"
@@ -2618,7 +3033,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L544",
+      "source_location": "L785",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek3individualaward"
@@ -2629,7 +3044,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L545",
+      "source_location": "L786",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek3teamaward"
@@ -2640,7 +3055,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L569",
+      "source_location": "L811",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek4teamaward"
@@ -2651,7 +3066,62 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L626",
+      "source_location": "L1095",
+      "weight": 1.0,
+      "source": "src_bot_index_inittelegrambot",
+      "target": "src_services_bonus_service_grantpickleballbonus"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/bot/index.ts",
+      "source_location": "L1126",
+      "weight": 1.0,
+      "source": "src_bot_index_inittelegrambot",
+      "target": "src_services_bonus_service_revokepickleballbonus"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/bot/index.ts",
+      "source_location": "L179",
+      "weight": 1.0,
+      "source": "src_bot_index_inittelegrambot",
+      "target": "src_services_department_service_getdepartmentmembersdetail"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/bot/index.ts",
+      "source_location": "L152",
+      "weight": 1.0,
+      "source": "src_bot_index_inittelegrambot",
+      "target": "src_services_department_service_getdepartmentsummaryleaderboard"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/bot/index.ts",
+      "source_location": "L895",
+      "weight": 1.0,
+      "source": "src_bot_index_inittelegrambot",
+      "target": "src_services_excel_service_exportleaderboardtoexcelbuffer"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/bot/index.ts",
+      "source_location": "L868",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_excel_service_exportviolationstoexcelbuffer"
@@ -2662,7 +3132,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L326",
+      "source_location": "L365",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_override_service_overrideactivitystatus"
@@ -2673,7 +3143,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L717",
+      "source_location": "L983",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_override_service_recalculateuserstats"
@@ -2684,7 +3154,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L588",
+      "source_location": "L830",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_penalty_service_calculatepenalties"
@@ -2695,7 +3165,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L652",
+      "source_location": "L690",
+      "weight": 1.0,
+      "source": "src_bot_index_inittelegrambot",
+      "target": "src_services_progress_service_getgrowthleaderboard"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/bot/index.ts",
+      "source_location": "L918",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_reconcile_service_reconcileallusers"
@@ -2706,7 +3187,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L375",
+      "source_location": "L619",
+      "weight": 1.0,
+      "source": "src_bot_index_inittelegrambot",
+      "target": "src_services_stats_service_getcompanysummarystats"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/bot/index.ts",
+      "source_location": "L414",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_sync_service_syncalluserspastactivities"
@@ -2717,7 +3209,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L126",
+      "source_location": "L196",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_team_service_getteamname"
@@ -2728,7 +3220,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L191",
+      "source_location": "L230",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_team_service_getteamweekdetail"
@@ -2739,7 +3231,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L220",
+      "source_location": "L259",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_team_service_teams"
@@ -2750,7 +3242,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L205",
+      "source_location": "L194",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_telegram_service_formatpace"
@@ -2761,7 +3253,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L291",
+      "source_location": "L330",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_telegram_service_formatvietnamdatetime"
@@ -2772,7 +3264,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L377",
+      "source_location": "L416",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_telegram_service_sendtelegrammessage"
@@ -2900,6 +3392,28 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "src/services/bonus.service.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "src_services_bonus_service",
+      "target": "src_config_db",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "src_services_department_service",
+      "target": "src_config_db",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "src/services/excel.service.ts",
       "source_location": "L2",
       "weight": 1.0,
@@ -2933,10 +3447,32 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "src/services/progress.service.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "src_services_progress_service",
+      "target": "src_config_db",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "src/services/reconcile.service.ts",
       "source_location": "L1",
       "weight": 1.0,
       "source": "src_services_reconcile_service",
+      "target": "src_config_db",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/stats.service.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "src_services_stats_service",
       "target": "src_config_db",
       "confidence_score": 1.0
     },
@@ -3076,7 +3612,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/services/excel.service.ts",
-      "source_location": "L4",
+      "source_location": "L3",
       "weight": 1.0,
       "source": "src_services_excel_service",
       "target": "src_config_env",
@@ -3197,7 +3733,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/services/excel.service.ts",
-      "source_location": "L4",
+      "source_location": "L3",
       "weight": 1.0,
       "source": "src_services_excel_service",
       "target": "src_config_env_env",
@@ -3897,7 +4433,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/activity.service.ts",
-      "source_location": "L9",
+      "source_location": "L286",
+      "weight": 1.0,
+      "source": "src_services_activity_service",
+      "target": "src_services_activity_service_bestpacequeryoptions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/activity.service.ts",
+      "source_location": "L294",
+      "weight": 1.0,
+      "source": "src_services_activity_service",
+      "target": "src_services_activity_service_getbestpaceactivities",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/activity.service.ts",
+      "source_location": "L10",
       "weight": 1.0,
       "source": "src_services_activity_service",
       "target": "src_services_activity_service_processactivityqueueitem",
@@ -3923,6 +4479,28 @@
       "weight": 1.0,
       "source": "src_services_activity_service",
       "target": "src_services_anticheat_service_validateactivity",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/activity.service.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_services_activity_service",
+      "target": "src_services_awards_service",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/activity.service.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_services_activity_service",
+      "target": "src_services_awards_service_weeks",
       "confidence_score": 1.0
     },
     {
@@ -4030,7 +4608,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/activity.service.ts",
-      "source_location": "L124",
+      "source_location": "L125",
       "weight": 1.0,
       "source": "src_services_activity_service_processactivityqueueitem",
       "target": "src_services_anticheat_service_validateactivity"
@@ -4041,7 +4619,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/activity.service.ts",
-      "source_location": "L113",
+      "source_location": "L114",
       "weight": 1.0,
       "source": "src_services_activity_service_processactivityqueueitem",
       "target": "src_services_strava_service_fetchstravaactivitydetail"
@@ -4052,7 +4630,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/activity.service.ts",
-      "source_location": "L104",
+      "source_location": "L105",
       "weight": 1.0,
       "source": "src_services_activity_service_processactivityqueueitem",
       "target": "src_services_strava_service_getvalidaccesstoken"
@@ -4063,7 +4641,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/activity.service.ts",
-      "source_location": "L87",
+      "source_location": "L88",
       "weight": 1.0,
       "source": "src_services_activity_service_processactivityqueueitem",
       "target": "src_services_telegram_service_notifyactivitydeleted"
@@ -4074,7 +4652,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/activity.service.ts",
-      "source_location": "L252",
+      "source_location": "L253",
       "weight": 1.0,
       "source": "src_services_activity_service_processactivityqueueitem",
       "target": "src_services_telegram_service_notifyactivityupdated"
@@ -4085,7 +4663,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/activity.service.ts",
-      "source_location": "L275",
+      "source_location": "L276",
       "weight": 1.0,
       "source": "src_services_activity_service_processactivityqueueitem",
       "target": "src_services_telegram_service_notifycheatingalert"
@@ -4096,7 +4674,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/activity.service.ts",
-      "source_location": "L266",
+      "source_location": "L267",
       "weight": 1.0,
       "source": "src_services_activity_service_processactivityqueueitem",
       "target": "src_services_telegram_service_notifyreachedmilestone"
@@ -4118,7 +4696,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/sync.service.ts",
-      "source_location": "L168",
+      "source_location": "L172",
       "weight": 1.0,
       "source": "src_services_sync_service_syncuserpastactivities",
       "target": "src_services_activity_service_processactivityqueueitem"
@@ -4187,7 +4765,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/awards.service.ts",
-      "source_location": "L153",
+      "source_location": "L167",
       "weight": 1.0,
       "source": "src_services_awards_service",
       "target": "src_services_awards_service_getweek3individualaward",
@@ -4197,7 +4775,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/awards.service.ts",
-      "source_location": "L199",
+      "source_location": "L216",
       "weight": 1.0,
       "source": "src_services_awards_service",
       "target": "src_services_awards_service_getweek3teamaward",
@@ -4207,7 +4785,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/awards.service.ts",
-      "source_location": "L238",
+      "source_location": "L256",
       "weight": 1.0,
       "source": "src_services_awards_service",
       "target": "src_services_awards_service_getweek4teamaward",
@@ -4246,6 +4824,72 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_services_department_service",
+      "target": "src_services_awards_service",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/progress.service.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_services_progress_service",
+      "target": "src_services_awards_service",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/stats.service.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_services_stats_service",
+      "target": "src_services_awards_service",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_services_department_service",
+      "target": "src_services_awards_service_weeks",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/progress.service.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_services_progress_service",
+      "target": "src_services_awards_service_weeks",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/stats.service.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_services_stats_service",
+      "target": "src_services_awards_service_weeks",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -4259,8 +4903,206 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "src/services/bonus.service.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_services_bonus_service",
+      "target": "src_services_bonus_service_bonusresult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/bonus.service.ts",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "src_services_bonus_service",
+      "target": "src_services_bonus_service_finduserbyflexiblequery",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/bonus.service.ts",
+      "source_location": "L73",
+      "weight": 1.0,
+      "source": "src_services_bonus_service",
+      "target": "src_services_bonus_service_grantpickleballbonus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/bonus.service.ts",
+      "source_location": "L163",
+      "weight": 1.0,
+      "source": "src_services_bonus_service",
+      "target": "src_services_bonus_service_revokepickleballbonus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/bonus.service.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_services_bonus_service",
+      "target": "src_services_override_service",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/bonus.service.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_services_bonus_service",
+      "target": "src_services_override_service_recalculateuserstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/bonus.service.ts",
+      "source_location": "L81",
+      "weight": 1.0,
+      "source": "src_services_bonus_service_grantpickleballbonus",
+      "target": "src_services_bonus_service_finduserbyflexiblequery",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/bonus.service.ts",
+      "source_location": "L170",
+      "weight": 1.0,
+      "source": "src_services_bonus_service_revokepickleballbonus",
+      "target": "src_services_bonus_service_finduserbyflexiblequery",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/services/bonus.service.ts",
+      "source_location": "L145",
+      "weight": 1.0,
+      "source": "src_services_bonus_service_grantpickleballbonus",
+      "target": "src_services_override_service_recalculateuserstats"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/services/bonus.service.ts",
+      "source_location": "L202",
+      "weight": 1.0,
+      "source": "src_services_bonus_service_revokepickleballbonus",
+      "target": "src_services_override_service_recalculateuserstats"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "src_services_department_service",
+      "target": "src_services_department_service_departmentdetailresult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "src_services_department_service",
+      "target": "src_services_department_service_departmentleaderboardresult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "src_services_department_service",
+      "target": "src_services_department_service_departmentmemberdetail",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_services_department_service",
+      "target": "src_services_department_service_departmentsummaryitem",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L169",
+      "weight": 1.0,
+      "source": "src_services_department_service",
+      "target": "src_services_department_service_getdepartmentmembersdetail",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L65",
+      "weight": 1.0,
+      "source": "src_services_department_service",
+      "target": "src_services_department_service_getdepartmentsummaryleaderboard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L49",
+      "weight": 1.0,
+      "source": "src_services_department_service",
+      "target": "src_services_department_service_parseweekparam",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L173",
+      "weight": 1.0,
+      "source": "src_services_department_service_getdepartmentmembersdetail",
+      "target": "src_services_department_service_parseweekparam",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/department.service.ts",
+      "source_location": "L66",
+      "weight": 1.0,
+      "source": "src_services_department_service_getdepartmentsummaryleaderboard",
+      "target": "src_services_department_service_parseweekparam",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "src/services/excel.service.ts",
-      "source_location": "L31",
+      "source_location": "L32",
       "weight": 1.0,
       "source": "src_services_excel_service",
       "target": "src_services_excel_service_excelexportresult",
@@ -4270,7 +5112,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/excel.service.ts",
-      "source_location": "L46",
+      "source_location": "L157",
+      "weight": 1.0,
+      "source": "src_services_excel_service",
+      "target": "src_services_excel_service_exportleaderboardtoexcelbuffer",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/excel.service.ts",
+      "source_location": "L42",
       "weight": 1.0,
       "source": "src_services_excel_service",
       "target": "src_services_excel_service_exportviolationstoexcelbuffer",
@@ -4280,11 +5132,132 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/excel.service.ts",
-      "source_location": "L8",
+      "source_location": "L9",
       "weight": 1.0,
       "source": "src_services_excel_service",
       "target": "src_services_excel_service_week_ranges",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/excel.service.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_services_excel_service",
+      "target": "src_services_team_service",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/excel.service.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_services_excel_service",
+      "target": "src_services_team_service_getteamname",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/excel.service.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_services_excel_service",
+      "target": "src_services_telegram_service",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/excel.service.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_services_excel_service",
+      "target": "src_services_telegram_service_formatpace",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/excel.service.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_services_excel_service",
+      "target": "src_services_telegram_service_formatvietnamdatetime",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/services/excel.service.ts",
+      "source_location": "L99",
+      "weight": 1.0,
+      "source": "src_services_excel_service_exportviolationstoexcelbuffer",
+      "target": "src_services_team_service_getteamname"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/services/excel.service.ts",
+      "source_location": "L105",
+      "weight": 1.0,
+      "source": "src_services_excel_service_exportviolationstoexcelbuffer",
+      "target": "src_services_telegram_service_formatpace"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/services/excel.service.ts",
+      "source_location": "L87",
+      "weight": 1.0,
+      "source": "src_services_excel_service_exportviolationstoexcelbuffer",
+      "target": "src_services_telegram_service_formatvietnamdatetime"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/services/excel.service.ts",
+      "source_location": "L239",
+      "weight": 1.0,
+      "source": "src_services_excel_service_exportleaderboardtoexcelbuffer",
+      "target": "src_services_team_service_getteamname"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/services/excel.service.ts",
+      "source_location": "L243",
+      "weight": 1.0,
+      "source": "src_services_excel_service_exportleaderboardtoexcelbuffer",
+      "target": "src_services_telegram_service_formatpace"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/services/excel.service.ts",
+      "source_location": "L246",
+      "weight": 1.0,
+      "source": "src_services_excel_service_exportleaderboardtoexcelbuffer",
+      "target": "src_services_telegram_service_formatvietnamdatetime"
     },
     {
       "relation": "contains",
@@ -4361,6 +5334,46 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "src/services/progress.service.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_services_progress_service",
+      "target": "src_services_progress_service_athletegrowthstat",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/progress.service.ts",
+      "source_location": "L40",
+      "weight": 1.0,
+      "source": "src_services_progress_service",
+      "target": "src_services_progress_service_getgrowthleaderboard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/progress.service.ts",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "src_services_progress_service",
+      "target": "src_services_progress_service_growthleaderboardresult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/progress.service.ts",
+      "source_location": "L31",
+      "weight": 1.0,
+      "source": "src_services_progress_service",
+      "target": "src_services_progress_service_growthqueryoptions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "src/services/reconcile.service.ts",
       "source_location": "L25",
       "weight": 1.0,
@@ -4386,6 +5399,36 @@
       "weight": 1.0,
       "source": "src_services_reconcile_service",
       "target": "src_services_reconcile_service_reconcileresult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/stats.service.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_services_stats_service",
+      "target": "src_services_stats_service_companysummarystats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/stats.service.ts",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "src_services_stats_service",
+      "target": "src_services_stats_service_getcompanysummarystats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/stats.service.ts",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "src_services_stats_service",
+      "target": "src_services_stats_service_summaryqueryoptions",
       "confidence_score": 1.0
     },
     {
@@ -4752,7 +5795,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/sync.service.ts",
-      "source_location": "L194",
+      "source_location": "L198",
       "weight": 1.0,
       "source": "src_services_sync_service",
       "target": "src_services_sync_service_syncalluserspastactivities",
@@ -4883,7 +5926,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/services/sync.service.ts",
-      "source_location": "L216",
+      "source_location": "L220",
       "weight": 1.0,
       "source": "src_services_sync_service_syncalluserspastactivities",
       "target": "src_services_sync_service_sleep",
@@ -4894,7 +5937,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/services/sync.service.ts",
-      "source_location": "L211",
+      "source_location": "L215",
       "weight": 1.0,
       "source": "src_services_sync_service_syncalluserspastactivities",
       "target": "src_services_sync_service_syncuserpastactivities",
@@ -4906,7 +5949,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/sync.service.ts",
-      "source_location": "L141",
+      "source_location": "L145",
       "weight": 1.0,
       "source": "src_services_sync_service_syncuserpastactivities",
       "target": "src_services_telegram_service_notifyactivitydeletedbatch"
@@ -4917,7 +5960,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/sync.service.ts",
-      "source_location": "L165",
+      "source_location": "L169",
       "weight": 1.0,
       "source": "src_services_sync_service_syncuserpastactivities",
       "target": "src_utils_queue_isactivityqueued"
@@ -4928,7 +5971,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/sync.service.ts",
-      "source_location": "L166",
+      "source_location": "L170",
       "weight": 1.0,
       "source": "src_services_sync_service_syncuserpastactivities",
       "target": "src_utils_queue_markactivityqueued"
@@ -4939,7 +5982,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/sync.service.ts",
-      "source_location": "L171",
+      "source_location": "L175",
       "weight": 1.0,
       "source": "src_services_sync_service_syncuserpastactivities",
       "target": "src_utils_queue_unmarkactivityqueued"
@@ -5050,7 +6093,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L153",
+      "source_location": "L154",
       "weight": 1.0,
       "source": "src_services_telegram_service",
       "target": "src_services_telegram_service_notifyactivitydeleted",
@@ -5060,7 +6103,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L210",
+      "source_location": "L211",
       "weight": 1.0,
       "source": "src_services_telegram_service",
       "target": "src_services_telegram_service_notifyactivitydeletedbatch",
@@ -5070,7 +6113,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L180",
+      "source_location": "L181",
       "weight": 1.0,
       "source": "src_services_telegram_service",
       "target": "src_services_telegram_service_notifyactivityupdated",
@@ -5080,7 +6123,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L114",
+      "source_location": "L115",
       "weight": 1.0,
       "source": "src_services_telegram_service",
       "target": "src_services_telegram_service_notifycheatingalert",
@@ -5090,7 +6133,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L87",
+      "source_location": "L88",
       "weight": 1.0,
       "source": "src_services_telegram_service",
       "target": "src_services_telegram_service_notifyreachedmilestone",
@@ -5100,7 +6143,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L39",
+      "source_location": "L40",
       "weight": 1.0,
       "source": "src_services_telegram_service",
       "target": "src_services_telegram_service_sendtelegrammessage",
@@ -5110,7 +6153,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L33",
+      "source_location": "L34",
       "weight": 1.0,
       "source": "src_services_telegram_service",
       "target": "src_services_telegram_service_telegramsendchain",
@@ -5165,7 +6208,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L94",
+      "source_location": "L95",
       "weight": 1.0,
       "source": "src_services_telegram_service_notifyreachedmilestone",
       "target": "src_services_telegram_service_formatvietnamdatetime",
@@ -5176,7 +6219,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L174",
+      "source_location": "L175",
       "weight": 1.0,
       "source": "src_services_telegram_service_notifyactivitydeleted",
       "target": "src_services_telegram_service_sendtelegrammessage",
@@ -5187,7 +6230,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L228",
+      "source_location": "L229",
       "weight": 1.0,
       "source": "src_services_telegram_service_notifyactivitydeletedbatch",
       "target": "src_services_telegram_service_sendtelegrammessage",
@@ -5198,7 +6241,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L204",
+      "source_location": "L205",
       "weight": 1.0,
       "source": "src_services_telegram_service_notifyactivityupdated",
       "target": "src_services_telegram_service_sendtelegrammessage",
@@ -5209,7 +6252,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L147",
+      "source_location": "L148",
       "weight": 1.0,
       "source": "src_services_telegram_service_notifycheatingalert",
       "target": "src_services_telegram_service_sendtelegrammessage",
@@ -5220,7 +6263,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L108",
+      "source_location": "L109",
       "weight": 1.0,
       "source": "src_services_telegram_service_notifyreachedmilestone",
       "target": "src_services_telegram_service_sendtelegrammessage",
@@ -5232,7 +6275,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L96",
+      "source_location": "L97",
       "weight": 1.0,
       "source": "src_services_telegram_service_notifyreachedmilestone",
       "target": "src_utils_format_escapehtml"
@@ -5243,7 +6286,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L124",
+      "source_location": "L125",
       "weight": 1.0,
       "source": "src_services_telegram_service_notifycheatingalert",
       "target": "src_utils_format_escapehtml"
@@ -5254,7 +6297,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L162",
+      "source_location": "L163",
       "weight": 1.0,
       "source": "src_services_telegram_service_notifyactivitydeleted",
       "target": "src_utils_format_escapehtml"
@@ -5265,7 +6308,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L192",
+      "source_location": "L193",
       "weight": 1.0,
       "source": "src_services_telegram_service_notifyactivityupdated",
       "target": "src_utils_format_escapehtml"
@@ -5276,7 +6319,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/telegram.service.ts",
-      "source_location": "L217",
+      "source_location": "L218",
       "weight": 1.0,
       "source": "src_services_telegram_service_notifyactivitydeletedbatch",
       "target": "src_utils_format_escapehtml"
@@ -5647,5 +6690,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "a7c994f667b68df5ff579ffcec2c18f3bf15d890"
+  "built_at_commit": "d6b783bcd50ca5b860e6e9da3ac31c65c9fc8725"
 }

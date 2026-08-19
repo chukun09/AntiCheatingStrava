@@ -10,8 +10,8 @@
     "semantic_hash": ""
   },
   "src/bot/index.ts": {
-    "mtime": 1786440776.8451624,
-    "ast_hash": "da00a781b272b089c911957e88d99e1a",
+    "mtime": 1787123140.0881343,
+    "ast_hash": "b0932fabbbba98ffd499f5cce61f4cb4",
     "semantic_hash": ""
   },
   "src/config/db.ts": {
@@ -50,23 +50,23 @@
     "semantic_hash": ""
   },
   "src/services/activity.service.ts": {
-    "mtime": 1786441997.0085952,
-    "ast_hash": "4178ee865b0ae962dd3714f4dd1217b4",
+    "mtime": 1786714427.6324008,
+    "ast_hash": "2cf8adaf4f7de1f214f506e5492e0be1",
     "semantic_hash": ""
   },
   "src/services/anticheat.service.ts": {
-    "mtime": 1786420427.8622382,
-    "ast_hash": "353151eb30be0c46de2f076f65f7988a",
+    "mtime": 1786977026.5382502,
+    "ast_hash": "93384152f4491363cd199ae0265df061",
     "semantic_hash": ""
   },
   "src/services/awards.service.ts": {
-    "mtime": 1786420922.439664,
-    "ast_hash": "8066f06cfd11bf978a789c938a23f1ee",
+    "mtime": 1786950901.9379835,
+    "ast_hash": "4371caa197ba3d7e844cc47b04153628",
     "semantic_hash": ""
   },
   "src/services/excel.service.ts": {
-    "mtime": 1786368250.308219,
-    "ast_hash": "6c020b37b2e2f92afeebf2bfea7edd5e",
+    "mtime": 1786504934.7019465,
+    "ast_hash": "39c4720a985483e1ce0c6f442a19fecd",
     "semantic_hash": ""
   },
   "src/services/override.service.ts": {
@@ -90,18 +90,18 @@
     "semantic_hash": ""
   },
   "src/services/sync.service.ts": {
-    "mtime": 1786421266.127811,
-    "ast_hash": "2f4d4332b56adc2bbe40e7175c248838",
+    "mtime": 1786951124.7822757,
+    "ast_hash": "026afc244678b3056d4548297b101a76",
     "semantic_hash": ""
   },
   "src/services/team.service.ts": {
-    "mtime": 1786440400.1589315,
-    "ast_hash": "78afefc8db4d7636df81f9ff53d347d4",
+    "mtime": 1786714824.7131333,
+    "ast_hash": "d935cbb4b400bef380018ed62095d3c6",
     "semantic_hash": ""
   },
   "src/services/telegram.service.ts": {
-    "mtime": 1786421291.594963,
-    "ast_hash": "a0191237abc4381076a27e1e6ee513e1",
+    "mtime": 1786714775.6406877,
+    "ast_hash": "583bd59b6b798d4097655abf5b1f2fd3",
     "semantic_hash": ""
   },
   "src/utils/queue.ts": {
@@ -152,6 +152,26 @@
   "nicknames.txt": {
     "mtime": 1786423353.74911,
     "ast_hash": "1639531d8630a23d51e1f798d064c5c9",
+    "semantic_hash": ""
+  },
+  "src/services/bonus.service.ts": {
+    "mtime": 1786951629.1830685,
+    "ast_hash": "7188590c1679b9e57c0e5b8d1c45ca85",
+    "semantic_hash": ""
+  },
+  "src/services/department.service.ts": {
+    "mtime": 1787123113.335875,
+    "ast_hash": "daa9fcd7a891b1dbc4ca272291ba3850",
+    "semantic_hash": ""
+  },
+  "src/services/progress.service.ts": {
+    "mtime": 1786977034.6140492,
+    "ast_hash": "f05e65b62f83eacddf8c4c951665daef",
+    "semantic_hash": ""
+  },
+  "src/services/stats.service.ts": {
+    "mtime": 1786938535.5870686,
+    "ast_hash": "99b28dc8e3878747da9686f9de2b40ed",
     "semantic_hash": ""
   }
 }
