@@ -41,31 +41,9 @@ export function initTelegramBot(): Telegraf | null {
   try {
     bot = new Telegraf(env.TELEGRAM_BOT_TOKEN);
 
-    // Middleware to support flexible mention formats:
-    // e.g. "@IRIS_Runner_Bot /best-pace", "@IRIS_Runner_Bot best-pace", "/best-pace@IRIS_Runner_Bot"
-    bot.use(async (ctx, next) => {
-      if (ctx.message && 'text' in ctx.message) {
-        const rawText = (ctx.message.text || '').trim();
-        // Match patterns like `@Bot /command`, `@Bot command`, `/command@Bot`, `/command`, `command`
-        const match = rawText.match(/^(?:@[\w_]+\s+)?\/?([a-zA-Z0-9_-]+)(?:@[\w_]+)?(?:\s+.*)?$/);
-        if (match) {
-          const cmdName = match[1].toLowerCase();
-          const validCommands = [
-            'start', 'help', 'bxh_canhan', 'bxh_doi', 'doi', 'bxh_phong', 'bxh_phongban', 'phong',
-            'lichsu', 'chitiet', 'speed_tuan1', 'best-pace', 'best_pace', 'tonghop', 'thongke', 'summary',
-            'bxh_butpha', 'butpha', 'but_pha',
-            'giai_tuan1', 'giai_tuan2', 'giai_tuan3', 'giai_tuan4', 'phat', 'sync', 'excel_vipham', 'vipham_excel',
-            'excel_bxh', 'bxh_excel', 'doisoat', 'duyet', 'huy', 'duyet_tatca', 'huy_tatca',
-            'cong_pickleball', 'bonus_pickleball', 'huy_pickleball'
-          ];
-          if (validCommands.includes(cmdName)) {
-            // Normalize command prefix while keeping trailing args
-            const trailingArgs = rawText.replace(/^(?:@[\w_]+\s+)?\/?([a-zA-Z0-9_-]+)(?:@[\w_]+)?/, '');
-            ctx.message.text = `/${cmdName}${trailingArgs}`;
-          }
-        }
-      }
-      return next();
+    // Global Error Handler to prevent bot crash
+    bot.catch((err: any, ctx: any) => {
+      console.error(`[Telegram Bot] Error in update ${ctx?.update?.update_id}:`, err);
     });
 
     // Command /start or /help
@@ -1140,14 +1118,15 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
     });
 
     const launchBotWithRetry = (retryCount = 0) => {
-      bot?.launch().then(() => {
+      bot?.launch({ dropPendingUpdates: false }).then(() => {
         console.log('[Telegram Bot] IRIS Challenge Bot launched successfully!');
       }).catch((err) => {
-        if (err.message?.includes('409') && retryCount < 5) {
-          console.warn(`[Telegram Bot] 409 Conflict (Another bot instance running). Retrying in 5s... (Attempt ${retryCount + 1}/5)`);
+        if (err.message?.includes('409')) {
+          console.warn(`[Telegram Bot] 409 Conflict (Another bot instance running). Retrying in 5s... (Attempt ${retryCount + 1})`);
           setTimeout(() => launchBotWithRetry(retryCount + 1), 5000);
         } else {
           console.error('[Telegram Bot] Failed to launch bot:', err.message);
+          setTimeout(() => launchBotWithRetry(retryCount + 1), 10000);
         }
       });
     };
