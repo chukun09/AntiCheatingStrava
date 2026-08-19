@@ -3052,7 +3052,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L585",
+      "source_location": "L626",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_activity_service_getbestpaceactivities"
@@ -3063,7 +3063,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L769",
+      "source_location": "L810",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek1teamaward"
@@ -3074,7 +3074,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L790",
+      "source_location": "L831",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek2teamaward"
@@ -3085,7 +3085,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L813",
+      "source_location": "L854",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek3individualaward"
@@ -3096,7 +3096,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L814",
+      "source_location": "L855",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek3teamaward"
@@ -3107,7 +3107,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L839",
+      "source_location": "L880",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek4teamaward"
@@ -3118,7 +3118,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1185",
+      "source_location": "L1164",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_bonus_service_grantpickleballbonus"
@@ -3129,7 +3129,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1216",
+      "source_location": "L1195",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_bonus_service_revokepickleballbonus"
@@ -3162,7 +3162,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L923",
+      "source_location": "L964",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_excel_service_exportleaderboardtoexcelbuffer"
@@ -3173,7 +3173,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L896",
+      "source_location": "L937",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_excel_service_exportviolationstoexcelbuffer"
@@ -3195,7 +3195,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1073",
+      "source_location": "L1052",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_override_service_recalculateuserstats"
@@ -3206,7 +3206,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L858",
+      "source_location": "L899",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_penalty_service_calculatepenalties"
@@ -3217,7 +3217,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L718",
+      "source_location": "L759",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_progress_service_getgrowthleaderboard"
@@ -3228,7 +3228,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L946",
+      "source_location": "L987",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_reconcile_service_reconcileallusers"
@@ -3239,7 +3239,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L647",
+      "source_location": "L688",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_stats_service_getcompanysummarystats"
@@ -3250,7 +3250,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L442",
+      "source_location": "L483",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_sync_service_syncalluserspastactivities"
@@ -3261,7 +3261,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1022",
+      "source_location": "L466",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_sync_service_syncuserpastactivities"
@@ -3327,7 +3327,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L444",
+      "source_location": "L485",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_telegram_service_sendtelegrammessage"
@@ -6783,5 +6783,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "20fe0f25a81b31bfebfa4b344a0fdaad2dee5345"
+  "built_at_commit": "bd2ccfe7737462c2fd346e48f3648c37ee2bd677"
 }
