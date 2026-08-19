@@ -108,11 +108,7 @@ export async function getTeamWeekDetail(teamId: number, weekNumber?: number | nu
 
     let isQualified = false;
     if (targetWeekObj) {
-      if (weekNumber === 1 || weekNumber === 2) {
-        isQualified = totalDistanceKm >= 3.0;
-      } else {
-        isQualified = totalDistanceKm > 0;
-      }
+      isQualified = totalDistanceKm >= 3.0;
     } else {
       // Whole contest goal: Female 15km, Male 30km
       const targetKm = user.gender === 'FEMALE' ? 15 : 30;
@@ -146,5 +142,130 @@ export async function getTeamWeekDetail(teamId: number, weekNumber?: number | nu
     qualifiedMembers,
     totalTeamDistanceKm,
     members: memberStats
+  };
+}
+
+export interface TeamSummaryItem {
+  teamId: number;
+  teamName: string;
+  totalMembers: number;
+  qualifiedMembers: number;
+  qualifiedRate: number;
+  totalDistanceKm: number;
+  avgKmPerMember: number;
+}
+
+export interface TeamWeeklyLeaderboardResult {
+  periodTitle: string;
+  weekNumber: number | null;
+  teams: TeamSummaryItem[];
+  totalCompanyUsers: number;
+  totalQualifiedUsers: number;
+  companyCompletionRate: number;
+}
+
+/**
+ * Get Leaderboard of all 8 teams filtered by week or whole contest,
+ * showing the count and percentage of members who completed the 3km target.
+ */
+export async function getTeamWeeklyLeaderboard(weekParam?: number | string | null): Promise<TeamWeeklyLeaderboardResult> {
+  let weekNumber: number | null = null;
+  if (weekParam !== undefined && weekParam !== null && weekParam !== '') {
+    const match = String(weekParam).match(/\d+/);
+    if (match) {
+      const parsed = parseInt(match[0], 10);
+      if (parsed >= 1 && parsed <= 4) weekNumber = parsed;
+    }
+  }
+
+  let dateFilter: { gte?: Date; lt?: Date } = {};
+  let periodTitle = 'Toàn Chiến Dịch (03/08 - 30/08)';
+
+  if (weekNumber && weekNumber >= 1 && weekNumber <= 4) {
+    const weekObj = WEEKS[weekNumber - 1];
+    dateFilter = { gte: weekObj.start, lt: weekObj.end };
+    periodTitle = weekObj.name;
+  }
+
+  const users = await db.user.findMany();
+
+  // Fetch legit activities
+  const activities = await db.activity.findMany({
+    where: {
+      isLegit: true,
+      ...(weekNumber ? { startDate: dateFilter } : {})
+    }
+  });
+
+  const userStatsMap = new Map<string, { totalDistanceKm: number; runCount: number; movingSec: number }>();
+  activities.forEach(act => {
+    const distKm = act.distance / 1000;
+    const current = userStatsMap.get(act.userId) || { totalDistanceKm: 0, runCount: 0, movingSec: 0 };
+    current.totalDistanceKm += distKm;
+    current.runCount += 1;
+    current.movingSec += act.movingTime;
+    userStatsMap.set(act.userId, current);
+  });
+
+  let totalQualifiedUsers = 0;
+
+  const teamList: TeamSummaryItem[] = TEAMS.map(team => {
+    const members = users.filter(u => u.teamId === team.id);
+    const totalMembers = members.length;
+    let qualifiedMembers = 0;
+    let totalDistanceKm = 0;
+
+    members.forEach(u => {
+      let userKm = 0;
+      if (weekNumber) {
+        userKm = userStatsMap.get(u.id)?.totalDistanceKm || 0;
+      } else {
+        userKm = u.totalDistance / 1000;
+      }
+      totalDistanceKm += userKm;
+
+      let isQualified = false;
+      if (weekNumber) {
+        isQualified = userKm >= 3.0;
+      } else {
+        const targetKm = u.gender === 'FEMALE' ? 15 : 30;
+        isQualified = userKm >= targetKm;
+      }
+
+      if (isQualified) {
+        qualifiedMembers++;
+        totalQualifiedUsers++;
+      }
+    });
+
+    const qualifiedRate = totalMembers > 0 ? (qualifiedMembers / totalMembers) * 100 : 0;
+    const avgKmPerMember = totalMembers > 0 ? totalDistanceKm / totalMembers : 0;
+
+    return {
+      teamId: team.id,
+      teamName: team.name,
+      totalMembers,
+      qualifiedMembers,
+      qualifiedRate,
+      totalDistanceKm,
+      avgKmPerMember
+    };
+  }).sort((a, b) => {
+    if (Math.abs(b.qualifiedRate - a.qualifiedRate) > 0.01) {
+      return b.qualifiedRate - a.qualifiedRate;
+    }
+    return b.totalDistanceKm - a.totalDistanceKm;
+  });
+
+  const totalCompanyUsers = users.length;
+  const companyCompletionRate = totalCompanyUsers > 0 ? (totalQualifiedUsers / totalCompanyUsers) * 100 : 0;
+
+  return {
+    periodTitle,
+    weekNumber,
+    teams: teamList,
+    totalCompanyUsers,
+    totalQualifiedUsers,
+    companyCompletionRate
   };
 }

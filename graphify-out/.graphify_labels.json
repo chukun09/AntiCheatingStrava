@@ -11,5 +11,6 @@
   "9": "progress.service.ts",
   "10": "department.service.ts",
   "11": "team.service.ts",
-  "12": "bonus.service.ts"
+  "12": "bonus.service.ts",
+  "13": "progress.service.ts"
 }

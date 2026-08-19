@@ -1,7 +1,7 @@
 import { Telegraf } from 'telegraf';
 import { db } from '../config/db';
 import { env } from '../config/env';
-import { TEAMS, getTeamName, getTeamWeekDetail } from '../services/team.service';
+import { TEAMS, getTeamName, getTeamWeekDetail, getTeamWeeklyLeaderboard } from '../services/team.service';
 import { calculatePenalties } from '../services/penalty.service';
 import { formatPace, formatVietnamDateTime, sendTelegramMessage } from '../services/telegram.service';
 import { syncAllUsersPastActivities } from '../services/sync.service';
@@ -55,7 +55,7 @@ Chào mừng các chiến binh đến với Giải Chạy Kỷ Niệm 15 Năm Th
 
 Danh sách lệnh hỗ trợ:
 🏆 <code>/bxh_canhan</code> - Xem Bảng Xếp Hạng Cá Nhân (Tách riêng Nam & Nữ).
-🛡️ <code>/bxh_doi [1-8] [tuần]</code> - Xem BXH 8 Đội Thi (Gõ <code>/bxh_doi 1</code> để xem chi tiết VĐV trong Đội 1).
+🛡️ <code>/bxh_doi [tuần/đội]</code> - Xem BXH 8 Đội Thi & Tỷ lệ đạt 3km (VD: <code>/bxh_doi 3</code>, <code>/bxh_doi 1 3</code>).
 🏢 <code>/bxh_phong [tuần/phòng]</code> - Xem BXH Phòng Ban & Tỷ lệ đạt 3km (VD: <code>/bxh_phong 3</code>, <code>/bxh_phong Kỹ thuật 3</code>).
 📋 <code>/lichsu [Nickname]</code> - Xem hồ sơ & danh sách bài chạy chi tiết của 1 VĐV.
 📊 <code>/tonghop [tuần/tatca]</code> - Báo cáo tổng hợp tỷ lệ tham gia & Pace toàn công ty.
@@ -89,7 +89,6 @@ Danh sách lệnh hỗ trợ:
         let weekParam: number | string | null = null;
 
         if (parts.length === 0) {
-          // No args: Default to whole contest overview
           searchDept = null;
           weekParam = null;
         } else if (parts.length === 1) {
@@ -101,10 +100,8 @@ Danh sách lệnh hỗ trợ:
             searchDept = parts[0];
           }
         } else if (parts.length === 2 && /^(?:tuan|w|tuần)$/i.test(parts[0]) && /^[1-4]$/.test(parts[1])) {
-          // e.g. /bxh_phong tuan 3
           weekParam = parseInt(parts[1], 10);
         } else {
-          // Multiple words: e.g. "Kỹ thuật 3", "Kỹ thuật tuan 3", "Phát triển kd"
           const lastWord = parts[parts.length - 1].toLowerCase();
           const secondLastWord = parts.length >= 3 ? parts[parts.length - 2].toLowerCase() : '';
 
@@ -125,32 +122,65 @@ Danh sách lệnh hỗ trợ:
           }
         }
 
+        // Helper to send chunked HTML messages (<= 3800 chars) to prevent Telegram 400 Bad Request
+        const sendChunkedHtmlMessages = async (header: string, itemLines: string[], footer?: string) => {
+          let currentMessage = header;
+          const messagesToSend: string[] = [];
+
+          for (const line of itemLines) {
+            if ((currentMessage + line).length > 3800) {
+              messagesToSend.push(currentMessage);
+              currentMessage = line;
+            } else {
+              currentMessage += line;
+            }
+          }
+
+          if (footer) {
+            if ((currentMessage + footer).length > 3800) {
+              messagesToSend.push(currentMessage);
+              currentMessage = footer;
+            } else {
+              currentMessage += footer;
+            }
+          }
+
+          if (currentMessage.trim().length > 0) {
+            messagesToSend.push(currentMessage);
+          }
+
+          for (const msg of messagesToSend) {
+            await ctx.replyWithHTML(msg);
+          }
+        };
+
         if (!searchDept) {
           // View summary leaderboard across all departments
           const res = await getDepartmentSummaryLeaderboard(weekParam);
           const isWeekly = res.weekNumber !== null;
 
-          let message = `🏢 <b>BẢNG XẾP HẠNG TIẾN ĐỘ PHÒNG BAN (${escapeHtml(res.periodTitle.toUpperCase())})</b> 🏢\n`;
+          let header = `🏢 <b>BẢNG XẾP HẠNG TIẾN ĐỘ PHÒNG BAN (${escapeHtml(res.periodTitle.toUpperCase())})</b> 🏢\n`;
           if (isWeekly) {
-            message += `📌 <i>Chỉ tiêu: VĐV đạt tích lũy >= 3.00 km trong tuần</i>\n`;
+            header += `📌 <i>Chỉ tiêu: VĐV đạt tích lũy >= 3.00 km trong tuần</i>\n`;
           } else {
-            message += `📌 <i>Chỉ tiêu tích lũy cả giải: Nam 30km, Nữ 15km</i>\n`;
+            header += `📌 <i>Chỉ tiêu tích lũy cả giải: Nam 30km, Nữ 15km</i>\n`;
           }
-          message += `📊 <b>Tỷ lệ toàn công ty:</b> <code>${res.totalQualifiedUsers}/${res.totalCompanyUsers} VĐV</code> (<b>${res.companyCompletionRate.toFixed(1)}%</b>)\n\n`;
+          header += `📊 <b>Toàn công ty:</b> <code>${res.totalQualifiedUsers}/${res.totalCompanyUsers} VĐV</code> (<b>${res.companyCompletionRate.toFixed(1)}%</b>)\n\n`;
 
           if (res.departments.length === 0) {
-            message += `<i>Chưa có dữ liệu phòng ban.</i>\n`;
-          } else {
-            res.departments.forEach((dept, index) => {
-              const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>#${index + 1}.</b>`;
-              message += `${medal} <b>${escapeHtml(dept.departmentName)}</b>\n`;
-              message += `   📊 Đạt chỉ tiêu: <code>${dept.qualifiedMembers}/${dept.totalMembers} VĐV</code> (<b>${dept.qualifiedRate.toFixed(1)}%</b>)\n`;
-              message += `   🏃 Tổng quãng đường: <code>${dept.totalDistanceKm.toFixed(1)} km</code> | TB: <code>${dept.avgKmPerMember.toFixed(2)} km/người</code>\n`;
-            });
+            return ctx.replyWithHTML(header + '<i>Chưa có dữ liệu phòng ban.</i>');
           }
 
-          message += `\n💡 <i>Mẹo: Gõ <code>/bxh_phong 3</code> để xem Tuần 3, hoặc <code>/bxh_phong Kỹ thuật 3</code> để xem chi tiết từng VĐV!</i>`;
-          return ctx.replyWithHTML(message);
+          const itemLines = res.departments.map((dept, index) => {
+            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>#${index + 1}.</b>`;
+            let line = `${medal} <b>${escapeHtml(dept.departmentName)}</b>\n`;
+            line += `   📊 Đạt: <code>${dept.qualifiedMembers}/${dept.totalMembers} VĐV</code> (<b>${dept.qualifiedRate.toFixed(1)}%</b>) | 🏃 <code>${dept.totalDistanceKm.toFixed(1)} km</code> (TB: <code>${dept.avgKmPerMember.toFixed(2)} km</code>)\n`;
+            return line;
+          });
+
+          const footer = `\n💡 <i>Mẹo: Gõ <code>/bxh_phong 3</code> để xem Tuần 3, hoặc <code>/bxh_phong Kỹ thuật 3</code> để xem chi tiết từng VĐV!</i>`;
+          await sendChunkedHtmlMessages(header, itemLines, footer);
+          return;
         }
 
         // View detailed member breakdown for a specific department
@@ -160,112 +190,132 @@ Danh sách lệnh hỗ trợ:
         }
 
         const isWeekly = detail.weekNumber !== null;
-        let message = `🏢 <b>CHI TIẾT PHÒNG BAN: ${escapeHtml(detail.departmentName.toUpperCase())}</b> 🏢\n`;
-        message += `📌 <b>Khung thời gian:</b> ${escapeHtml(detail.periodTitle)}\n`;
-        message += `📊 <b>Đạt chỉ tiêu:</b> <code>${detail.qualifiedMembers}/${detail.totalMembers} VĐV</code> (<b>${detail.qualifiedRate.toFixed(1)}%</b>)\n`;
-        message += `🏃 <b>Tổng quãng đường:</b> <code>${detail.totalDistanceKm.toFixed(1)} km</code> | TB: <code>${detail.avgKmPerMember.toFixed(2)} km/người</code>\n\n`;
-        message += `👥 <b>DANH SÁCH CHI TIẾT TỪNG VĐV:</b>\n`;
+        let header = `🏢 <b>CHI TIẾT PHÒNG BAN: ${escapeHtml(detail.departmentName.toUpperCase())}</b> 🏢\n`;
+        header += `📌 <b>Khung thời gian:</b> ${escapeHtml(detail.periodTitle)}\n`;
+        header += `📊 <b>Đạt chỉ tiêu:</b> <code>${detail.qualifiedMembers}/${detail.totalMembers} VĐV</code> (<b>${detail.qualifiedRate.toFixed(1)}%</b>)\n`;
+        header += `🏃 <b>Tổng quãng đường:</b> <code>${detail.totalDistanceKm.toFixed(1)} km</code> | TB: <code>${detail.avgKmPerMember.toFixed(2)} km/người</code>\n\n`;
+        header += `👥 <b>DANH SÁCH CHI TIẾT TỪNG VĐV:</b>\n`;
 
-        detail.members.forEach((m, idx) => {
+        const itemLines = detail.members.map((m, idx) => {
           const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `<b>${idx + 1}.</b>`;
           const statusIcon = m.isQualified ? '✅' : '⏳';
           const paceStr = m.runCount > 0 && isFinite(m.avgPaceSecPerKm) ? formatPace(m.avgPaceSecPerKm) : '--:--';
           const genderIcon = m.gender === 'FEMALE' ? '👩' : '👨';
           const teamName = getTeamName(m.teamId);
 
-          message += `${medal} ${statusIcon} <b>${escapeHtml(m.fullName || m.nickName)}</b> (@${escapeHtml(m.nickName)}) ${genderIcon}\n`;
-          message += `   └─ <code>${m.totalDistanceKm.toFixed(2)} km</code> | ${m.runCount} bài | Pace: <code>${paceStr}</code> (${escapeHtml(teamName)})\n`;
+          return `${medal} ${statusIcon} <b>${escapeHtml(m.fullName || m.nickName)}</b> (@${escapeHtml(m.nickName)}) ${genderIcon}\n   └─ <code>${m.totalDistanceKm.toFixed(2)} km</code> | ${m.runCount} bài | Pace: <code>${paceStr}</code> (${escapeHtml(teamName)})\n`;
         });
 
-        return ctx.replyWithHTML(message);
+        await sendChunkedHtmlMessages(header, itemLines);
+        return;
       } catch (error) {
         console.error('[Bot /bxh_phong] Error:', error);
         return ctx.reply('Lỗi khi tải Bảng xếp hạng phòng ban.');
       }
     });
 
-    // Command /bxh_doi [1-8] [tuần] or /doi [1-8] [tuần] - Team Leaderboards & Detailed Weekly Breakdown
+    // Command /bxh_doi [1-8/tuần] or /doi [1-8/tuần] - Team Leaderboards & Detailed Weekly Breakdown
     bot.command(['bxh_doi', 'doi'], async (ctx) => {
       try {
-        const text = (ctx.message?.text || '').trim();
-        const parts = text.split(/\s+/);
+        const rawText = (ctx.message?.text || '').trim();
+        const parts = rawText.split(/\s+/).slice(1);
 
-        if (parts.length > 1) {
-          const teamIdArg = parseInt(parts[1], 10);
-          if (!isNaN(teamIdArg) && teamIdArg >= 1 && teamIdArg <= 8) {
-            let weekNumArg: number | null = null;
-            if (parts.length >= 3) {
-              const rawWeek = parts.slice(2).join(' ').toLowerCase();
-              const match = rawWeek.match(/\d+/);
-              if (match) {
-                const parsedWeek = parseInt(match[0], 10);
-                if (parsedWeek >= 1 && parsedWeek <= 4) {
-                  weekNumArg = parsedWeek;
-                }
+        let teamIdArg: number | null = null;
+        let weekNumArg: number | null = null;
+
+        if (parts.length === 1) {
+          const p = parts[0].toLowerCase();
+          if (/^(?:tuan|w|tuần)[1-4]$/i.test(p)) {
+            const num = p.match(/\d+/);
+            if (num) weekNumArg = parseInt(num[0], 10);
+          } else if (p === 'tatca' || p === 'all') {
+            weekNumArg = null;
+          } else {
+            const num = parseInt(p, 10);
+            if (!isNaN(num)) {
+              if (num >= 5 && num <= 8) {
+                teamIdArg = num;
+              } else if (num >= 1 && num <= 4) {
+                weekNumArg = num;
               }
             }
+          }
+        } else if (parts.length === 2) {
+          const p0 = parts[0].toLowerCase();
+          const p1 = parts[1].toLowerCase();
 
-            const detail = await getTeamWeekDetail(teamIdArg, weekNumArg);
-            if (!detail) {
-              return ctx.replyWithHTML(`❌ Không tìm thấy dữ liệu cho Đội ${teamIdArg}.`);
+          if (/^(?:tuan|w|tuần)$/i.test(p0) && /^[1-4]$/.test(p1)) {
+            weekNumArg = parseInt(p1, 10);
+          } else if (/^(?:doi|team|đội)$/i.test(p0) && /^[1-8]$/.test(p1)) {
+            teamIdArg = parseInt(p1, 10);
+          } else {
+            const n0 = parseInt(p0, 10);
+            if (!isNaN(n0) && n0 >= 1 && n0 <= 8) {
+              teamIdArg = n0;
+              const matchW = p1.match(/\d+/);
+              if (matchW) {
+                const w = parseInt(matchW[0], 10);
+                if (w >= 1 && w <= 4) weekNumArg = w;
+              }
             }
-
-            const headerWeekStr = detail.weekNumber ? `(TUẦN ${detail.weekNumber})` : `(TÍCH LŨY TOÀN GIẢI)`;
-            let message = `🛡️ <b>CHI TIẾT THÀNH TÍCH ${detail.teamName.toUpperCase()} ${headerWeekStr}</b> 🛡️\n`;
-            message += `📌 <b>Khung thời gian:</b> ${detail.weekName}\n`;
-            message += `📊 <b>VĐV Đạt chỉ tiêu:</b> <code>${detail.qualifiedMembers}/${detail.totalMembers} VĐV</code> (${((detail.qualifiedMembers / detail.totalMembers) * 100).toFixed(1)}%)\n`;
-            message += `🏃 <b>Tổng quãng đường Đội:</b> <code>${detail.totalTeamDistanceKm.toFixed(1)} km</code>\n\n`;
-
-            detail.members.forEach((m, idx) => {
-              const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `<b>${idx + 1}.</b>`;
-              const statusIcon = m.isQualified ? '✅' : '❌';
-              const paceStr = m.runCount > 0 ? formatPace(m.avgPaceSecPerKm) : '--:--';
-              const genderIcon = m.gender === 'FEMALE' ? '👩' : '👨';
-
-              message += `${medal} ${statusIcon} <b>${escapeHtml(m.nickName)}</b> ${genderIcon}\n`;
-              message += `   └─ <code>${m.totalDistanceKm.toFixed(2)} km</code> | ${m.runCount} bài | Pace: <code>${paceStr}</code>\n`;
-            });
-
-            return ctx.replyWithHTML(message);
+          }
+        } else if (parts.length >= 3) {
+          const numMatch = parts.join(' ').match(/(\d+)/g);
+          if (numMatch && numMatch.length >= 1) {
+            const firstNum = parseInt(numMatch[0], 10);
+            if (firstNum >= 1 && firstNum <= 8) teamIdArg = firstNum;
+            if (numMatch.length >= 2) {
+              const secondNum = parseInt(numMatch[1], 10);
+              if (secondNum >= 1 && secondNum <= 4) weekNumArg = secondNum;
+            }
           }
         }
 
-        // View summary leaderboard of all 8 teams
-        const users = await db.user.findMany();
-        
-        const teamStatsMap = new Map<number, { totalMeters: number; memberCount: number }>();
-        TEAMS.forEach(t => teamStatsMap.set(t.id, { totalMeters: 0, memberCount: 0 }));
-
-        users.forEach(u => {
-          const stat = teamStatsMap.get(u.teamId);
-          if (stat) {
-            stat.totalMeters += u.totalDistance;
-            stat.memberCount += 1;
+        // Case 1: Detailed athlete-by-athlete breakdown for a specific team
+        if (teamIdArg !== null) {
+          const detail = await getTeamWeekDetail(teamIdArg, weekNumArg);
+          if (!detail) {
+            return ctx.replyWithHTML(`❌ Không tìm thấy dữ liệu cho Đội ${teamIdArg}.`);
           }
-        });
 
-        const teamList = TEAMS.map(t => {
-          const stat = teamStatsMap.get(t.id) || { totalMeters: 0, memberCount: 0 };
-          const avgKm = stat.memberCount > 0 ? (stat.totalMeters / 1000) / stat.memberCount : 0;
-          const totalKm = stat.totalMeters / 1000;
-          return {
-            id: t.id,
-            name: t.name,
-            totalKm,
-            memberCount: stat.memberCount,
-            avgKm
-          };
-        }).sort((a, b) => b.avgKm - a.avgKm);
+          const headerWeekStr = detail.weekNumber ? `(TUẦN ${detail.weekNumber})` : `(TÍCH LŨY TOÀN GIẢI)`;
+          let message = `🛡️ <b>CHI TIẾT THÀNH TÍCH ${detail.teamName.toUpperCase()} ${headerWeekStr}</b> 🛡️\n`;
+          message += `📌 <b>Khung thời gian:</b> ${detail.weekName}\n`;
+          message += `📊 <b>VĐV Đạt chỉ tiêu:</b> <code>${detail.qualifiedMembers}/${detail.totalMembers} VĐV</code> (${((detail.qualifiedMembers / detail.totalMembers) * 100).toFixed(1)}%)\n`;
+          message += `🏃 <b>Tổng quãng đường Đội:</b> <code>${detail.totalTeamDistanceKm.toFixed(1)} km</code>\n\n`;
 
-        let message = `🛡️ <b>BẢNG XẾP HẠNG 08 ĐỘI THI ĐẤU (AVG KM/NGƯỜI CẢ GIẢI)</b> 🛡️\n\n`;
+          detail.members.forEach((m, idx) => {
+            const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `<b>${idx + 1}.</b>`;
+            const statusIcon = m.isQualified ? '✅' : '❌';
+            const paceStr = m.runCount > 0 && isFinite(m.avgPaceSecPerKm) ? formatPace(m.avgPaceSecPerKm) : '--:--';
+            const genderIcon = m.gender === 'FEMALE' ? '👩' : '👨';
 
-        teamList.forEach((team, index) => {
+            message += `${medal} ${statusIcon} <b>${escapeHtml(m.fullName || m.nickName)}</b> (@${escapeHtml(m.nickName)}) ${genderIcon}\n`;
+            message += `   └─ <code>${m.totalDistanceKm.toFixed(2)} km</code> | ${m.runCount} bài | Pace: <code>${paceStr}</code>\n`;
+          });
+
+          return ctx.replyWithHTML(message);
+        }
+
+        // Case 2: Summary Leaderboard of ALL 08 Teams (with week filter & >= 3km progress)
+        const res = await getTeamWeeklyLeaderboard(weekNumArg);
+        const isWeekly = res.weekNumber !== null;
+
+        let message = `🛡️ <b>BẢNG XẾP HẠNG TIẾN ĐỘ 08 ĐỘI THI (${escapeHtml(res.periodTitle.toUpperCase())})</b> 🛡️\n`;
+        if (isWeekly) {
+          message += `📌 <i>Chỉ tiêu: VĐV đạt tích lũy >= 3.00 km trong tuần</i>\n`;
+        } else {
+          message += `📌 <i>Chỉ tiêu tích lũy cả giải: Nam 30km, Nữ 15km</i>\n`;
+        }
+        message += `📊 <b>Toàn công ty:</b> <code>${res.totalQualifiedUsers}/${res.totalCompanyUsers} VĐV</code> (<b>${res.companyCompletionRate.toFixed(1)}%</b>)\n\n`;
+
+        res.teams.forEach((team, index) => {
           const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>#${index + 1}.</b>`;
-          message += `${medal} <b>${escapeHtml(team.name)}</b>\n`;
-          message += `   📊 Trung bình: <code>${team.avgKm.toFixed(2)} km/người</code> (Tổng: ${team.totalKm.toFixed(1)}km - ${team.memberCount} thành viên)\n`;
+          message += `${medal} <b>${escapeHtml(team.teamName)}</b>\n`;
+          message += `   📊 Đạt: <code>${team.qualifiedMembers}/${team.totalMembers} VĐV</code> (<b>${team.qualifiedRate.toFixed(1)}%</b>) | 🏃 <code>${team.totalDistanceKm.toFixed(1)} km</code> (TB: <code>${team.avgKmPerMember.toFixed(2)} km</code>)\n`;
         });
 
-        message += `\n💡 <i>Mẹo: Gõ <code>/doi 2 tuan 1</code> hoặc <code>/doi 2</code> để xem chi tiết danh sách VĐV từng Đội!</i>`;
+        message += `\n💡 <i>Mẹo: Gõ <code>/bxh_doi 3</code> để xem Tuần 3, hoặc <code>/doi 1 3</code> để xem chi tiết từng VĐV Đội 1!</i>`;
         return ctx.replyWithHTML(message);
       } catch (error) {
         console.error('[Bot /bxh_doi] Error:', error);
