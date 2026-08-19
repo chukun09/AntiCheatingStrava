@@ -4,7 +4,7 @@ import { env } from '../config/env';
 import { TEAMS, getTeamName, getTeamWeekDetail, getTeamWeeklyLeaderboard } from '../services/team.service';
 import { calculatePenalties } from '../services/penalty.service';
 import { formatPace, formatVietnamDateTime, sendTelegramMessage } from '../services/telegram.service';
-import { syncAllUsersPastActivities } from '../services/sync.service';
+import { syncAllUsersPastActivities, syncUserPastActivities } from '../services/sync.service';
 import { overrideActivityStatus, recalculateUserStats } from '../services/override.service';
 import { 
   getWeek1TeamAward, 
@@ -69,7 +69,7 @@ Danh sách lệnh hỗ trợ:
 🏓 <code>/cong_pickleball [Nicknames...]</code> - BTC cộng điểm thưởng Pickleball (+5km Nam, +3km Nữ).
 📊 <code>/excel_bxh [tuan1-4/tatca]</code> - Trích xuất file Excel Bảng xếp hạng VĐV theo tuần.
 📄 <code>/excel_vipham [tuan1-4/doi1-8/tatca]</code> - Trích xuất file Excel danh sách bài vi phạm.
-🔄 <code>/sync</code> - Kích hoạt đồng bộ bài chạy mới nhất từ Strava cho tất cả VĐV.
+🔄 <code>/sync [Nickname/all]</code> - Đồng bộ bài chạy mới từ Strava (VD: <code>/sync CapyLong</code> hoặc <code>/sync</code>).
 ✅ <code>/duyet [IDs]</code> - BTC duyệt bài chạy hợp lệ theo danh sách IDs.
 ❌ <code>/huy [IDs]</code> - BTC từ chối bài chạy phạm quy theo danh sách IDs.
 ❓ <code>/help</code> - Hướng dẫn sử dụng Bot.
@@ -972,6 +972,68 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
       } catch (error: any) {
         console.error('[Bot /doisoat] Error:', error);
         return ctx.reply('Lỗi khi chạy đối soát dữ liệu: ' + (error?.message || error));
+      }
+    });
+
+    // Command /sync [Nickname / Họ Tên / all / tatca] - Trigger Strava Past Activities Sync
+    bot.command('sync', async (ctx) => {
+      try {
+        const text = (ctx.message?.text || '').trim();
+        const parts = text.split(/\s+/).slice(1);
+        const searchTarget = parts.join(' ').trim();
+
+        if (!searchTarget || searchTarget.toLowerCase() === 'all' || searchTarget.toLowerCase() === 'tatca') {
+          // Sync ALL users in company
+          await ctx.replyWithHTML('⏳ <i>Đang kích hoạt đồng bộ lịch sử bài chạy Strava cho TOÀN BỘ VĐV trong công ty... Vui lòng đợi trong giây lát.</i>');
+          const res = await syncAllUsersPastActivities();
+          if (res.isAlreadyRunning) {
+            return ctx.replyWithHTML('⚠️ <b>HỆ THỐNG ĐANG BẬN:</b> Một tiến trình đồng bộ toàn bộ đang chạy ngầm, vui lòng không kích hoạt lặp lại.');
+          }
+          return ctx.replyWithHTML(
+            `🔄 <b>ĐỒNG BỘ TOÀN BỘ HOÀN TẤT!</b> 🔄\n\n` +
+            `👥 <b>Tổng số VĐV đã kiểm tra:</b> <code>${res.totalUsers} người</code>\n` +
+            `📥 <b>Bài chạy mới ghi nhận:</b> <code>${res.totalSynced} bài</code>\n` +
+            `🗑️ <b>Bài chạy bị xóa (đồng bộ Strava):</b> <code>${res.totalDeleted} bài</code>`
+          );
+        }
+
+        // Sync a specific user
+        const cleanTarget = searchTarget.startsWith('@') ? searchTarget.slice(1) : searchTarget;
+        const targetUser = await db.user.findFirst({
+          where: {
+            OR: [
+              { nickName: { equals: cleanTarget, mode: 'insensitive' } },
+              { nickName: { contains: cleanTarget, mode: 'insensitive' } },
+              { fullName: { contains: cleanTarget, mode: 'insensitive' } }
+            ]
+          }
+        });
+
+        if (!targetUser) {
+          return ctx.replyWithHTML(`⚠️ Không tìm thấy VĐV nào khớp với từ khóa <b>"${escapeHtml(searchTarget)}"</b>.`);
+        }
+
+        if (!targetUser.stravaAthleteId) {
+          return ctx.replyWithHTML(`⚠️ VĐV <b>${escapeHtml(targetUser.fullName || targetUser.nickName)}</b> (@${escapeHtml(targetUser.nickName)}) chưa liên kết tài khoản Strava.`);
+        }
+
+        await ctx.replyWithHTML(`⏳ <i>Đang kéo dữ liệu bài chạy mới nhất từ Strava cho VĐV <b>${escapeHtml(targetUser.fullName || targetUser.nickName)}</b> (@${escapeHtml(targetUser.nickName)})...</i>`);
+
+        const res = await syncUserPastActivities(targetUser.id);
+        const updatedUser = await db.user.findUnique({ where: { id: targetUser.id } });
+        const finalKm = updatedUser ? (updatedUser.totalDistance / 1000).toFixed(2) : (targetUser.totalDistance / 1000).toFixed(2);
+
+        return ctx.replyWithHTML(
+          `🔄 <b>ĐỒNG BỘ THÀNH CÔNG!</b> 🔄\n\n` +
+          `👤 <b>VĐV:</b> ${escapeHtml(targetUser.fullName || targetUser.nickName)} (@${escapeHtml(targetUser.nickName)})\n` +
+          `🛡️ <b>Đội:</b> ${escapeHtml(getTeamName(targetUser.teamId))}\n` +
+          `📥 <b>Bài chạy mới ghi nhận:</b> <code>${res.syncedCount} bài</code>\n` +
+          `🗑️ <b>Bài chạy bị xóa trên Strava:</b> <code>${res.deletedCount} bài</code>\n` +
+          `🏃 <b>Tổng quãng đường hiện tại:</b> <code>${finalKm} km</code>`
+        );
+      } catch (error: any) {
+        console.error('[Bot /sync] Error:', error);
+        return ctx.reply('Lỗi khi đồng bộ dữ liệu Strava: ' + (error?.message || error));
       }
     });
 

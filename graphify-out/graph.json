@@ -1180,7 +1180,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_strava_service",
-      "community": 7,
+      "community": 14,
       "norm_label": "strava.service.ts"
     },
     {
@@ -1190,7 +1190,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_services_strava_service_sleep",
-      "community": 7,
+      "community": 14,
       "norm_label": "sleep()"
     },
     {
@@ -1200,7 +1200,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_services_strava_service_tokenrefreshpromises",
-      "community": 7,
+      "community": 14,
       "norm_label": "tokenrefreshpromises"
     },
     {
@@ -1210,7 +1210,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_services_strava_service_checkratelimitheaders",
-      "community": 7,
+      "community": 14,
       "norm_label": "checkratelimitheaders()"
     },
     {
@@ -1230,7 +1230,7 @@
       "source_location": "L109",
       "_origin": "ast",
       "id": "src_services_strava_service_fetchstravaactivitydetail",
-      "community": 7,
+      "community": 14,
       "norm_label": "fetchstravaactivitydetail()"
     },
     {
@@ -1710,7 +1710,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_utils_ratelimit",
-      "community": 8,
+      "community": 14,
       "norm_label": "ratelimit.ts"
     },
     {
@@ -1720,7 +1720,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_utils_ratelimit_stravadailyquotaerror",
-      "community": 8,
+      "community": 14,
       "norm_label": "stravadailyquotaerror"
     },
     {
@@ -1730,7 +1730,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_utils_ratelimit_stravadailyquotaerror_constructor",
-      "community": 8,
+      "community": 14,
       "norm_label": ".constructor()"
     },
     {
@@ -1740,7 +1740,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_utils_ratelimit_clientbucket",
-      "community": 8,
+      "community": 14,
       "norm_label": "clientbucket"
     },
     {
@@ -1750,7 +1750,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_utils_ratelimit_stravaratelimiter",
-      "community": 8,
+      "community": 14,
       "norm_label": "stravaratelimiter"
     },
     {
@@ -1760,7 +1760,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_utils_ratelimit_stravaratelimiter_getbucket",
-      "community": 8,
+      "community": 14,
       "norm_label": ".getbucket()"
     },
     {
@@ -1770,7 +1770,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "src_utils_ratelimit_stravaratelimiter_updatefromheaders",
-      "community": 8,
+      "community": 14,
       "norm_label": ".updatefromheaders()"
     },
     {
@@ -1780,7 +1780,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "src_utils_ratelimit_stravaratelimiter_isratelimited",
-      "community": 8,
+      "community": 14,
       "norm_label": ".isratelimited()"
     },
     {
@@ -1790,7 +1790,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "src_utils_ratelimit_stravaratelimiter_acquire",
-      "community": 8,
+      "community": 14,
       "norm_label": ".acquire()"
     },
     {
@@ -2926,6 +2926,17 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/bot/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_bot_index",
+      "target": "src_services_sync_service_syncuserpastactivities",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -3107,7 +3118,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1123",
+      "source_location": "L1185",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_bonus_service_grantpickleballbonus"
@@ -3118,7 +3129,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1154",
+      "source_location": "L1216",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_bonus_service_revokepickleballbonus"
@@ -3184,7 +3195,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1011",
+      "source_location": "L1073",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_override_service_recalculateuserstats"
@@ -3243,6 +3254,17 @@
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_sync_service_syncalluserspastactivities"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/bot/index.ts",
+      "source_location": "L1022",
+      "weight": 1.0,
+      "source": "src_bot_index_inittelegrambot",
+      "target": "src_services_sync_service_syncuserpastactivities"
     },
     {
       "relation": "calls",
@@ -6761,5 +6783,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "b9feaeeca28d386a6918cadef3e7dbffd0be77ab"
+  "built_at_commit": "20fe0f25a81b31bfebfa4b344a0fdaad2dee5345"
 }
