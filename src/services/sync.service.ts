@@ -21,17 +21,17 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
  * 3. Atomic DB transaction for batch deletions & totalDistance recalculation.
  * 4. Throttled execution to prevent Strava rate limits.
  */
-export async function syncUserPastActivities(userId: string): Promise<{ syncedCount: number; deletedCount: number; totalFetched: number }> {
+export async function syncUserPastActivities(userId: string): Promise<{ syncedCount: number; updatedCount: number; deletedCount: number; totalFetched: number }> {
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user || !user.stravaAthleteId) {
     console.warn(`[Historical Sync] User ${userId} has no Strava Athlete ID. Skipped.`);
-    return { syncedCount: 0, deletedCount: 0, totalFetched: 0 };
+    return { syncedCount: 0, updatedCount: 0, deletedCount: 0, totalFetched: 0 };
   }
 
   const accessToken = await getValidAccessToken(user);
   if (!accessToken) {
     console.error(`[Historical Sync] Cannot get valid access token for user ${user.nickName}. Aborted.`);
-    return { syncedCount: 0, deletedCount: 0, totalFetched: 0 };
+    return { syncedCount: 0, updatedCount: 0, deletedCount: 0, totalFetched: 0 };
   }
 
   const contestStart = env.ALLOW_TEST_DATE ? new Date('2026-07-01T00:00:00+07:00') : CONTEST_START;
@@ -151,17 +151,30 @@ export async function syncUserPastActivities(userId: string): Promise<{ syncedCo
       });
     }
 
-    // 4. Batch query existing activities to only process NEW activities
+    // 4. Batch query existing activities to process NEW and MODIFIED (cropped) activities
     const existingDbActivities = await db.activity.findMany({
       where: {
         userId: user.id,
         stravaActivityId: { in: Array.from(stravaActiveIds).map(id => BigInt(id)) }
       },
-      select: { stravaActivityId: true }
+      select: {
+        stravaActivityId: true,
+        distance: true,
+        movingTime: true,
+        name: true
+      }
     });
 
-    const existingIdSet = new Set(existingDbActivities.map(a => String(a.stravaActivityId)));
-    const newActivities = stravaActivities.filter(a => !existingIdSet.has(String(a.id)));
+    const existingDbMap = new Map<string, { distance: number; movingTime: number; name: string }>();
+    existingDbActivities.forEach(a => {
+      existingDbMap.set(String(a.stravaActivityId), {
+        distance: a.distance,
+        movingTime: a.movingTime,
+        name: a.name
+      });
+    });
+
+    const newActivities = stravaActivities.filter(a => !existingDbMap.has(String(a.id)));
 
     let syncedCount = 0;
     for (const activity of newActivities) {
@@ -177,16 +190,39 @@ export async function syncUserPastActivities(userId: string): Promise<{ syncedCo
       }
     }
 
-    console.log(`[Historical Sync] User ${user.nickName}: ${newActivities.length} new activities processed out of ${stravaActivities.length} total fetched.`);
+    // 5. Detect and process modified/cropped activities (distance or movingTime changed by > 5m or > 2s)
+    const modifiedActivities = stravaActivities.filter(a => {
+      const dbAct = existingDbMap.get(String(a.id));
+      if (!dbAct) return false;
+      const distanceDiff = Math.abs((a.distance || 0) - dbAct.distance);
+      const timeDiff = Math.abs((a.moving_time || 0) - dbAct.movingTime);
+      return distanceDiff > 5 || timeDiff > 2;
+    });
 
-    return { syncedCount, deletedCount, totalFetched: stravaActivities.length };
+    let updatedCount = 0;
+    for (const activity of modifiedActivities) {
+      const actIdStr = String(activity.id);
+      if (!isActivityQueued(actIdStr, 'update')) {
+        markActivityQueued(actIdStr, 'update');
+        try {
+          await processActivityQueueItem(activity.id, user.stravaAthleteId, 'update');
+          updatedCount++;
+        } finally {
+          unmarkActivityQueued(actIdStr);
+        }
+      }
+    }
+
+    console.log(`[Historical Sync] User ${user.nickName}: ${newActivities.length} new, ${modifiedActivities.length} updated/cropped processed out of ${stravaActivities.length} total fetched.`);
+
+    return { syncedCount, updatedCount, deletedCount, totalFetched: stravaActivities.length };
   } catch (error: any) {
     if (error?.name === 'StravaDailyQuotaError') {
       console.warn(`[Historical Sync] Daily quota limit reached for user ${user.nickName} (App Client ${user.appClientId}). Skipping sync for now.`);
-      return { syncedCount: 0, deletedCount: 0, totalFetched: 0 };
+      return { syncedCount: 0, updatedCount: 0, deletedCount: 0, totalFetched: 0 };
     }
     console.error(`[Historical Sync] Error syncing activities for ${user.nickName}:`, error?.response?.data || error.message);
-    return { syncedCount: 0, deletedCount: 0, totalFetched: 0 };
+    return { syncedCount: 0, updatedCount: 0, deletedCount: 0, totalFetched: 0 };
   }
 }
 
@@ -195,10 +231,10 @@ let isGlobalSyncing = false;
 /**
  * Sync past activities for ALL onboarded users in DB with batching & throttling
  */
-export async function syncAllUsersPastActivities(): Promise<{ totalUsers: number; totalSynced: number; totalDeleted: number; isAlreadyRunning?: boolean }> {
+export async function syncAllUsersPastActivities(): Promise<{ totalUsers: number; totalSynced: number; totalUpdated: number; totalDeleted: number; isAlreadyRunning?: boolean }> {
   if (isGlobalSyncing) {
     console.warn('[Historical Sync] Global sync is already running in background. Skipping duplicate trigger.');
-    return { totalUsers: 0, totalSynced: 0, totalDeleted: 0, isAlreadyRunning: true };
+    return { totalUsers: 0, totalSynced: 0, totalUpdated: 0, totalDeleted: 0, isAlreadyRunning: true };
   }
 
   isGlobalSyncing = true;
@@ -209,19 +245,21 @@ export async function syncAllUsersPastActivities(): Promise<{ totalUsers: number
 
     console.log(`[Historical Sync] Starting throttled batch sync for ALL ${users.length} users...`);
     let totalSynced = 0;
+    let totalUpdated = 0;
     let totalDeleted = 0;
 
     for (const user of users) {
       const res = await syncUserPastActivities(user.id);
       totalSynced += res.syncedCount;
+      totalUpdated += res.updatedCount;
       totalDeleted += res.deletedCount;
 
       // Safety pause 250ms between users
       await sleep(250);
     }
 
-    console.log(`[Historical Sync] Finished batch sync for ALL users. Synced: ${totalSynced}, Deleted Cleanup: ${totalDeleted}`);
-    return { totalUsers: users.length, totalSynced, totalDeleted };
+    console.log(`[Historical Sync] Finished batch sync for ALL users. Synced: ${totalSynced}, Updated: ${totalUpdated}, Deleted Cleanup: ${totalDeleted}`);
+    return { totalUsers: users.length, totalSynced, totalUpdated, totalDeleted };
   } finally {
     isGlobalSyncing = false;
   }

@@ -467,14 +467,17 @@ Danh sách lệnh hỗ trợ:
           const updatedUser = await db.user.findUnique({ where: { id: targetUser.id } });
           const finalKm = updatedUser ? (updatedUser.totalDistance / 1000).toFixed(2) : (targetUser.totalDistance / 1000).toFixed(2);
 
-          return ctx.replyWithHTML(
-            `🔄 <b>ĐỒNG BỘ THÀNH CÔNG!</b> 🔄\n\n` +
+          let syncDetailMsg = `🔄 <b>ĐỒNG BỘ THÀNH CÔNG!</b> 🔄\n\n` +
             `👤 <b>VĐV:</b> ${escapeHtml(targetUser.fullName || targetUser.nickName)} (@${escapeHtml(targetUser.nickName)})\n` +
             `🛡️ <b>Đội:</b> ${escapeHtml(getTeamName(targetUser.teamId))}\n` +
-            `📥 <b>Bài chạy mới ghi nhận:</b> <code>${res.syncedCount} bài</code>\n` +
-            `🗑️ <b>Bài chạy bị xóa trên Strava:</b> <code>${res.deletedCount} bài</code>\n` +
-            `🏃 <b>Tổng quãng đường hiện tại:</b> <code>${finalKm} km</code>`
-          );
+            `📥 <b>Bài chạy mới ghi nhận:</b> <code>${res.syncedCount} bài</code>\n`;
+          if (res.updatedCount > 0) {
+            syncDetailMsg += `✂️ <b>Bài cập nhật (cắt gọt/sửa):</b> <code>${res.updatedCount} bài</code>\n`;
+          }
+          syncDetailMsg += `🗑️ <b>Bài chạy bị xóa trên Strava:</b> <code>${res.deletedCount} bài</code>\n` +
+            `🏃 <b>Tổng quãng đường hiện tại:</b> <code>${finalKm} km</code>`;
+
+          return ctx.replyWithHTML(syncDetailMsg);
         }
 
         // Sync ALL users in background (Non-Blocking)
@@ -489,12 +492,15 @@ Danh sách lệnh hỗ trợ:
             return;
           }
 
-          const summaryText = 
+          let summaryText = 
 `🔄 <b>ĐỒNG BỘ DỮ LIỆU HOÀN TẤT!</b> 🔄
 
 📊 Đã đối soát: <b>${res.totalUsers}</b> vận động viên.
-🏃 Đã nạp & xử lý mới: <b>${res.totalSynced}</b> bài chạy active từ Strava.
-🧹 Đã dọn dẹp & trừ km: <b>${res.totalDeleted}</b> bài đã bị xóa trên Strava.
+🏃 Đã nạp & xử lý mới: <b>${res.totalSynced}</b> bài chạy active từ Strava.\n`;
+          if (res.totalUpdated > 0) {
+            summaryText += `✂️ Đã cập nhật (cắt gọt/sửa): <b>${res.totalUpdated}</b> bài chạy.\n`;
+          }
+          summaryText += `🧹 Đã dọn dẹp & trừ km: <b>${res.totalDeleted}</b> bài đã bị xóa trên Strava.
 
 Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp hạng mới nhất!`;
 

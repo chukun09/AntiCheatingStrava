@@ -1357,7 +1357,7 @@
       "label": "syncAllUsersPastActivities()",
       "file_type": "code",
       "source_file": "src/services/sync.service.ts",
-      "source_location": "L198",
+      "source_location": "L234",
       "_origin": "ast",
       "id": "src_services_sync_service_syncalluserspastactivities",
       "community": 8,
@@ -3052,7 +3052,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L626",
+      "source_location": "L632",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_activity_service_getbestpaceactivities"
@@ -3063,7 +3063,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L810",
+      "source_location": "L816",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek1teamaward"
@@ -3074,7 +3074,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L831",
+      "source_location": "L837",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek2teamaward"
@@ -3085,7 +3085,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L854",
+      "source_location": "L860",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek3individualaward"
@@ -3096,7 +3096,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L855",
+      "source_location": "L861",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek3teamaward"
@@ -3107,7 +3107,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L880",
+      "source_location": "L886",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek4teamaward"
@@ -3118,7 +3118,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1164",
+      "source_location": "L1170",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_bonus_service_grantpickleballbonus"
@@ -3129,7 +3129,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1195",
+      "source_location": "L1201",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_bonus_service_revokepickleballbonus"
@@ -3162,7 +3162,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L964",
+      "source_location": "L970",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_excel_service_exportleaderboardtoexcelbuffer"
@@ -3173,7 +3173,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L937",
+      "source_location": "L943",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_excel_service_exportviolationstoexcelbuffer"
@@ -3195,7 +3195,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1052",
+      "source_location": "L1058",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_override_service_recalculateuserstats"
@@ -3206,7 +3206,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L899",
+      "source_location": "L905",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_penalty_service_calculatepenalties"
@@ -3217,7 +3217,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L759",
+      "source_location": "L765",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_progress_service_getgrowthleaderboard"
@@ -3228,7 +3228,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L987",
+      "source_location": "L993",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_reconcile_service_reconcileallusers"
@@ -3239,7 +3239,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L688",
+      "source_location": "L694",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_stats_service_getcompanysummarystats"
@@ -3250,7 +3250,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L483",
+      "source_location": "L486",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_sync_service_syncalluserspastactivities"
@@ -3327,7 +3327,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L485",
+      "source_location": "L488",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_telegram_service_sendtelegrammessage"
@@ -4759,7 +4759,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/sync.service.ts",
-      "source_location": "L172",
+      "source_location": "L185",
       "weight": 1.0,
       "source": "src_services_sync_service_syncuserpastactivities",
       "target": "src_services_activity_service_processactivityqueueitem"
@@ -5858,7 +5858,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/sync.service.ts",
-      "source_location": "L198",
+      "source_location": "L234",
       "weight": 1.0,
       "source": "src_services_sync_service",
       "target": "src_services_sync_service_syncalluserspastactivities",
@@ -5989,7 +5989,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/services/sync.service.ts",
-      "source_location": "L220",
+      "source_location": "L258",
       "weight": 1.0,
       "source": "src_services_sync_service_syncalluserspastactivities",
       "target": "src_services_sync_service_sleep",
@@ -6000,7 +6000,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/services/sync.service.ts",
-      "source_location": "L215",
+      "source_location": "L252",
       "weight": 1.0,
       "source": "src_services_sync_service_syncalluserspastactivities",
       "target": "src_services_sync_service_syncuserpastactivities",
@@ -6023,7 +6023,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/sync.service.ts",
-      "source_location": "L169",
+      "source_location": "L182",
       "weight": 1.0,
       "source": "src_services_sync_service_syncuserpastactivities",
       "target": "src_utils_queue_isactivityqueued"
@@ -6034,7 +6034,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/sync.service.ts",
-      "source_location": "L170",
+      "source_location": "L183",
       "weight": 1.0,
       "source": "src_services_sync_service_syncuserpastactivities",
       "target": "src_utils_queue_markactivityqueued"
@@ -6045,7 +6045,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/services/sync.service.ts",
-      "source_location": "L175",
+      "source_location": "L188",
       "weight": 1.0,
       "source": "src_services_sync_service_syncuserpastactivities",
       "target": "src_utils_queue_unmarkactivityqueued"
@@ -6783,5 +6783,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "bd2ccfe7737462c2fd346e48f3648c37ee2bd677"
+  "built_at_commit": "595d9c1ef725f064834ab32880e7ce22cebd3517"
 }
