@@ -152,10 +152,37 @@ export async function exportViolationsToExcelBuffer(param?: string): Promise<Exc
 
 /**
  * Generates an Excel (.xlsx) Buffer containing Leaderboard / User Rankings for ALL users.
- * Supports filtering by Week ('tuan1', 'tuan2', 'tuan3', 'tuan4') or All Time ('tatca').
+ * Supports filtering by Week ('tuan1', 'tuan2', 'tuan3', 'tuan4', 'tatca') AND minimum distance per activity (e.g. minKm = 3).
  */
-export async function exportLeaderboardToExcelBuffer(param?: string): Promise<ExcelExportResult> {
-  let cleanParam = (param || 'tatca').trim().toLowerCase().replace(/[\s_]+/g, '');
+export async function exportLeaderboardToExcelBuffer(param?: string, minKmParam?: number | string): Promise<ExcelExportResult> {
+  let cleanParam = (param || 'tatca').trim().toLowerCase();
+  
+  // Extract minKm from minKmParam or from within param string (e.g. "tuan3 3", "3 3", "tuan3 min 3", "3km")
+  let minKm: number | null = null;
+
+  if (minKmParam !== undefined && minKmParam !== null && minKmParam !== '') {
+    const parsed = parseFloat(String(minKmParam).trim().replace(/[^\d.]/g, ''));
+    if (!isNaN(parsed) && parsed > 0) {
+      minKm = parsed;
+    }
+  }
+
+  // Also check if minKm is embedded inside param string (e.g. "tuan3 3", "tuan3 3km", "tuan3 >3")
+  const paramParts = cleanParam.split(/\s+/);
+  if (paramParts.length >= 2) {
+    cleanParam = paramParts[0];
+    if (minKm === null) {
+      const matchMin = paramParts.slice(1).join(' ').match(/(\d+(?:\.\d+)?)/);
+      if (matchMin) {
+        const parsed = parseFloat(matchMin[1]);
+        if (!isNaN(parsed) && parsed > 0) {
+          minKm = parsed;
+        }
+      }
+    }
+  }
+
+  cleanParam = cleanParam.replace(/[\s_]+/g, '');
   if (cleanParam === '1' || cleanParam === 'w1' || cleanParam === 'tuần1') cleanParam = 'tuan1';
   if (cleanParam === '2' || cleanParam === 'w2' || cleanParam === 'tuần2') cleanParam = 'tuan2';
   if (cleanParam === '3' || cleanParam === 'w3' || cleanParam === 'tuần3') cleanParam = 'tuan3';
@@ -164,20 +191,28 @@ export async function exportLeaderboardToExcelBuffer(param?: string): Promise<Ex
   let filterTitle = 'Bảng Xếp Hạng Toàn Bộ VĐV (Cả Giải)';
   const selectedWeek = WEEK_RANGES[cleanParam];
 
+  if (selectedWeek) {
+    filterTitle = `Bảng Xếp Hạng VĐV trong ${selectedWeek.name}`;
+  }
+  if (minKm !== null && minKm > 0) {
+    filterTitle += ` [Chỉ tính bài chạy >= ${minKm.toFixed(1)} km]`;
+  }
+
   const users = await db.user.findMany({
     orderBy: { teamId: 'asc' }
   });
 
   let userStatsMap = new Map<string, { totalDistanceMeters: number; validCount: number; totalMovingTimeSec: number }>();
 
+  const distanceCondition = minKm !== null && minKm > 0 ? { distance: { gte: minKm * 1000 } } : {};
+
   if (selectedWeek) {
-    filterTitle = `Bảng Xếp Hạng VĐV trong ${selectedWeek.name}`;
-    
-    // Group legit activities within week window
+    // Group legit activities within week window with distance condition
     const activities = await db.activity.findMany({
       where: {
         isLegit: true,
-        startDate: { gte: selectedWeek.start, lte: selectedWeek.end }
+        startDate: { gte: selectedWeek.start, lte: selectedWeek.end },
+        ...distanceCondition
       }
     });
 
@@ -189,10 +224,13 @@ export async function exportLeaderboardToExcelBuffer(param?: string): Promise<Ex
       userStatsMap.set(act.userId, current);
     });
   } else {
-    // Whole contest aggregated stats
+    // Whole contest aggregated stats with distance condition
     const activitiesGrouped = await db.activity.groupBy({
       by: ['userId'],
-      where: { isLegit: true },
+      where: {
+        isLegit: true,
+        ...distanceCondition
+      },
       _sum: { distance: true, movingTime: true },
       _count: { id: true }
     });
@@ -229,6 +267,9 @@ export async function exportLeaderboardToExcelBuffer(param?: string): Promise<Ex
     return a.avgPaceSec - b.avgPaceSec;
   });
 
+  const distColHeader = minKm !== null && minKm > 0 ? `Tổng Quãng đường (km) (Bài >= ${minKm}km)` : 'Tổng Quãng đường (km)';
+  const countColHeader = minKm !== null && minKm > 0 ? `Số bài hợp lệ (>= ${minKm}km)` : 'Số bài chạy hợp lệ';
+
   const rows = leaderboardList.map((item, index) => {
     const u = item.user;
     return {
@@ -238,8 +279,8 @@ export async function exportLeaderboardToExcelBuffer(param?: string): Promise<Ex
       'Giới tính': u.gender === 'FEMALE' ? 'Nữ' : 'Nam',
       'Đội thi đấu': getTeamName(u.teamId),
       'Phòng Ban': u.department || 'N/A',
-      'Tổng Quãng đường (km)': parseFloat(item.totalKm.toFixed(2)),
-      'Số bài chạy hợp lệ': item.validCount,
+      [distColHeader]: parseFloat(item.totalKm.toFixed(2)),
+      [countColHeader]: item.validCount,
       'Pace trung bình': formatPace(item.avgPaceSec),
       'Chỉ tiêu cá nhân (km)': item.targetKm,
       'Trạng thái mốc chỉ tiêu': item.isTargetReached ? '⚡ Đã đạt' : '⏳ Chưa đạt',
@@ -256,8 +297,8 @@ export async function exportLeaderboardToExcelBuffer(param?: string): Promise<Ex
     { wch: 10 },  // Giới tính
     { wch: 30 },  // Đội
     { wch: 20 },  // Phòng ban
-    { wch: 22 },  // Tổng km
-    { wch: 18 },  // Số bài hợp lệ
+    { wch: 26 },  // Tổng km
+    { wch: 22 },  // Số bài hợp lệ
     { wch: 16 },  // Pace
     { wch: 20 },  // Chỉ tiêu km
     { wch: 22 },  // Trạng thái mốc
@@ -269,7 +310,8 @@ export async function exportLeaderboardToExcelBuffer(param?: string): Promise<Ex
 
   const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
   const nowStr = new Date().toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }).replace(/\//g, '_');
-  const filename = `BANG_XEP_HANG_${cleanParam.toUpperCase()}_${nowStr}.xlsx`;
+  const minKmTag = minKm !== null && minKm > 0 ? `_MIN_${minKm}KM` : '';
+  const filename = `BANG_XEP_HANG_${cleanParam.toUpperCase()}${minKmTag}_${nowStr}.xlsx`;
 
   return {
     buffer,

@@ -67,7 +67,7 @@ Danh sách lệnh hỗ trợ:
 🚀 <code>/giai_tuan3</code> - Xem BXH Giải Tuần 3 (Bứt phá Cá nhân & Tập thể).
 🏁 <code>/giai_tuan4</code> - Xem BXH Giải Tập Thể Về Đích (Avg Km Cả Giải).
 🏓 <code>/cong_pickleball [Nicknames...]</code> - BTC cộng điểm thưởng Pickleball (+5km Nam, +3km Nữ).
-📊 <code>/excel_bxh [tuan1-4/tatca]</code> - Trích xuất file Excel Bảng xếp hạng VĐV theo tuần.
+📊 <code>/excel_bxh [tuần] [min_km]</code> - Xuất Excel BXH VĐV (VD: <code>/excel_bxh tuan3 3</code> hoặc <code>/excel_bxh 3 3</code>).
 📄 <code>/excel_vipham [tuan1-4/doi1-8/tatca]</code> - Trích xuất file Excel danh sách bài vi phạm.
 🔄 <code>/sync [Nickname/all]</code> - Đồng bộ bài chạy mới từ Strava (VD: <code>/sync CapyLong</code> hoặc <code>/sync</code>).
 ✅ <code>/duyet [IDs]</code> - BTC duyệt bài chạy hợp lệ theo danh sách IDs.
@@ -958,20 +958,30 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
     bot.command('excel_vipham', handleExcelExport);
     bot.command('vipham_excel', handleExcelExport);
 
-    // Command /excel_bxh & /bxh_excel - Leaderboard Excel Export (Week or All-time)
+    // Command /excel_bxh & /bxh_excel - Leaderboard Excel Export (Week or All-time + Min Km Filter)
     const handleLeaderboardExcelExport = async (ctx: any) => {
       try {
         const text = ctx.message?.text || '';
-        const parts = text.trim().split(/\s+/);
-        const param = parts.length > 1 ? parts.slice(1).join(' ') : 'tatca';
+        const parts = text.trim().split(/\s+/).slice(1);
+        
+        let weekParam = 'tatca';
+        let minKmParam: string | undefined = undefined;
 
-        await ctx.reply(`📊 Đang trích xuất Bảng Xếp Hạng Excel theo bộ lọc "${param}"... Vui lòng đợi trong giây lát.`);
+        if (parts.length === 1) {
+          weekParam = parts[0];
+        } else if (parts.length >= 2) {
+          weekParam = parts[0];
+          minKmParam = parts[1];
+        }
 
-        const result = await exportLeaderboardToExcelBuffer(param);
+        const filterDisplay = minKmParam ? `${weekParam} (Bài >= ${minKmParam}km)` : weekParam;
+        await ctx.reply(`📊 Đang trích xuất Bảng Xếp Hạng Excel theo bộ lọc "${filterDisplay}"... Vui lòng đợi trong giây lát.`);
+
+        const result = await exportLeaderboardToExcelBuffer(weekParam, minKmParam);
 
         await ctx.replyWithDocument(
           { source: result.buffer, filename: result.filename },
-          { caption: `📄 <b>EXCEL BẢNG XẾP HẠNG VẬN ĐỘNG VIÊN</b>\n📌 <b>Bộ lọc:</b> ${result.filterTitle}\n📊 <b>Tổng số VĐV:</b> <code>${result.totalRecords} người</code>\n💡 <i>Mẹo: Gõ <code>/excel_bxh tuan1</code>, <code>/excel_bxh tuan2</code>, <code>/excel_bxh tuan3</code>, <code>/excel_bxh tuan4</code> hoặc <code>/excel_bxh tatca</code> để lọc theo tuần!</i>`, parse_mode: 'HTML' }
+          { caption: `📄 <b>EXCEL BẢNG XẾP HẠNG VẬN ĐỘNG VIÊN</b>\n📌 <b>Bộ lọc:</b> ${result.filterTitle}\n📊 <b>Tổng số VĐV:</b> <code>${result.totalRecords} người</code>\n💡 <i>Mẹo: Gõ <code>/excel_bxh tuan3 3</code> để lọc Tuần 3 bài >= 3km, hoặc <code>/excel_bxh tatca</code> để xuất cả giải!</i>`, parse_mode: 'HTML' }
         );
       } catch (error: any) {
         console.error('[Bot /excel_bxh] Error:', error);
