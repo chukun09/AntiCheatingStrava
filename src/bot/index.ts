@@ -21,6 +21,7 @@ import { grantPickleballBonus, revokePickleballBonus } from '../services/bonus.s
 import { getGrowthLeaderboard } from '../services/progress.service';
 import { getDepartmentSummaryLeaderboard, getDepartmentMembersDetail } from '../services/department.service';
 import { grantWeeklyExemption, revokeWeeklyExemption, getWeeklyExemptionsList } from '../services/exemption.service';
+import { getWeeklyActivityReminderList } from '../services/reminder.service';
 
 let bot: Telegraf | null = null;
 
@@ -31,6 +32,40 @@ function escapeHtml(text?: string | null): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+/**
+ * Helper to send chunked HTML messages (<= 3800 chars) to prevent Telegram 400 Bad Request
+ */
+async function sendChunkedHtmlMessages(ctx: any, header: string, itemLines: string[], footer?: string) {
+  let currentMessage = header;
+  const messagesToSend: string[] = [];
+
+  for (const line of itemLines) {
+    if ((currentMessage + line).length > 3800) {
+      messagesToSend.push(currentMessage);
+      currentMessage = line;
+    } else {
+      currentMessage += line;
+    }
+  }
+
+  if (footer) {
+    if ((currentMessage + footer).length > 3800) {
+      messagesToSend.push(currentMessage);
+      currentMessage = footer;
+    } else {
+      currentMessage += footer;
+    }
+  }
+
+  if (currentMessage.trim().length > 0) {
+    messagesToSend.push(currentMessage);
+  }
+
+  for (const msg of messagesToSend) {
+    await ctx.replyWithHTML(msg);
+  }
 }
 
 export function initTelegramBot(): Telegraf | null {
@@ -58,6 +93,7 @@ Danh sách lệnh hỗ trợ:
 🏆 <code>/bxh_canhan</code> - Xem Bảng Xếp Hạng Cá Nhân (Tách riêng Nam & Nữ).
 🛡️ <code>/bxh_doi [tuần/đội]</code> - Xem BXH 8 Đội Thi & Tỷ lệ đạt 3km (VD: <code>/bxh_doi 3</code>, <code>/bxh_doi 1 3</code>).
 🏢 <code>/bxh_phong [tuần/phòng]</code> - Xem BXH Phòng Ban & Tỷ lệ đạt 3km (VD: <code>/bxh_phong 3</code>, <code>/bxh_phong Kỹ thuật 3</code>).
+📢 <code>/nhacnho [tuần] [min_km]</code> - Danh sách VĐV chưa có bài chạy >= x km (VD: <code>/nhacnho 3 3</code> hoặc <code>/nhacnho 3 5</code>).
 📋 <code>/lichsu [Nickname]</code> - Xem hồ sơ & danh sách bài chạy chi tiết của 1 VĐV.
 📊 <code>/tonghop [tuần/tatca]</code> - Báo cáo tổng hợp tỷ lệ tham gia & Pace toàn công ty.
 📈 <code>/bxh_butpha [tuần] [top]</code> - BXH VĐV bứt phá tiến bộ nhất (VD: <code>/bxh_butpha 3 20</code>).
@@ -125,38 +161,6 @@ Danh sách lệnh hỗ trợ:
           }
         }
 
-        // Helper to send chunked HTML messages (<= 3800 chars) to prevent Telegram 400 Bad Request
-        const sendChunkedHtmlMessages = async (header: string, itemLines: string[], footer?: string) => {
-          let currentMessage = header;
-          const messagesToSend: string[] = [];
-
-          for (const line of itemLines) {
-            if ((currentMessage + line).length > 3800) {
-              messagesToSend.push(currentMessage);
-              currentMessage = line;
-            } else {
-              currentMessage += line;
-            }
-          }
-
-          if (footer) {
-            if ((currentMessage + footer).length > 3800) {
-              messagesToSend.push(currentMessage);
-              currentMessage = footer;
-            } else {
-              currentMessage += footer;
-            }
-          }
-
-          if (currentMessage.trim().length > 0) {
-            messagesToSend.push(currentMessage);
-          }
-
-          for (const msg of messagesToSend) {
-            await ctx.replyWithHTML(msg);
-          }
-        };
-
         if (!searchDept) {
           // View summary leaderboard across all departments
           const res = await getDepartmentSummaryLeaderboard(weekParam);
@@ -191,7 +195,7 @@ Danh sách lệnh hỗ trợ:
           });
 
           const footer = `\n💡 <i>Mẹo: Gõ <code>/bxh_phong 3</code> để xem Tuần 3, hoặc <code>/bxh_phong Kỹ thuật 3</code> để xem chi tiết từng VĐV!</i>`;
-          await sendChunkedHtmlMessages(header, itemLines, footer);
+          await sendChunkedHtmlMessages(ctx, header, itemLines, footer);
           return;
         }
 
@@ -218,7 +222,7 @@ Danh sách lệnh hỗ trợ:
           return `${medal} ${statusIcon} <b>${escapeHtml(m.fullName || m.nickName)}</b> (@${escapeHtml(m.nickName)}) ${genderIcon}\n   └─ <code>${m.totalDistanceKm.toFixed(2)} km</code> | ${m.runCount} bài | Pace: <code>${paceStr}</code> (${escapeHtml(teamName)})\n`;
         });
 
-        await sendChunkedHtmlMessages(header, itemLines);
+        await sendChunkedHtmlMessages(ctx, header, itemLines);
         return;
       } catch (error) {
         console.error('[Bot /bxh_phong] Error:', error);
@@ -329,6 +333,77 @@ Danh sách lệnh hỗ trợ:
       } catch (error) {
         console.error('[Bot /bxh_doi] Error:', error);
         return ctx.reply('Lỗi khi tải Bảng xếp hạng đội thi.');
+      }
+    });
+
+    // Command /nhacnho [tuần] [min_km] [đội] or /thieubai [tuần] [min_km] - List athletes missing a single activity >= minKm
+    bot.command(['nhacnho', 'nhac_nho', 'thieubai', 'chuanhac'], async (ctx) => {
+      try {
+        const rawText = (ctx.message?.text || '').trim();
+        const parts = rawText.split(/\s+/).slice(1);
+
+        let weekParam: number | string | null = null;
+        let minKmParam: number | null = null;
+        let teamIdParam: number | null = null;
+
+        if (parts.length === 1) {
+          const p = parts[0].toLowerCase();
+          if (/^(?:tuan|w|tuần)?([1-4])$/i.test(p)) {
+            const num = p.match(/\d+/);
+            if (num) weekParam = parseInt(num[0], 10);
+          } else {
+            const num = parseFloat(p.replace(/[^\d.]/g, ''));
+            if (!isNaN(num)) {
+              if (num >= 1 && num <= 4) weekParam = num;
+              else minKmParam = num;
+            }
+          }
+        } else if (parts.length === 2) {
+          const num1 = parseInt(parts[0].replace(/[^\d]/g, ''), 10);
+          const num2 = parseFloat(parts[1].replace(/[^\d.]/g, ''));
+          if (!isNaN(num1) && num1 >= 1 && num1 <= 4) weekParam = num1;
+          if (!isNaN(num2) && num2 > 0) minKmParam = num2;
+        } else if (parts.length >= 3) {
+          const num1 = parseInt(parts[0].replace(/[^\d]/g, ''), 10);
+          const num2 = parseFloat(parts[1].replace(/[^\d.]/g, ''));
+          const num3 = parseInt(parts[2].replace(/[^\d]/g, ''), 10);
+          if (!isNaN(num1) && num1 >= 1 && num1 <= 4) weekParam = num1;
+          if (!isNaN(num2) && num2 > 0) minKmParam = num2;
+          if (!isNaN(num3) && num3 >= 1 && num3 <= 8) teamIdParam = num3;
+        }
+
+        const res = await getWeeklyActivityReminderList({
+          week: weekParam,
+          minKm: minKmParam,
+          teamId: teamIdParam
+        });
+
+        let header = `📢 <b>DANH SÁCH VĐV CẦN NHẮC NHỞ (${escapeHtml(res.weekName.toUpperCase())})</b> 📢\n`;
+        header += `📌 <b>Tiêu chí:</b> <i>Chưa có bài chạy đơn lẻ nào >= ${res.minKm.toFixed(2)} km trong tuần</i>\n`;
+        header += `📊 <b>Toàn công ty:</b> <code>${res.totalMissingUsers}/${res.totalCompanyUsers} VĐV</code> cần hoàn thành bài chạy\n\n`;
+
+        const itemLines: string[] = [];
+
+        res.teams.forEach(team => {
+          let teamBlock = `🛡️ <b>${escapeHtml(team.teamName)}</b> (<code>${team.missingCount}/${team.totalActiveMembers} VĐV</code>)\n`;
+          if (team.missingAthletes.length === 0) {
+            teamBlock += `   🎉 <i>100% Đội đã có bài chạy >= ${res.minKm.toFixed(1)}km!</i>\n\n`;
+          } else {
+            team.missingAthletes.forEach((m, idx) => {
+              const genderIcon = m.gender === 'FEMALE' ? '👩' : '👨';
+              const maxStr = m.runCountInWeek > 0 ? `Bài dài nhất: ${m.maxSingleActivityKm.toFixed(2)}km (${m.runCountInWeek} bài)` : 'Chưa chạy bài nào';
+              teamBlock += `   ${idx + 1}. <b>${escapeHtml(m.fullName || m.nickName)}</b> (@${escapeHtml(m.nickName)}) ${genderIcon}\n      └─ <code>${maxStr}</code> | Tổng tuần: <code>${m.totalDistanceInWeekKm.toFixed(2)} km</code>\n`;
+            });
+            teamBlock += '\n';
+          }
+          itemLines.push(teamBlock);
+        });
+
+        const footer = `💡 <i>Mẹo: Gõ <code>/nhacnho 3 3</code> xem Tuần 3 mốc 3km, hoặc <code>/nhacnho 3 5</code> xem mốc 5km!</i>`;
+        await sendChunkedHtmlMessages(ctx, header, itemLines, footer);
+      } catch (error) {
+        console.error('[Bot /nhacnho] Error:', error);
+        return ctx.reply('Lỗi khi tải danh sách nhắc nhở bài chạy.');
       }
     });
 
