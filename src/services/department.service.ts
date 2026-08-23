@@ -188,13 +188,15 @@ export async function getDepartmentMembersDetail(
     periodTitle = weekObj.name;
   }
 
-  // Find users in matching department
-  const users = await db.user.findMany({
-    where: {
-      department: { contains: searchDept, mode: 'insensitive' }
-    },
-    orderBy: { nickName: 'asc' }
-  });
+  const [users, exemptUserIds] = await Promise.all([
+    db.user.findMany({
+      where: {
+        department: { contains: searchDept, mode: 'insensitive' }
+      },
+      orderBy: { nickName: 'asc' }
+    }),
+    (weekNumber && weekNumber >= 1 && weekNumber <= 4) ? getExemptUserIdsForWeek(weekNumber) : Promise.resolve(new Set<string>())
+  ]);
 
   if (users.length === 0) {
     return null;
@@ -229,6 +231,7 @@ export async function getDepartmentMembersDetail(
     let userKm = 0;
     let runCount = 0;
     let movingSec = 0;
+    const isExempt = exemptUserIds.has(u.id);
 
     if (weekNumber) {
       const stat = userStatsMap.get(u.id);
@@ -242,18 +245,21 @@ export async function getDepartmentMembersDetail(
       movingSec = stat ? stat.movingSec : 0;
     }
 
-    totalDeptDistanceKm += userKm;
+    if (!isExempt) {
+      totalDeptDistanceKm += userKm;
+    }
+
     const avgPaceSecPerKm = userKm > 0 ? movingSec / userKm : Number.POSITIVE_INFINITY;
 
     let isQualified = false;
     if (weekNumber) {
-      isQualified = userKm >= 3.0;
+      isQualified = isExempt ? true : userKm >= 3.0;
     } else {
       const targetKm = u.gender === 'FEMALE' ? 15 : 30;
       isQualified = userKm >= targetKm;
     }
 
-    if (isQualified) qualifiedMembers++;
+    if (isQualified && !isExempt) qualifiedMembers++;
 
     return {
       id: u.id,
@@ -264,21 +270,23 @@ export async function getDepartmentMembersDetail(
       totalDistanceKm: userKm,
       runCount,
       avgPaceSecPerKm,
-      isQualified
+      isQualified,
+      isExempt
     };
   });
 
   // Sort members by totalDistanceKm descending
   members.sort((a, b) => b.totalDistanceKm - a.totalDistanceKm);
 
-  const qualifiedRate = users.length > 0 ? (qualifiedMembers / users.length) * 100 : 0;
-  const avgKmPerMember = users.length > 0 ? totalDeptDistanceKm / users.length : 0;
+  const activeUsersCount = users.filter(u => !exemptUserIds.has(u.id)).length;
+  const qualifiedRate = activeUsersCount > 0 ? (qualifiedMembers / activeUsersCount) * 100 : 0;
+  const avgKmPerMember = activeUsersCount > 0 ? totalDeptDistanceKm / activeUsersCount : 0;
 
   return {
     departmentName: actualDeptName,
     periodTitle,
     weekNumber,
-    totalMembers: users.length,
+    totalMembers: activeUsersCount,
     qualifiedMembers,
     qualifiedRate,
     totalDistanceKm: totalDeptDistanceKm,

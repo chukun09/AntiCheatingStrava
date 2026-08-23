@@ -201,7 +201,7 @@ Danh sách lệnh hỗ trợ:
 
         const itemLines = detail.members.map((m, idx) => {
           const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `<b>${idx + 1}.</b>`;
-          const statusIcon = m.isQualified ? '✅' : '⏳';
+          const statusIcon = m.isExempt ? '🏥 [Nghỉ ốm]' : (m.isQualified ? '✅' : '⏳');
           const paceStr = m.runCount > 0 && isFinite(m.avgPaceSecPerKm) ? formatPace(m.avgPaceSecPerKm) : '--:--';
           const genderIcon = m.gender === 'FEMALE' ? '👩' : '👨';
           const teamName = getTeamName(m.teamId);
@@ -243,53 +243,41 @@ Danh sách lệnh hỗ trợ:
               }
             }
           }
-        } else if (parts.length === 2) {
-          const p0 = parts[0].toLowerCase();
-          const p1 = parts[1].toLowerCase();
+        } else if (parts.length >= 2) {
+          const num1 = parseInt(parts[0].replace(/[^\d]/g, ''), 10);
+          const num2 = parseInt(parts[1].replace(/[^\d]/g, ''), 10);
 
-          if (/^(?:tuan|w|tuần)$/i.test(p0) && /^[1-4]$/.test(p1)) {
-            weekNumArg = parseInt(p1, 10);
-          } else if (/^(?:doi|team|đội)$/i.test(p0) && /^[1-8]$/.test(p1)) {
-            teamIdArg = parseInt(p1, 10);
-          } else {
-            const n0 = parseInt(p0, 10);
-            if (!isNaN(n0) && n0 >= 1 && n0 <= 8) {
-              teamIdArg = n0;
-              const matchW = p1.match(/\d+/);
-              if (matchW) {
-                const w = parseInt(matchW[0], 10);
-                if (w >= 1 && w <= 4) weekNumArg = w;
-              }
-            }
+          if (!isNaN(num1) && num1 >= 1 && num1 <= 8) {
+            teamIdArg = num1;
           }
-        } else if (parts.length >= 3) {
-          const numMatch = parts.join(' ').match(/(\d+)/g);
-          if (numMatch && numMatch.length >= 1) {
-            const firstNum = parseInt(numMatch[0], 10);
-            if (firstNum >= 1 && firstNum <= 8) teamIdArg = firstNum;
-            if (numMatch.length >= 2) {
-              const secondNum = parseInt(numMatch[1], 10);
-              if (secondNum >= 1 && secondNum <= 4) weekNumArg = secondNum;
-            }
+          if (!isNaN(num2) && num2 >= 1 && num2 <= 4) {
+            weekNumArg = num2;
           }
         }
 
-        // Case 1: Detailed athlete-by-athlete breakdown for a specific team
+        // Case 1: Detailed athlete-by-athlete list for a SPECIFIC team
         if (teamIdArg !== null) {
           const detail = await getTeamWeekDetail(teamIdArg, weekNumArg);
           if (!detail) {
-            return ctx.replyWithHTML(`❌ Không tìm thấy dữ liệu cho Đội ${teamIdArg}.`);
+            return ctx.replyWithHTML(`⚠️ Không tìm thấy thông tin cho <b>Đội ${teamIdArg}</b>.`);
           }
 
-          const headerWeekStr = detail.weekNumber ? `(TUẦN ${detail.weekNumber})` : `(TÍCH LŨY TOÀN GIẢI)`;
-          let message = `🛡️ <b>CHI TIẾT THÀNH TÍCH ${detail.teamName.toUpperCase()} ${headerWeekStr}</b> 🛡️\n`;
-          message += `📌 <b>Khung thời gian:</b> ${detail.weekName}\n`;
-          message += `📊 <b>VĐV Đạt chỉ tiêu:</b> <code>${detail.qualifiedMembers}/${detail.totalMembers} VĐV</code> (${((detail.qualifiedMembers / detail.totalMembers) * 100).toFixed(1)}%)\n`;
-          message += `🏃 <b>Tổng quãng đường Đội:</b> <code>${detail.totalTeamDistanceKm.toFixed(1)} km</code>\n\n`;
+          const isWeekly = detail.weekNumber !== null;
+          let message = `🛡️ <b>CHI TIẾT ĐỘI THI: ${escapeHtml(detail.teamName.toUpperCase())}</b> 🛡️\n`;
+          message += `📌 <b>Khung thời gian:</b> ${escapeHtml(detail.weekName)}\n`;
+          if (isWeekly) {
+            const qualifiedRate = detail.totalMembers > 0 ? (detail.qualifiedMembers / detail.totalMembers) * 100 : 0;
+            message += `📊 <b>Đạt chỉ tiêu (>= 3km):</b> <code>${detail.qualifiedMembers}/${detail.totalMembers} VĐV</code> (<b>${qualifiedRate.toFixed(1)}%</b>)\n`;
+          } else {
+            const qualifiedRate = detail.totalMembers > 0 ? (detail.qualifiedMembers / detail.totalMembers) * 100 : 0;
+            message += `📊 <b>Đạt đích chiến dịch:</b> <code>${detail.qualifiedMembers}/${detail.totalMembers} VĐV</code> (<b>${qualifiedRate.toFixed(1)}%</b>)\n`;
+          }
+          message += `🏃 <b>Tổng quãng đường đội:</b> <code>${detail.totalTeamDistanceKm.toFixed(1)} km</code>\n\n`;
+          message += `👥 <b>DANH SÁCH CHI TIẾT TỪNG THÀNH VIÊN:</b>\n`;
 
           detail.members.forEach((m, idx) => {
             const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `<b>${idx + 1}.</b>`;
-            const statusIcon = m.isQualified ? '✅' : '❌';
+            const statusIcon = m.isExempt ? '🏥 [Nghỉ ốm]' : (m.isQualified ? '✅' : '❌');
             const paceStr = m.runCount > 0 && isFinite(m.avgPaceSecPerKm) ? formatPace(m.avgPaceSecPerKm) : '--:--';
             const genderIcon = m.gender === 'FEMALE' ? '👩' : '👨';
 
