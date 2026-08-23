@@ -3,6 +3,7 @@ import { getValidAccessToken, fetchStravaActivityDetail } from './strava.service
 import { validateActivity } from './anticheat.service';
 import { notifyReachedMilestone, notifyCheatingAlert, notifyActivityDeleted, notifyActivityUpdated } from './telegram.service';
 import { WEEKS } from './awards.service';
+import { getExemptUserIdsForWeek } from './exemption.service';
 
 /**
  * Worker function executed by P-Queue to process a Strava activity event (create, update, or delete)
@@ -319,11 +320,16 @@ export async function getBestPaceActivities(options?: BestPaceQueryOptions) {
     }
   }
 
+  const exemptUserIds = (weekNumber && weekNumber >= 1 && weekNumber <= 4) 
+    ? await getExemptUserIdsForWeek(weekNumber) 
+    : new Set<string>();
+
   const activities = await db.activity.findMany({
     where: {
       isLegit: true,
       averagePace: { gt: 0 },
       distance: { gte: 3000 }, // Chỉ lọc bài chạy có quãng đường >= 3km (3000 mét)
+      ...(exemptUserIds.size > 0 ? { userId: { notIn: Array.from(exemptUserIds) } } : {}),
       ...dateFilter
     },
     include: {

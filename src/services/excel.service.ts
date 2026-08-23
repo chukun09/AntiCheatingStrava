@@ -3,6 +3,7 @@ import { db } from '../config/db';
 import { env } from '../config/env';
 import { getTeamName } from './team.service';
 import { formatVietnamDateTime, formatPace } from './telegram.service';
+import { getExemptUserIdsForWeek } from './exemption.service';
 
 const week1StartDate = env.ALLOW_TEST_DATE ? new Date('2026-07-01T00:00:00+07:00') : new Date('2026-08-03T00:00:00+07:00');
 
@@ -198,9 +199,13 @@ export async function exportLeaderboardToExcelBuffer(param?: string, minKmParam?
     filterTitle += ` [Chỉ tính bài chạy >= ${minKm.toFixed(1)} km]`;
   }
 
-  const users = await db.user.findMany({
-    orderBy: { teamId: 'asc' }
-  });
+  const weekNum = cleanParam.startsWith('tuan') ? parseInt(cleanParam.replace('tuan', ''), 10) : null;
+  const [users, exemptUserIds] = await Promise.all([
+    db.user.findMany({
+      orderBy: { teamId: 'asc' }
+    }),
+    (weekNum && weekNum >= 1 && weekNum <= 4) ? getExemptUserIdsForWeek(weekNum) : Promise.resolve(new Set<string>())
+  ]);
 
   let userStatsMap = new Map<string, { totalDistanceMeters: number; validCount: number; totalMovingTimeSec: number }>();
 
@@ -258,7 +263,8 @@ export async function exportLeaderboardToExcelBuffer(param?: string, minKmParam?
       validCount: stats.validCount,
       avgPaceSec,
       targetKm,
-      isTargetReached
+      isTargetReached,
+      isExempt: exemptUserIds.has(user.id)
     };
   }).sort((a, b) => {
     if (Math.abs(b.totalKm - a.totalKm) > 0.001) {
@@ -272,6 +278,11 @@ export async function exportLeaderboardToExcelBuffer(param?: string, minKmParam?
 
   const rows = leaderboardList.map((item, index) => {
     const u = item.user;
+    let targetStatus = item.isTargetReached ? '⚡ Đã đạt' : '⏳ Chưa đạt';
+    if (item.isExempt) {
+      targetStatus = '🏥 [Nghỉ ốm / Miễn trừ]';
+    }
+
     return {
       'Hạng (Rank)': index + 1,
       'Họ và Tên VĐV': u.fullName || u.nickName,
@@ -283,7 +294,7 @@ export async function exportLeaderboardToExcelBuffer(param?: string, minKmParam?
       [countColHeader]: item.validCount,
       'Pace trung bình': formatPace(item.avgPaceSec),
       'Chỉ tiêu cá nhân (km)': item.targetKm,
-      'Trạng thái mốc chỉ tiêu': item.isTargetReached ? '⚡ Đã đạt' : '⏳ Chưa đạt',
+      'Trạng thái mốc chỉ tiêu': targetStatus,
       'Thời điểm cán mốc (UTC+7)': u.reachedTargetAt ? formatVietnamDateTime(u.reachedTargetAt) : 'Chưa đạt'
     };
   });
