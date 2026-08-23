@@ -1,5 +1,6 @@
 import { db } from '../config/db';
 import { WEEKS } from './awards.service';
+import { getExemptUserIdsForWeek } from './exemption.service';
 
 export interface TeamInfo {
   id: number;
@@ -32,6 +33,7 @@ export interface MemberWeekStat {
   runCount: number;
   avgPaceSecPerKm: number;
   isQualified: boolean;
+  isExempt?: boolean;
 }
 
 export interface TeamWeekDetailResult {
@@ -49,44 +51,45 @@ export interface TeamWeekDetailResult {
  * Get detailed athlete-by-athlete breakdown for a specific team and optional week number.
  */
 export async function getTeamWeekDetail(teamId: number, weekNumber?: number | null): Promise<TeamWeekDetailResult | null> {
-  const teamName = getTeamName(teamId);
-  
-  // Find team members
-  const users = await db.user.findMany({
-    where: { teamId },
-    orderBy: { nickName: 'asc' }
-  });
+  const team = TEAMS.find(t => t.id === teamId);
+  if (!team) return null;
 
-  if (users.length === 0) {
-    return null;
-  }
+  const teamName = team.name;
 
-  let weekName = 'Toàn bộ giải đấu';
+  let targetWeekObj: typeof WEEKS[0] | null = null;
   let dateFilter: { gte?: Date; lt?: Date } = {};
-  let targetWeekObj: (typeof WEEKS)[0] | null = null;
+  let weekName = 'Toàn Chiến Dịch (03/08 - 30/08)';
 
   if (weekNumber && weekNumber >= 1 && weekNumber <= 4) {
     targetWeekObj = WEEKS[weekNumber - 1];
+    dateFilter = {
+      gte: targetWeekObj.start,
+      lt: targetWeekObj.end
+    };
     weekName = targetWeekObj.name;
-    dateFilter = { gte: targetWeekObj.start, lt: targetWeekObj.end };
-  } else {
-    // Whole contest from Week 1 start to Week 4 end
-    dateFilter = { gte: WEEKS[0].start, lt: WEEKS[3].end };
   }
 
-  const userIds = users.map(u => u.id);
+  const [users, exemptUserIds] = await Promise.all([
+    db.user.findMany({
+      where: { teamId },
+      orderBy: { totalDistance: 'desc' }
+    }),
+    (weekNumber && weekNumber >= 1 && weekNumber <= 4) ? getExemptUserIdsForWeek(weekNumber) : Promise.resolve(new Set<string>())
+  ]);
 
-  // Fetch legitimate activities for these users in the date range
+  // Fetch activities of all team members
+  const userIds = users.map(u => u.id);
   const activities = await db.activity.findMany({
     where: {
       userId: { in: userIds },
       isLegit: true,
-      startDate: dateFilter
+      ...(targetWeekObj ? { startDate: dateFilter } : {})
     }
   });
 
-  // Aggregate stats per user
+  // Calculate distances and paces per user
   const userStatsMap = new Map<string, { distanceMeters: number; movingSec: number; runCount: number }>();
+  users.forEach(u => userStatsMap.set(u.id, { distanceMeters: 0, movingSec: 0, runCount: 0 }));
 
   activities.forEach(a => {
     const current = userStatsMap.get(a.userId) || { distanceMeters: 0, movingSec: 0, runCount: 0 };
@@ -102,20 +105,24 @@ export async function getTeamWeekDetail(teamId: number, weekNumber?: number | nu
   const memberStats: MemberWeekStat[] = users.map(user => {
     const stat = userStatsMap.get(user.id) || { distanceMeters: 0, movingSec: 0, runCount: 0 };
     const totalDistanceKm = stat.distanceMeters / 1000;
-    totalTeamDistanceKm += totalDistanceKm;
+    const isExempt = exemptUserIds.has(user.id);
+
+    if (!isExempt) {
+      totalTeamDistanceKm += totalDistanceKm;
+    }
 
     const avgPaceSecPerKm = totalDistanceKm > 0 ? stat.movingSec / totalDistanceKm : Number.POSITIVE_INFINITY;
 
     let isQualified = false;
     if (targetWeekObj) {
-      isQualified = totalDistanceKm >= 3.0;
+      isQualified = isExempt ? true : totalDistanceKm >= 3.0;
     } else {
       // Whole contest goal: Female 15km, Male 30km
       const targetKm = user.gender === 'FEMALE' ? 15 : 30;
       isQualified = totalDistanceKm >= targetKm;
     }
 
-    if (isQualified) qualifiedMembers++;
+    if (isQualified && !isExempt) qualifiedMembers++;
 
     return {
       id: user.id,
@@ -126,19 +133,22 @@ export async function getTeamWeekDetail(teamId: number, weekNumber?: number | nu
       totalDistanceKm,
       runCount: stat.runCount,
       avgPaceSecPerKm,
-      isQualified
+      isQualified,
+      isExempt
     };
   });
 
   // Sort members by totalDistanceKm descending
   memberStats.sort((a, b) => b.totalDistanceKm - a.totalDistanceKm);
 
+  const activeMembersCount = users.filter(u => !exemptUserIds.has(u.id)).length;
+
   return {
     teamId,
     teamName,
     weekNumber: weekNumber || null,
     weekName,
-    totalMembers: users.length,
+    totalMembers: activeMembersCount,
     qualifiedMembers,
     totalTeamDistanceKm,
     members: memberStats
@@ -187,7 +197,10 @@ export async function getTeamWeeklyLeaderboard(weekParam?: number | string | nul
     periodTitle = weekObj.name;
   }
 
-  const users = await db.user.findMany();
+  const [users, exemptUserIds] = await Promise.all([
+    db.user.findMany(),
+    (weekNumber && weekNumber >= 1 && weekNumber <= 4) ? getExemptUserIdsForWeek(weekNumber) : Promise.resolve(new Set<string>())
+  ]);
 
   // Fetch legit activities
   const activities = await db.activity.findMany({
@@ -210,7 +223,8 @@ export async function getTeamWeeklyLeaderboard(weekParam?: number | string | nul
   let totalQualifiedUsers = 0;
 
   const teamList: TeamSummaryItem[] = TEAMS.map(team => {
-    const members = users.filter(u => u.teamId === team.id);
+    // Exclude exempt users from this week's active member list
+    const members = users.filter(u => u.teamId === team.id && !exemptUserIds.has(u.id));
     const totalMembers = members.length;
     let qualifiedMembers = 0;
     let totalDistanceKm = 0;
@@ -226,7 +240,8 @@ export async function getTeamWeeklyLeaderboard(weekParam?: number | string | nul
 
       let isQualified = false;
       if (weekNumber) {
-        isQualified = userKm >= 3.0;
+        // exemptUserIds would be empty if weekNumber is null/undefined, but handled here for safety
+        isQualified = exemptUserIds.has(u.id) ? true : userKm >= 3.0;
       } else {
         const targetKm = u.gender === 'FEMALE' ? 15 : 30;
         isQualified = userKm >= targetKm;
@@ -257,14 +272,14 @@ export async function getTeamWeeklyLeaderboard(weekParam?: number | string | nul
     return b.totalDistanceKm - a.totalDistanceKm;
   });
 
-  const totalCompanyUsers = users.length;
-  const companyCompletionRate = totalCompanyUsers > 0 ? (totalQualifiedUsers / totalCompanyUsers) * 100 : 0;
+  const activeCompanyUsers = users.filter(u => !exemptUserIds.has(u.id)).length;
+  const companyCompletionRate = activeCompanyUsers > 0 ? (totalQualifiedUsers / activeCompanyUsers) * 100 : 0;
 
   return {
     periodTitle,
     weekNumber,
     teams: teamList,
-    totalCompanyUsers,
+    totalCompanyUsers: activeCompanyUsers,
     totalQualifiedUsers,
     companyCompletionRate
   };

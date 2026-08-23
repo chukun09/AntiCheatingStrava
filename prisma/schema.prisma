@@ -39,6 +39,7 @@ model User {
   reachedTargetAt  DateTime?  // Thời điểm cán mốc chỉ tiêu cá nhân (Nam: 30km, Nữ: 15km)
   
   activities       Activity[]
+  weeklyExemptions WeeklyExemption[]
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
@@ -46,6 +47,18 @@ model User {
   @@index([teamId])
   @@index([reachedTargetAt])
   @@index([gender, totalDistance])
+}
+
+model WeeklyExemption {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  week      Int      // 1, 2, 3, 4
+  reason    String?  // Lý do (Nghỉ ốm, chấn thương, thai sản...)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, week])
+  @@index([week])
 }
 
 model Activity {

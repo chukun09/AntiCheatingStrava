@@ -1,5 +1,6 @@
 import { db } from '../config/db';
 import { WEEKS } from './awards.service';
+import { getExemptUserIdsForWeek } from './exemption.service';
 
 export interface CompanySummaryStats {
   periodTitle: string;
@@ -40,11 +41,6 @@ export interface SummaryQueryOptions {
  * filtered by a specific week or across the whole contest.
  */
 export async function getCompanySummaryStats(options?: SummaryQueryOptions): Promise<CompanySummaryStats> {
-  const users = await db.user.findMany();
-  const totalCompanyUsers = users.length;
-  const totalMaleUsers = users.filter(u => u.gender === 'MALE').length;
-  const totalFemaleUsers = users.filter(u => u.gender === 'FEMALE').length;
-
   let dateFilter: any = {};
   let periodTitle = 'Toàn Chiến Dịch (03/08 - 30/08)';
   let weekNumber: number | null = null;
@@ -69,6 +65,16 @@ export async function getCompanySummaryStats(options?: SummaryQueryOptions): Pro
       }
     }
   }
+
+  const [allUsers, exemptUserIds] = await Promise.all([
+    db.user.findMany(),
+    (weekNumber && weekNumber >= 1 && weekNumber <= 4) ? getExemptUserIdsForWeek(weekNumber) : Promise.resolve(new Set<string>())
+  ]);
+
+  const activeUsers = allUsers.filter(u => !exemptUserIds.has(u.id));
+  const totalCompanyUsers = activeUsers.length;
+  const totalMaleUsers = activeUsers.filter(u => u.gender === 'MALE').length;
+  const totalFemaleUsers = activeUsers.filter(u => u.gender === 'FEMALE').length;
 
   // Fetch all legit activities in the period
   const activities = await db.activity.findMany({
@@ -96,7 +102,7 @@ export async function getCompanySummaryStats(options?: SummaryQueryOptions): Pro
     userStatsMap.set(act.userId, current);
   });
 
-  // Classify users into qualified (>= 3.0km)
+  // Classify active users into qualified (>= 3.0km)
   let qualifiedUsersCount = 0;
   let qualifiedMaleCount = 0;
   let qualifiedFemaleCount = 0;
@@ -110,7 +116,7 @@ export async function getCompanySummaryStats(options?: SummaryQueryOptions): Pro
   let qualifiedFemaleDistanceKm = 0;
   let qualifiedFemaleMovingSec = 0;
 
-  users.forEach(u => {
+  activeUsers.forEach(u => {
     const stat = userStatsMap.get(u.id);
     const userKm = stat ? stat.totalDistanceKm : 0;
     const userMovingSec = stat ? stat.totalMovingSec : 0;

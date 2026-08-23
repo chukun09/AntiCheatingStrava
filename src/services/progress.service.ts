@@ -1,5 +1,6 @@
 import { db } from '../config/db';
 import { WEEKS } from './awards.service';
+import { getExemptUserIdsForWeek } from './exemption.service';
 
 export interface AthleteGrowthStat {
   user: {
@@ -79,16 +80,19 @@ export async function getGrowthLeaderboard(options?: GrowthQueryOptions): Promis
   const targetWeekName = targetWeekObj ? targetWeekObj.name : `Tuần ${targetWeekNum}`;
   const baseWeekName = baseWeekObj ? baseWeekObj.name : `Tuần ${baseWeekNum}`;
 
-  const users = await db.user.findMany({
-    select: {
-      id: true,
-      nickName: true,
-      fullName: true,
-      gender: true,
-      teamId: true,
-      department: true
-    }
-  });
+  const [users, targetExemptUserIds] = await Promise.all([
+    db.user.findMany({
+      select: {
+        id: true,
+        nickName: true,
+        fullName: true,
+        gender: true,
+        teamId: true,
+        department: true
+      }
+    }),
+    getExemptUserIdsForWeek(targetWeekNum)
+  ]);
 
   // Query activities in targetWeek and baseWeek
   const [targetActs, baseActs] = await Promise.all([
@@ -126,21 +130,23 @@ export async function getGrowthLeaderboard(options?: GrowthQueryOptions): Promis
     baseDistMap.set(a.userId, (a._sum.distance || 0) / 1000);
   });
 
-  // Calculate delta for all users
-  const allGrowth: AthleteGrowthStat[] = users.map(u => {
-    const targetWeekKm = targetDistMap.get(u.id) || 0;
-    const baseWeekKm = baseDistMap.get(u.id) || 0;
-    const deltaKm = targetWeekKm - baseWeekKm;
-    const growthPercent = baseWeekKm > 0 ? (deltaKm / baseWeekKm) * 100 : null;
+  // Calculate delta for all users (excluding those on sick leave in target week)
+  const allGrowth: AthleteGrowthStat[] = users
+    .filter(u => !targetExemptUserIds.has(u.id))
+    .map(u => {
+      const targetWeekKm = targetDistMap.get(u.id) || 0;
+      const baseWeekKm = baseDistMap.get(u.id) || 0;
+      const deltaKm = targetWeekKm - baseWeekKm;
+      const growthPercent = baseWeekKm > 0 ? (deltaKm / baseWeekKm) * 100 : null;
 
-    return {
-      user: u,
-      targetWeekKm,
-      baseWeekKm,
-      deltaKm,
-      growthPercent
-    };
-  });
+      return {
+        user: u,
+        targetWeekKm,
+        baseWeekKm,
+        deltaKm,
+        growthPercent
+      };
+    });
 
   // Filter only athletes with positive growth (deltaKm > 0)
   const growingAthletes = allGrowth

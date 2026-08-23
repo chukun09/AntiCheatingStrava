@@ -1,6 +1,7 @@
 import { db } from '../config/db';
 import { TEAMS } from './team.service';
 import { env } from '../config/env';
+import { getExemptUserIdsForWeek } from './exemption.service';
 
 // If ALLOW_TEST_DATE=true, expand Week 1 start date back to 2026-07-01 so test runs show up on leaderboards
 const week1StartDate = env.ALLOW_TEST_DATE ? new Date('2026-07-01T00:00:00+07:00') : new Date('2026-08-03T00:00:00+07:00');
@@ -17,7 +18,10 @@ export const WEEKS = [
  */
 export async function getWeek1TeamAward() {
   const week1 = WEEKS[0];
-  const users = await db.user.findMany();
+  const [users, exemptUserIds] = await Promise.all([
+    db.user.findMany(),
+    getExemptUserIdsForWeek(1)
+  ]);
 
   // Get total distance per user in Week 1
   const userDistances = await db.activity.groupBy({
@@ -32,7 +36,8 @@ export async function getWeek1TeamAward() {
   const distanceMap = new Map(userDistances.map(d => [d.userId, (d._sum.distance || 0) / 1000]));
 
   return TEAMS.map(team => {
-    const teamMembers = users.filter(u => u.teamId === team.id);
+    // Exclude users on sick leave / exempt in Week 1
+    const teamMembers = users.filter(u => u.teamId === team.id && !exemptUserIds.has(u.id));
     const totalMembers = teamMembers.length;
 
     let totalDistanceKmWeek1 = 0;
@@ -83,7 +88,10 @@ export async function getWeek1TeamAward() {
  */
 export async function getWeek2TeamAward() {
   const week2 = WEEKS[1];
-  const users = await db.user.findMany();
+  const [users, exemptUserIds] = await Promise.all([
+    db.user.findMany(),
+    getExemptUserIdsForWeek(2)
+  ]);
 
   const activities = await db.activity.findMany({
     where: {
@@ -104,7 +112,8 @@ export async function getWeek2TeamAward() {
   });
 
   return TEAMS.map(team => {
-    const teamMembers = users.filter(u => u.teamId === team.id);
+    // Exclude users on sick leave / exempt in Week 2
+    const teamMembers = users.filter(u => u.teamId === team.id && !exemptUserIds.has(u.id));
     const totalMembers = teamMembers.length;
 
     const teamActs = teamActivitiesMap.get(team.id) || [];
@@ -129,6 +138,9 @@ export async function getWeek2TeamAward() {
     let totalDistanceKm = 0;
 
     teamActs.forEach(a => {
+      // Exclude exempt member activities from team pace calculation if any
+      if (exemptUserIds.has(a.userId)) return;
+
       const distKm = a.distance / 1000;
       let movingSec = a.movingTime;
 
@@ -166,6 +178,7 @@ export async function getWeek2TeamAward() {
  */
 export async function getWeek3IndividualAward() {
   const week3 = WEEKS[2];
+  const exemptUserIds = await getExemptUserIdsForWeek(3);
 
   const maleStats = await db.activity.groupBy({
     by: ['userId'],
@@ -177,7 +190,7 @@ export async function getWeek3IndividualAward() {
     },
     _sum: { distance: true },
     orderBy: { _sum: { distance: 'desc' } },
-    take: 5
+    take: 10
   });
 
   const femaleStats = await db.activity.groupBy({
@@ -190,19 +203,22 @@ export async function getWeek3IndividualAward() {
     },
     _sum: { distance: true },
     orderBy: { _sum: { distance: 'desc' } },
-    take: 5
+    take: 10
   });
 
-  const userIds = [...maleStats.map(s => s.userId), ...femaleStats.map(s => s.userId)];
+  const filteredMaleStats = maleStats.filter(s => !exemptUserIds.has(s.userId)).slice(0, 5);
+  const filteredFemaleStats = femaleStats.filter(s => !exemptUserIds.has(s.userId)).slice(0, 5);
+
+  const userIds = [...filteredMaleStats.map(s => s.userId), ...filteredFemaleStats.map(s => s.userId)];
   const users = await db.user.findMany({ where: { id: { in: userIds } } });
   const userMap = new Map(users.map(u => [u.id, u]));
 
   return {
-    males: maleStats.map(s => ({
+    males: filteredMaleStats.map(s => ({
       user: userMap.get(s.userId),
       totalKm: ((s._sum.distance || 0) / 1000)
     })).filter(m => m.user !== undefined),
-    females: femaleStats.map(s => ({
+    females: filteredFemaleStats.map(s => ({
       user: userMap.get(s.userId),
       totalKm: ((s._sum.distance || 0) / 1000)
     })).filter(f => f.user !== undefined)
@@ -215,7 +231,10 @@ export async function getWeek3IndividualAward() {
  */
 export async function getWeek3TeamAward() {
   const week3 = WEEKS[2];
-  const users = await db.user.findMany();
+  const [users, exemptUserIds] = await Promise.all([
+    db.user.findMany(),
+    getExemptUserIdsForWeek(3)
+  ]);
 
   const userDistances = await db.activity.groupBy({
     by: ['userId'],
@@ -230,7 +249,8 @@ export async function getWeek3TeamAward() {
   const distanceMap = new Map(userDistances.map(d => [d.userId, (d._sum.distance || 0) / 1000]));
 
   return TEAMS.map(team => {
-    const teamMembers = users.filter(u => u.teamId === team.id);
+    // Exclude users on sick leave / exempt in Week 3
+    const teamMembers = users.filter(u => u.teamId === team.id && !exemptUserIds.has(u.id));
     const totalMembers = teamMembers.length;
     let totalKmWeek3 = 0;
 

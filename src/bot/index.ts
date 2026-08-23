@@ -20,6 +20,7 @@ import { getCompanySummaryStats } from '../services/stats.service';
 import { grantPickleballBonus, revokePickleballBonus } from '../services/bonus.service';
 import { getGrowthLeaderboard } from '../services/progress.service';
 import { getDepartmentSummaryLeaderboard, getDepartmentMembersDetail } from '../services/department.service';
+import { grantWeeklyExemption, revokeWeeklyExemption, getWeeklyExemptionsList } from '../services/exemption.service';
 
 let bot: Telegraf | null = null;
 
@@ -67,6 +68,8 @@ Danh sách lệnh hỗ trợ:
 🚀 <code>/giai_tuan3</code> - Xem BXH Giải Tuần 3 (Bứt phá Cá nhân & Tập thể).
 🏁 <code>/giai_tuan4</code> - Xem BXH Giải Tập Thể Về Đích (Avg Km Cả Giải).
 🏓 <code>/cong_pickleball [Nicknames...]</code> - BTC cộng điểm thưởng Pickleball (+5km Nam, +3km Nữ).
+🏥 <code>/nghi_om [tuần] [Nicknames...]</code> - BTC duyệt nghỉ ốm/miễn trừ theo tuần (VD: <code>/nghi_om 3 CapyLong</code>).
+🏥 <code>/ds_nghi_om [tuần]</code> - Xem danh sách VĐV nghỉ ốm/miễn trừ theo tuần.
 📊 <code>/excel_bxh [tuần] [min_km]</code> - Xuất Excel BXH VĐV (VD: <code>/excel_bxh tuan3 3</code> hoặc <code>/excel_bxh 3 3</code>).
 📄 <code>/excel_vipham [tuan1-4/doi1-8/tatca]</code> - Trích xuất file Excel danh sách bài vi phạm.
 🔄 <code>/sync [Nickname/all]</code> - Đồng bộ bài chạy mới từ Strava (VD: <code>/sync CapyLong</code> hoặc <code>/sync</code>).
@@ -1223,6 +1226,128 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
         return ctx.reply('Lỗi khi thu hồi điểm thưởng Pickleball: ' + (error?.message || error));
       }
     });
+
+    // Command /nghi_om [tuần] [Nicknames...] - Register Weekly Sick Leave / Exemption
+    const handleWeeklyExemption = async (ctx: any) => {
+      try {
+        const text = (ctx.message?.text || '').trim();
+        const parts = text.split(/\s+/).slice(1);
+
+        if (parts.length < 2) {
+          let msg = `🏥 <b>HƯỚNG DẪN ĐĂNG KÝ NGHỈ ỐM / MIỄN TRỪ THEO TUẦN:</b>\n\n`;
+          msg += `Cú pháp: <code>/nghi_om [tuần 1-4] [Danh sách Nicknames hoặc Họ tên...]</code>\n\n`;
+          msg += `<i>Ví dụ:</i> <code>/nghi_om 3 CapyLong ZuyHun HanaMichi</code>\n\n`;
+          msg += `💡 <i>Tác dụng: VĐV nghỉ ốm trong tuần sẽ được trừ khỏi mẫu số thành viên của Đội/Phòng/Toàn công ty trong tuần đó (không làm tụt % hoặc Avg km của Đội) và được miễn phạt tuần đó!</i>`;
+          return ctx.replyWithHTML(msg);
+        }
+
+        const weekNum = parseInt(parts[0].replace(/[^\d]/g, ''), 10);
+        if (isNaN(weekNum) || weekNum < 1 || weekNum > 4) {
+          return ctx.replyWithHTML(`⚠️ Số tuần không hợp lệ: <b>"${escapeHtml(parts[0])}"</b>. Vui lòng nhập số tuần từ 1 đến 4 (VD: <code>/nghi_om 3 CapyLong</code>).`);
+        }
+
+        const nicknames = parts.slice(1);
+        const results = await grantWeeklyExemption(weekNum, nicknames);
+
+        let msg = `🏥 <b>KẾT QUẢ XÁC NHẬN NGHỈ ỐM / MIỄN TRỪ TUẦN ${weekNum}:</b>\n\n`;
+        results.forEach((r) => {
+          const icon = r.success ? '✅' : '⚠️';
+          const displayName = r.fullName ? `<b>${escapeHtml(r.fullName)}</b> (@${escapeHtml(r.nickname)})` : `<b>${escapeHtml(r.nickname)}</b>`;
+          msg += `${icon} ${displayName}: ${escapeHtml(r.message)}\n`;
+        });
+
+        msg += `\n💡 <i>Gõ <code>/ds_nghi_om ${weekNum}</code> để xem danh sách nghỉ ốm Tuần ${weekNum}!</i>`;
+        return ctx.replyWithHTML(msg);
+      } catch (error: any) {
+        console.error('[Bot /nghi_om] Error:', error);
+        return ctx.reply('Lỗi khi đăng ký nghỉ ốm theo tuần: ' + (error?.message || error));
+      }
+    };
+
+    bot.command(['nghi_om', 'nghiom', 'mien_tuan'], handleWeeklyExemption);
+
+    // Command /huy_nghi_om [tuần] [Nicknames...] - Revoke Weekly Sick Leave
+    const handleRevokeWeeklyExemption = async (ctx: any) => {
+      try {
+        const text = (ctx.message?.text || '').trim();
+        const parts = text.split(/\s+/).slice(1);
+
+        if (parts.length < 2) {
+          let msg = `⚠️ <b>HƯỚNG DẪN HỦY NGHỈ ỐM / MIỄN TRỪ THEO TUẦN:</b>\n\n`;
+          msg += `Cú pháp: <code>/huy_nghi_om [tuần 1-4] [Danh sách Nicknames hoặc Họ tên...]</code>\n\n`;
+          msg += `<i>Ví dụ:</i> <code>/huy_nghi_om 3 CapyLong</code>`;
+          return ctx.replyWithHTML(msg);
+        }
+
+        const weekNum = parseInt(parts[0].replace(/[^\d]/g, ''), 10);
+        if (isNaN(weekNum) || weekNum < 1 || weekNum > 4) {
+          return ctx.replyWithHTML(`⚠️ Số tuần không hợp lệ: <b>"${escapeHtml(parts[0])}"</b>. Vui lòng nhập số tuần từ 1 đến 4 (VD: <code>/huy_nghi_om 3 CapyLong</code>).`);
+        }
+
+        const nicknames = parts.slice(1);
+        const results = await revokeWeeklyExemption(weekNum, nicknames);
+
+        let msg = `🏥 <b>KẾT QUẢ HỦY TRẠNG THÁI NGHỈ ỐM TUẦN ${weekNum}:</b>\n\n`;
+        results.forEach((r) => {
+          const icon = r.success ? '✅' : '⚠️';
+          const displayName = r.fullName ? `<b>${escapeHtml(r.fullName)}</b> (@${escapeHtml(r.nickname)})` : `<b>${escapeHtml(r.nickname)}</b>`;
+          msg += `${icon} ${displayName}: ${escapeHtml(r.message)}\n`;
+        });
+
+        return ctx.replyWithHTML(msg);
+      } catch (error: any) {
+        console.error('[Bot /huy_nghi_om] Error:', error);
+        return ctx.reply('Lỗi khi hủy trạng thái nghỉ ốm: ' + (error?.message || error));
+      }
+    };
+
+    bot.command(['huy_nghi_om', 'huynghiom', 'huy_mien_tuan'], handleRevokeWeeklyExemption);
+
+    // Command /ds_nghi_om [tuần] - List of Exempt / Sick Leave Athletes
+    const handleListWeeklyExemption = async (ctx: any) => {
+      try {
+        const text = (ctx.message?.text || '').trim();
+        const parts = text.split(/\s+/).slice(1);
+
+        let weekNum: number | null = null;
+        if (parts.length > 0) {
+          const parsed = parseInt(parts[0].replace(/[^\d]/g, ''), 10);
+          if (!isNaN(parsed) && parsed >= 1 && parsed <= 4) {
+            weekNum = parsed;
+          }
+        }
+
+        const exemptions = await getWeeklyExemptionsList(weekNum);
+
+        if (exemptions.length === 0) {
+          const title = weekNum ? `trong Tuần ${weekNum}` : 'trong toàn bộ giải đấu';
+          return ctx.replyWithHTML(`🏥 <b>DANH SÁCH VĐV NGHỈ ỐM / MIỄN TRỪ:</b>\n\nℹ️ Hiện tại không có VĐV nào được đánh dấu nghỉ ốm ${title}.`);
+        }
+
+        const title = weekNum ? `TUẦN ${weekNum}` : 'TẤT CẢ CÁC TUẦN';
+        let msg = `🏥 <b>DANH SÁCH VĐV NGHỈ ỐM / MIỄN TRỪ (${title}):</b> 🏥\n\n`;
+
+        exemptions.forEach((ex, idx) => {
+          const genderIcon = ex.user.gender === 'FEMALE' ? '👩' : '👨';
+          const teamName = getTeamName(ex.user.teamId);
+          const deptName = ex.user.department ? ` - ${escapeHtml(ex.user.department)}` : '';
+          const athleteName = ex.user.fullName ? `<b>${escapeHtml(ex.user.fullName)}</b> (@${escapeHtml(ex.user.nickName)})` : `<b>${escapeHtml(ex.user.nickName)}</b>`;
+          
+          msg += `${idx + 1}. ${genderIcon} ${athleteName} [Tuần ${ex.week}]\n`;
+          msg += `   └─ 🛡️ ${escapeHtml(teamName)}${deptName} | 📝 <i>${escapeHtml(ex.reason || 'Nghỉ ốm')}</i>\n`;
+        });
+
+        msg += `\n📊 <b>Tổng số lượt miễn trừ:</b> <code>${exemptions.length} lượt</code>\n`;
+        msg += `💡 <i>Cú pháp thêm: <code>/nghi_om [tuần] [Nicknames...]</code> | Hủy: <code>/huy_nghi_om [tuần] [Nicknames...]</code></i>`;
+
+        return ctx.replyWithHTML(msg);
+      } catch (error: any) {
+        console.error('[Bot /ds_nghi_om] Error:', error);
+        return ctx.reply('Lỗi khi tải danh sách nghỉ ốm: ' + (error?.message || error));
+      }
+    };
+
+    bot.command(['ds_nghi_om', 'dsnghiom', 'ds_mien'], handleListWeeklyExemption);
 
     const launchBotWithRetry = (retryCount = 0) => {
       bot?.launch({ dropPendingUpdates: false }).then(() => {

@@ -1,5 +1,6 @@
 import { db } from '../config/db';
 import { WEEKS } from './awards.service';
+import { getExemptUserIdsForWeek } from './exemption.service';
 
 export interface DepartmentSummaryItem {
   departmentName: string;
@@ -29,6 +30,7 @@ export interface DepartmentMemberDetail {
   runCount: number;
   avgPaceSecPerKm: number;
   isQualified: boolean;
+  isExempt?: boolean;
 }
 
 export interface DepartmentDetailResult {
@@ -73,9 +75,12 @@ export async function getDepartmentSummaryLeaderboard(weekParam?: number | strin
     periodTitle = weekObj.name;
   }
 
-  const users = await db.user.findMany({
-    orderBy: { department: 'asc' }
-  });
+  const [users, exemptUserIds] = await Promise.all([
+    db.user.findMany({
+      orderBy: { department: 'asc' }
+    }),
+    (weekNumber && weekNumber >= 1 && weekNumber <= 4) ? getExemptUserIdsForWeek(weekNumber) : Promise.resolve(new Set<string>())
+  ]);
 
   // Fetch legitimate activities in period
   const activities = await db.activity.findMany({
@@ -102,6 +107,9 @@ export async function getDepartmentSummaryLeaderboard(weekParam?: number | strin
   let totalQualifiedUsers = 0;
 
   users.forEach(u => {
+    // Exclude exempt user in this week from department total members calculation
+    if (exemptUserIds.has(u.id)) return;
+
     const deptName = u.department?.trim() || 'Chưa phân phòng';
     const stat = deptMap.get(deptName) || { totalMembers: 0, qualifiedMembers: 0, totalDistanceKm: 0 };
 
@@ -150,14 +158,14 @@ export async function getDepartmentSummaryLeaderboard(weekParam?: number | strin
     return b.totalDistanceKm - a.totalDistanceKm;
   });
 
-  const totalCompanyUsers = users.length;
-  const companyCompletionRate = totalCompanyUsers > 0 ? (totalQualifiedUsers / totalCompanyUsers) * 100 : 0;
+  const activeCompanyUsers = users.filter(u => !exemptUserIds.has(u.id)).length;
+  const companyCompletionRate = activeCompanyUsers > 0 ? (totalQualifiedUsers / activeCompanyUsers) * 100 : 0;
 
   return {
     periodTitle,
     weekNumber,
     departments: departmentList,
-    totalCompanyUsers,
+    totalCompanyUsers: activeCompanyUsers,
     totalQualifiedUsers,
     companyCompletionRate
   };
