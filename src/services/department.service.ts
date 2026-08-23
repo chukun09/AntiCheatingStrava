@@ -9,6 +9,14 @@ export interface DepartmentSummaryItem {
   qualifiedRate: number;
   totalDistanceKm: number;
   avgKmPerMember: number;
+  unqualifiedMembers: {
+    id: string;
+    nickName: string;
+    fullName: string | null;
+    currentKm: number;
+    targetKm: number;
+    missingKm: number;
+  }[];
 }
 
 export interface DepartmentLeaderboardResult {
@@ -102,7 +110,19 @@ export async function getDepartmentSummaryLeaderboard(weekParam?: number | strin
   });
 
   // Group by department
-  const deptMap = new Map<string, { totalMembers: number; qualifiedMembers: number; totalDistanceKm: number }>();
+  const deptMap = new Map<string, { 
+    totalMembers: number; 
+    qualifiedMembers: number; 
+    totalDistanceKm: number;
+    unqualifiedMembers: {
+      id: string;
+      nickName: string;
+      fullName: string | null;
+      currentKm: number;
+      targetKm: number;
+      missingKm: number;
+    }[];
+  }>();
 
   let totalQualifiedUsers = 0;
 
@@ -111,13 +131,22 @@ export async function getDepartmentSummaryLeaderboard(weekParam?: number | strin
     if (exemptUserIds.has(u.id)) return;
 
     const deptName = u.department?.trim() || 'Chưa phân phòng';
-    const stat = deptMap.get(deptName) || { totalMembers: 0, qualifiedMembers: 0, totalDistanceKm: 0 };
+    const stat = deptMap.get(deptName) || { 
+      totalMembers: 0, 
+      qualifiedMembers: 0, 
+      totalDistanceKm: 0,
+      unqualifiedMembers: []
+    };
 
     let userKm = 0;
+    let targetKm = 3.0;
+
     if (weekNumber) {
       userKm = userStatsMap.get(u.id)?.totalDistanceKm || 0;
+      targetKm = 3.0;
     } else {
       userKm = u.totalDistance / 1000;
+      targetKm = u.gender === 'FEMALE' ? 15 : 30;
     }
 
     stat.totalMembers += 1;
@@ -125,21 +154,30 @@ export async function getDepartmentSummaryLeaderboard(weekParam?: number | strin
 
     let isQualified = false;
     if (weekNumber) {
-      isQualified = userKm >= 3.0;
+      isQualified = userKm >= targetKm;
     } else {
-      const targetKm = u.gender === 'FEMALE' ? 15 : 30;
       isQualified = userKm >= targetKm;
     }
 
     if (isQualified) {
       stat.qualifiedMembers += 1;
       totalQualifiedUsers += 1;
+    } else {
+      stat.unqualifiedMembers.push({
+        id: u.id,
+        nickName: u.nickName,
+        fullName: u.fullName,
+        currentKm: userKm,
+        targetKm,
+        missingKm: Math.max(0, targetKm - userKm)
+      });
     }
 
     deptMap.set(deptName, stat);
   });
 
   const departmentList: DepartmentSummaryItem[] = Array.from(deptMap.entries()).map(([departmentName, s]) => {
+    s.unqualifiedMembers.sort((a, b) => b.currentKm - a.currentKm);
     const qualifiedRate = s.totalMembers > 0 ? (s.qualifiedMembers / s.totalMembers) * 100 : 0;
     const avgKmPerMember = s.totalMembers > 0 ? s.totalDistanceKm / s.totalMembers : 0;
     return {
@@ -148,7 +186,8 @@ export async function getDepartmentSummaryLeaderboard(weekParam?: number | strin
       qualifiedMembers: s.qualifiedMembers,
       qualifiedRate,
       totalDistanceKm: s.totalDistanceKm,
-      avgKmPerMember
+      avgKmPerMember,
+      unqualifiedMembers: s.unqualifiedMembers
     };
   }).sort((a, b) => {
     // Sort by qualified rate descending, then by total distance descending

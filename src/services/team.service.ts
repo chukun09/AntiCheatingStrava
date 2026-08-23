@@ -155,6 +155,16 @@ export async function getTeamWeekDetail(teamId: number, weekNumber?: number | nu
   };
 }
 
+export interface UnqualifiedMemberInfo {
+  id: string;
+  nickName: string;
+  fullName: string | null;
+  gender: string;
+  currentKm: number;
+  targetKm: number;
+  missingKm: number;
+}
+
 export interface TeamSummaryItem {
   teamId: number;
   teamName: string;
@@ -163,6 +173,7 @@ export interface TeamSummaryItem {
   qualifiedRate: number;
   totalDistanceKm: number;
   avgKmPerMember: number;
+  unqualifiedMembers: UnqualifiedMemberInfo[];
 }
 
 export interface TeamWeeklyLeaderboardResult {
@@ -228,30 +239,46 @@ export async function getTeamWeeklyLeaderboard(weekParam?: number | string | nul
     const totalMembers = members.length;
     let qualifiedMembers = 0;
     let totalDistanceKm = 0;
+    const unqualifiedMembers: UnqualifiedMemberInfo[] = [];
 
     members.forEach(u => {
       let userKm = 0;
+      let targetKm = 3.0;
+
       if (weekNumber) {
         userKm = userStatsMap.get(u.id)?.totalDistanceKm || 0;
+        targetKm = 3.0;
       } else {
         userKm = u.totalDistance / 1000;
+        targetKm = u.gender === 'FEMALE' ? 15 : 30;
       }
       totalDistanceKm += userKm;
 
       let isQualified = false;
       if (weekNumber) {
         // exemptUserIds would be empty if weekNumber is null/undefined, but handled here for safety
-        isQualified = exemptUserIds.has(u.id) ? true : userKm >= 3.0;
+        isQualified = exemptUserIds.has(u.id) ? true : userKm >= targetKm;
       } else {
-        const targetKm = u.gender === 'FEMALE' ? 15 : 30;
         isQualified = userKm >= targetKm;
       }
 
       if (isQualified) {
         qualifiedMembers++;
         totalQualifiedUsers++;
+      } else {
+        unqualifiedMembers.push({
+          id: u.id,
+          nickName: u.nickName,
+          fullName: u.fullName,
+          gender: u.gender,
+          currentKm: userKm,
+          targetKm,
+          missingKm: Math.max(0, targetKm - userKm)
+        });
       }
     });
+
+    unqualifiedMembers.sort((a, b) => b.currentKm - a.currentKm);
 
     const qualifiedRate = totalMembers > 0 ? (qualifiedMembers / totalMembers) * 100 : 0;
     const avgKmPerMember = totalMembers > 0 ? totalDistanceKm / totalMembers : 0;
@@ -263,7 +290,8 @@ export async function getTeamWeeklyLeaderboard(weekParam?: number | string | nul
       qualifiedMembers,
       qualifiedRate,
       totalDistanceKm,
-      avgKmPerMember
+      avgKmPerMember,
+      unqualifiedMembers
     };
   }).sort((a, b) => {
     if (Math.abs(b.qualifiedRate - a.qualifiedRate) > 0.01) {

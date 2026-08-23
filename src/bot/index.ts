@@ -178,6 +178,15 @@ Danh sách lệnh hỗ trợ:
             const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>#${index + 1}.</b>`;
             let line = `${medal} <b>${escapeHtml(dept.departmentName)}</b>\n`;
             line += `   📊 Đạt: <code>${dept.qualifiedMembers}/${dept.totalMembers} VĐV</code> (<b>${dept.qualifiedRate.toFixed(1)}%</b>) | 🏃 <code>${dept.totalDistanceKm.toFixed(1)} km</code> (TB: <code>${dept.avgKmPerMember.toFixed(2)} km</code>)\n`;
+            
+            if (dept.unqualifiedMembers && dept.unqualifiedMembers.length > 0) {
+              const unqList = dept.unqualifiedMembers
+                .map(m => `<b>${escapeHtml(m.fullName || m.nickName)}</b> (<code>${m.currentKm.toFixed(1)}/${m.targetKm}km</code>)`)
+                .join(', ');
+              line += `   ⚠️ <i>Chưa đạt (${dept.unqualifiedMembers.length} người):</i> ${unqList}\n`;
+            } else if (dept.totalMembers > 0) {
+              line += `   🎉 <i>100% Phòng ban đã hoàn thành chỉ tiêu!</i>\n`;
+            }
             return line;
           });
 
@@ -304,6 +313,15 @@ Danh sách lệnh hỗ trợ:
           const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>#${index + 1}.</b>`;
           message += `${medal} <b>${escapeHtml(team.teamName)}</b>\n`;
           message += `   📊 Đạt: <code>${team.qualifiedMembers}/${team.totalMembers} VĐV</code> (<b>${team.qualifiedRate.toFixed(1)}%</b>) | 🏃 <code>${team.totalDistanceKm.toFixed(1)} km</code> (TB: <code>${team.avgKmPerMember.toFixed(2)} km</code>)\n`;
+          
+          if (team.unqualifiedMembers && team.unqualifiedMembers.length > 0) {
+            const unqList = team.unqualifiedMembers
+              .map(m => `<b>${escapeHtml(m.fullName || m.nickName)}</b> (<code>${m.currentKm.toFixed(1)}/${m.targetKm}km</code>)`)
+              .join(', ');
+            message += `   ⚠️ <i>Chưa đạt (${team.unqualifiedMembers.length} người):</i> ${unqList}\n`;
+          } else if (team.totalMembers > 0) {
+            message += `   🎉 <i>100% Đội đã hoàn thành chỉ tiêu!</i>\n`;
+          }
         });
 
         message += `\n💡 <i>Mẹo: Gõ <code>/bxh_doi 3</code> để xem Tuần 3, hoặc <code>/doi 1 3</code> để xem chi tiết từng VĐV Đội 1!</i>`;
