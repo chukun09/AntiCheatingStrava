@@ -968,12 +968,14 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
     bot.command('giai_tuan4', async (ctx) => {
       try {
         const teams = await getWeek4TeamAward();
-        let message = `🏁 <b>GIẢI TẬP THỂ TUẦN 4: VỀ ĐÍCH (AVG KM/NGƯỜI CẢ GIẢI)</b> 🏁\n\n`;
+        let message = `🏁 <b>GIẢI TẬP THỂ TUẦN 4: VỀ ĐÍCH (AVG KM/NGƯỜI CẢ GIẢI)</b> 🏁\n`;
+        message += `<i>(Tính trên thành tích cả giải của các thành viên chính thức, loại trừ người miễn trừ Tuần 4)</i>\n\n`;
 
         teams.forEach((t, index) => {
           const medal = index === 0 ? '👑 GIẢI NHẤT TẬP THỂ (1.000.000đ)' : index === 1 ? '🥈 TOP 2' : index === 2 ? '🥉 TOP 3' : `<b>#${index + 1}</b>`;
+          const exemptNote = (t.exemptCount && t.exemptCount > 0) ? ` | 🏥 Miễn trừ: ${t.exemptCount}` : '';
           message += `${medal} <b>${escapeHtml(t.teamName)}</b>\n`;
-          message += `   📊 TB cả giải: <code>${t.avgKmPerMember.toFixed(2)} km/người</code> (Tổng ${t.totalKmWholeContest.toFixed(1)}km)\n`;
+          message += `   📊 TB cả giải: <code>${t.avgKmPerMember.toFixed(2)} km/người</code> (Tổng ${t.totalKmWholeContest.toFixed(1)}km / ${t.totalMembers} VĐV${exemptNote})\n`;
         });
 
         return ctx.replyWithHTML(message);

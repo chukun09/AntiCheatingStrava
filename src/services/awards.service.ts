@@ -272,12 +272,16 @@ export async function getWeek3TeamAward() {
 
 /**
  * Tuần 4: Giải Tập Thể Về Đích - Avg Km / người cao nhất của CẢ GIẢI
+ * Quy tắc: VĐV nghỉ ốm / rút lui ở Tuần 4 sẽ bị loại bỏ hoàn toàn cả Sĩ số lẫn Tổng km tích lũy của Đội
  */
 export async function getWeek4TeamAward() {
   const contestStart = week1StartDate;
   const contestEnd = WEEKS[3].end;
 
-  const users = await db.user.findMany();
+  const [users, exemptUserIds] = await Promise.all([
+    db.user.findMany(),
+    getExemptUserIdsForWeek(4)
+  ]);
 
   const userDistances = await db.activity.groupBy({
     by: ['userId'],
@@ -291,8 +295,10 @@ export async function getWeek4TeamAward() {
   const distanceMap = new Map(userDistances.map(d => [d.userId, (d._sum.distance || 0) / 1000]));
 
   return TEAMS.map(team => {
-    const teamMembers = users.filter(u => u.teamId === team.id);
+    // Exclude members who withdrew / are exempt in Week 4
+    const teamMembers = users.filter(u => u.teamId === team.id && !exemptUserIds.has(u.id));
     const totalMembers = teamMembers.length;
+    const exemptCount = users.filter(u => u.teamId === team.id && exemptUserIds.has(u.id)).length;
     let totalKmWholeContest = 0;
 
     teamMembers.forEach(u => {
@@ -305,6 +311,7 @@ export async function getWeek4TeamAward() {
       teamId: team.id,
       teamName: team.name,
       totalMembers,
+      exemptCount,
       totalKmWholeContest,
       avgKmPerMember
     };
