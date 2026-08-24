@@ -969,7 +969,7 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
       try {
         const teams = await getWeek4TeamAward();
         let message = `🏁 <b>GIẢI TẬP THỂ TUẦN 4: VỀ ĐÍCH (AVG KM/NGƯỜI CẢ GIẢI)</b> 🏁\n`;
-        message += `<i>(Tính trên thành tích cả giải của các thành viên chính thức, loại trừ người miễn trừ Tuần 4)</i>\n\n`;
+        message += `<i>(Tiêu chí: Chỉ tính các bài chạy >= 3.00 km, loại trừ người miễn trừ Tuần 4)</i>\n\n`;
 
         teams.forEach((t, index) => {
           const medal = index === 0 ? '👑 GIẢI NHẤT TẬP THỂ (1.000.000đ)' : index === 1 ? '🥈 TOP 2' : index === 2 ? '🥉 TOP 3' : `<b>#${index + 1}</b>`;

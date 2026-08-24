@@ -272,7 +272,9 @@ export async function getWeek3TeamAward() {
 
 /**
  * Tuần 4: Giải Tập Thể Về Đích - Avg Km / người cao nhất của CẢ GIẢI
- * Quy tắc: VĐV nghỉ ốm / rút lui ở Tuần 4 sẽ bị loại bỏ hoàn toàn cả Sĩ số lẫn Tổng km tích lũy của Đội
+ * Quy tắc:
+ * 1. Chỉ tính các bài chạy hợp lệ có cự ly tối thiểu >= 3.00km (3000m)
+ * 2. VĐV nghỉ ốm / rút lui ở Tuần 4 sẽ bị loại bỏ hoàn toàn cả Sĩ số lẫn Tổng km tích lũy của Đội
  */
 export async function getWeek4TeamAward() {
   const contestStart = week1StartDate;
@@ -287,6 +289,7 @@ export async function getWeek4TeamAward() {
     by: ['userId'],
     where: {
       isLegit: true,
+      distance: { gte: 3000 },
       startDate: { gte: contestStart, lt: contestEnd }
     },
     _sum: { distance: true }
