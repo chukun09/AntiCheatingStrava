@@ -23,6 +23,7 @@ import { getDepartmentSummaryLeaderboard, getDepartmentMembersDetail } from '../
 import { grantWeeklyExemption, revokeWeeklyExemption, getWeeklyExemptionsList } from '../services/exemption.service';
 import { getWeeklyActivityReminderList } from '../services/reminder.service';
 import { grantManualKm, revokeManualKm, getManualKmList } from '../services/manual-km.service';
+import { getDailySummaryReport } from '../services/daily-report.service';
 
 let bot: Telegraf | null = null;
 
@@ -104,6 +105,7 @@ Danh sách lệnh hỗ trợ:
 🏃 <code>/giai_tuan2</code> - Xem BXH Giải Tập Thể Tuần 2 (Pace Đội - Ưu đãi Nữ -1 min/km).
 🚀 <code>/giai_tuan3</code> - Xem BXH Giải Tuần 3 (Bứt phá Cá nhân & Tập thể).
 🏁 <code>/giai_tuan4</code> - Xem BXH Giải Tập Thể Về Đích (Avg Km Cả Giải).
+📊 <code>/tonghop_ngay</code> - Bảng tổng hợp toàn diện hằng ngày Tuần 4 & Toàn giải (alias: <code>/daily</code>, <code>/baocao_ngay</code>).
 👟 <code>/cong_km [Nickname] [Số_km] [Tuần] [Ghi chú]</code> - BTC cộng km thủ công (VD: <code>/cong_km CapyLong 5.2 4</code>).
 👟 <code>/ds_cong_km [tuần]</code> - Xem danh sách bài chạy cộng tay của BTC.
 👟 <code>/huy_cong_km [ID/Nickname]</code> - Thu hồi bài chạy cộng tay của BTC.
@@ -1105,6 +1107,89 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
         return ctx.reply('Lỗi khi tải dữ liệu Giải Tuần 4.');
       }
     });
+
+    // Command /tonghop_ngay or /baocao_ngay or /daily or /tongket_ngay - Daily Briefing Report for Week 4 & Whole Contest
+    const handleDailySummaryReport = async (ctx: any) => {
+      try {
+        const rep = await getDailySummaryReport();
+
+        let header = `🏁 <b>BẢNG TỔNG HỢP HẰNG NGÀY - TUẦN 4: VỀ ĐÍCH</b> 🏁\n`;
+        header += `📅 <i>Cập nhật: ${rep.updatedAtStr}</i>\n\n`;
+
+        const itemLines: string[] = [];
+
+        // 1. TIẾN ĐỘ 08 ĐỘI THI (SẮP XẾP THEO AVG KM CẢ GIẢI)
+        let block1 = `🛡️ <b>1. TIẾN ĐỘ 08 ĐỘI THI (XẾP THEO AVG KM CẢ GIẢI):</b>\n`;
+        rep.teamProgress.forEach((t, idx) => {
+          const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `<b>#${idx + 1}.</b>`;
+          block1 += `${medal} <b>${escapeHtml(t.teamName)}</b> (<code>${t.totalMembers} VĐV</code>)\n` +
+            `   ├─ 🏃 <b>Cả giải:</b> <code>${t.totalKmWholeContest.toFixed(1)} km</code> (TB: <b>${t.avgKmWholeContest.toFixed(2)} km/người</b>)\n` +
+            `   └─ ⚡ <b>Tuần 4:</b> <code>${t.totalKmWeek4.toFixed(1)} km</code> (TB: <code>${t.avgKmWeek4.toFixed(2)} km/người</code>)\n`;
+        });
+        itemLines.push(block1 + '\n');
+
+        // 2. ĐỐI ĐẦU ĐUA TOP: ĐỘI 1 VS ĐỘI 5 (BÀI >= 3.0KM)
+        let block2 = `⚔️ <b>2. ĐỐI ĐẦU ĐUA TOP: ĐỘI 1 VS ĐỘI 5 (BÀI >= 3.0KM):</b>\n`;
+        const t1 = rep.team1StatsMin3;
+        const t5 = rep.team5StatsMin3;
+        block2 += `🔥 <b>${escapeHtml(t1.teamName)}</b> (<code>${t1.totalMembers} VĐV</code>):\n` +
+          `   ├─ Cả giải (>=3km): <code>${t1.wholeContestKmMin3.toFixed(1)} km</code> (TB: <b>${t1.wholeContestAvgMin3.toFixed(2)} km/người</b>)\n` +
+          `   └─ Tuần 4 (>=3km): <code>${t1.week4KmMin3.toFixed(1)} km</code> (TB: <b>${t1.week4AvgMin3.toFixed(2)} km/người</b>)\n\n`;
+        block2 += `🔥 <b>${escapeHtml(t5.teamName)}</b> (<code>${t5.totalMembers} VĐV</code>):\n` +
+          `   ├─ Cả giải (>=3km): <code>${t5.wholeContestKmMin3.toFixed(1)} km</code> (TB: <b>${t5.wholeContestAvgMin3.toFixed(2)} km/người</b>)\n` +
+          `   └─ Tuần 4 (>=3km): <code>${t5.week4KmMin3.toFixed(1)} km</code> (TB: <b>${t5.week4AvgMin3.toFixed(2)} km/người</b>)\n\n`;
+        
+        block2 += `📊 <b>Cách biệt Cả giải (>=3km):</b> <b>${escapeHtml(rep.wholeContestGapMin3.leadingTeamName)}</b> đang dẫn trước <code>+${rep.wholeContestGapMin3.diffKm.toFixed(1)} km</code> (TB <code>+${rep.wholeContestGapMin3.diffAvgKm.toFixed(2)} km/người</code>)\n`;
+        block2 += `📊 <b>Cách biệt Tuần 4 (>=3km):</b> <b>${escapeHtml(rep.week4GapMin3.leadingTeamName)}</b> đang dẫn trước <code>+${rep.week4GapMin3.diffKm.toFixed(1)} km</code> trong Tuần 4!\n`;
+        itemLines.push(block2 + '\n');
+
+        // 3. TOP 15 NAM TUẦN 4
+        let block3 = `👨 <b>3. TOP 15 NAM TUẦN 4:</b>\n`;
+        if (rep.top15MalesWeek4.length === 0) {
+          block3 += `<i>Chưa có dữ liệu.</i>\n`;
+        } else {
+          rep.top15MalesWeek4.forEach((u, idx) => {
+            const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `<b>${idx + 1}.</b>`;
+            const tag = u.isExempt ? ' 🏥' : (u.isQualified ? ' ⚡' : '');
+            const paceStr = u.runCount > 0 && isFinite(u.avgPaceSecPerKm) ? ` | Pace: <code>${formatPace(u.avgPaceSecPerKm)}</code>` : '';
+            block3 += `${medal} <b>${escapeHtml(u.fullName || u.nickName)}</b> (@${escapeHtml(u.nickName)}) - ${escapeHtml(u.teamName)}: <code>${u.totalDistanceKm.toFixed(2)} km</code> (${u.runCount} bài${paceStr})${tag}\n`;
+          });
+        }
+        itemLines.push(block3 + '\n');
+
+        // 4. TOP 15 NỮ TUẦN 4
+        let block4 = `👩 <b>4. TOP 15 NỮ TUẦN 4:</b>\n`;
+        if (rep.top15FemalesWeek4.length === 0) {
+          block4 += `<i>Chưa có dữ liệu.</i>\n`;
+        } else {
+          rep.top15FemalesWeek4.forEach((u, idx) => {
+            const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `<b>${idx + 1}.</b>`;
+            const tag = u.isExempt ? ' 🏥' : (u.isQualified ? ' ⚡' : '');
+            const paceStr = u.runCount > 0 && isFinite(u.avgPaceSecPerKm) ? ` | Pace: <code>${formatPace(u.avgPaceSecPerKm)}</code>` : '';
+            block4 += `${medal} <b>${escapeHtml(u.fullName || u.nickName)}</b> (@${escapeHtml(u.nickName)}) - ${escapeHtml(u.teamName)}: <code>${u.totalDistanceKm.toFixed(2)} km</code> (${u.runCount} bài${paceStr})${tag}\n`;
+          });
+        }
+        itemLines.push(block4 + '\n');
+
+        // 5. TOP 10 TOÀN BỘ CLUB (CẢ CHIẾN DỊCH TÍCH LŨY)
+        let block5 = `🏆 <b>5. TOP 10 TOÀN BỘ CLUB (CẢ CHIẾN DỊCH TÍCH LŨY):</b>\n`;
+        rep.top10OverallWholeContest.forEach((u, idx) => {
+          const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `<b>#${idx + 1}.</b>`;
+          const genderIcon = u.gender === 'FEMALE' ? '👩' : '👨';
+          const paceStr = u.runCount > 0 && isFinite(u.avgPaceSecPerKm) ? ` | Pace: <code>${formatPace(u.avgPaceSecPerKm)}</code>` : '';
+          block5 += `${medal} ${genderIcon} <b>${escapeHtml(u.fullName || u.nickName)}</b> (@${escapeHtml(u.nickName)}) - ${escapeHtml(u.teamName)}: <code>${u.totalDistanceKm.toFixed(2)} km</code> (${u.runCount} bài${paceStr})\n`;
+        });
+        itemLines.push(block5);
+
+        const footer = `\n💡 <i>Mẹo: Gõ <code>/giai_tuan4</code> xem Giải Về đích, hoặc <code>/bxh_canhan 4 20</code> xem Top 20 Tuần 4!</i>`;
+        await sendChunkedHtmlMessages(ctx, header, itemLines, footer);
+      } catch (error: any) {
+        console.error('[Bot /tonghop_ngay] Error:', error);
+        return ctx.reply('Lỗi khi tạo bảng tổng hợp hằng ngày: ' + (error?.message || error));
+      }
+    };
+
+    bot.command(['tonghop_ngay', 'baocao_ngay', 'daily', 'tongket_ngay'], handleDailySummaryReport);
 
     // Command /phat - Penalty / Contribution Report
     bot.command('phat', async (ctx) => {
