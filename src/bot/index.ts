@@ -16,7 +16,7 @@ import {
 import { exportViolationsToExcelBuffer, exportLeaderboardToExcelBuffer } from '../services/excel.service';
 import { reconcileAllUsers } from '../services/reconcile.service';
 import { getBestPaceActivities } from '../services/activity.service';
-import { getCompanySummaryStats } from '../services/stats.service';
+import { getCompanySummaryStats, getIndividualLeaderboard } from '../services/stats.service';
 import { grantPickleballBonus, revokePickleballBonus } from '../services/bonus.service';
 import { getGrowthLeaderboard } from '../services/progress.service';
 import { getDepartmentSummaryLeaderboard, getDepartmentMembersDetail } from '../services/department.service';
@@ -653,48 +653,112 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
       }
     });
 
-    // Command /bxh_canhan - Individual Leaderboards (Male & Female split)
-    bot.command('bxh_canhan', async (ctx) => {
+    // Command /bxh_canhan [tuần/tatca] [top_count] or /canhan [tuần/tatca] [top_count]
+    bot.command(['bxh_canhan', 'canhan'], async (ctx) => {
       try {
-        const maleUsers = await db.user.findMany({
-          where: { gender: 'MALE' },
-          orderBy: { totalDistance: 'desc' },
-          take: 10
-        });
+        const rawText = (ctx.message?.text || '').trim();
+        const parts = rawText.split(/\s+/).slice(1);
 
-        const femaleUsers = await db.user.findMany({
-          where: { gender: 'FEMALE' },
-          orderBy: { totalDistance: 'desc' },
-          take: 10
-        });
+        let weekParam: string | number | null = null;
+        let limitParam: number = 10;
 
-        let message = `🏆 <b>BẢNG XẾP HẠNG CÁ NHÂN - HÀNH TRÌNH IRIS</b> 🏆\n\n`;
+        if (parts.length === 1) {
+          const p = parts[0].toLowerCase();
+          if (p === 'tatca' || p === 'all') {
+            weekParam = null;
+          } else if (/^(?:tuan|w|tuần)?[1-4]$/i.test(p)) {
+            const num = p.match(/\d+/);
+            if (num) weekParam = parseInt(num[0], 10);
+          } else {
+            const num = parseInt(p.replace(/[^\d]/g, ''), 10);
+            if (!isNaN(num)) {
+              if (num >= 1 && num <= 4) {
+                weekParam = num;
+              } else if (num > 4) {
+                limitParam = num;
+              }
+            }
+          }
+        } else if (parts.length >= 2) {
+          const p0 = parts[0].toLowerCase();
+          const p1 = parts[1].toLowerCase();
 
-        message += `👨 <b>TOP 10 NAM (Chỉ tiêu 30km):</b>\n`;
-        if (maleUsers.length === 0) {
-          message += `<i>Chưa có dữ liệu.</i>\n`;
-        } else {
-          maleUsers.forEach((user, index) => {
-            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>${index + 1}.</b>`;
-            const distKm = (user.totalDistance / 1000).toFixed(2);
-            const doneTag = user.totalDistance >= 30000 ? ' ⚡ (Đã đạt 30km)' : '';
-            message += `${medal} <b>${escapeHtml(user.nickName)}</b> (${getTeamName(user.teamId)}): <code>${distKm} km</code>${doneTag}\n`;
-          });
+          if (p0 === 'tatca' || p0 === 'all') {
+            weekParam = null;
+          } else if (/^(?:tuan|w|tuần)?[1-4]$/i.test(p0)) {
+            const num = p0.match(/\d+/);
+            if (num) weekParam = parseInt(num[0], 10);
+          } else {
+            const num1 = parseInt(p0.replace(/[^\d]/g, ''), 10);
+            if (!isNaN(num1) && num1 >= 1 && num1 <= 4) {
+              weekParam = num1;
+            }
+          }
+
+          const parsedLimit = parseInt(p1.replace(/[^\d]/g, ''), 10);
+          if (!isNaN(parsedLimit) && parsedLimit > 0) {
+            limitParam = parsedLimit;
+          }
         }
 
-        message += `\n👩 <b>TOP 10 NỮ (Chỉ tiêu 15km):</b>\n`;
-        if (femaleUsers.length === 0) {
-          message += `<i>Chưa có dữ liệu.</i>\n`;
+        const res = await getIndividualLeaderboard({
+          week: weekParam,
+          limit: limitParam
+        });
+
+        const isWeekly = res.weekNumber !== null;
+        let header = `🏆 <b>BẢNG XẾP HẠNG CÁ NHÂN - ${escapeHtml(res.periodTitle.toUpperCase())}</b> 🏆\n`;
+        if (isWeekly) {
+          header += `📌 <i>Chỉ tiêu tuần: Hoàn thành tích lũy >= 3.00 km</i>\n\n`;
         } else {
-          femaleUsers.forEach((user, index) => {
-            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>${index + 1}.</b>`;
-            const distKm = (user.totalDistance / 1000).toFixed(2);
-            const doneTag = user.totalDistance >= 15000 ? ' ⚡ (Đã đạt 15km)' : '';
-            message += `${medal} <b>${escapeHtml(user.nickName)}</b> (${getTeamName(user.teamId)}): <code>${distKm} km</code>${doneTag}\n`;
-          });
+          header += `📌 <i>Chỉ tiêu cả giải: Nam 30km, Nữ 15km</i>\n\n`;
         }
 
-        return ctx.replyWithHTML(message);
+        const itemLines: string[] = [];
+
+        // 👨 TOP NAM
+        let maleBlock = `👨 <b>TOP ${res.males.length} NAM (${res.qualifiedMalesCount}/${res.totalMales} VĐV đạt chỉ tiêu):</b>\n`;
+        if (res.males.length === 0) {
+          maleBlock += `<i>Chưa có dữ liệu.</i>\n\n`;
+        } else {
+          res.males.forEach((user, index) => {
+            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>${index + 1}.</b>`;
+            const distKm = user.totalDistanceKm.toFixed(2);
+            let tag = '';
+            if (user.isExempt) {
+              tag = ' 🏥 [Nghỉ ốm]';
+            } else if (user.isQualified) {
+              tag = isWeekly ? ' ⚡' : ' ⚡ (Đã đạt 30km)';
+            }
+            const paceStr = user.runCount > 0 && isFinite(user.avgPaceSecPerKm) ? ` | Pace: <code>${formatPace(user.avgPaceSecPerKm)}</code>` : '';
+            maleBlock += `${medal} <b>${escapeHtml(user.fullName || user.nickName)}</b> (@${escapeHtml(user.nickName)}) - ${escapeHtml(user.teamName)}: <code>${distKm} km</code> (${user.runCount} bài${paceStr})${tag}\n`;
+          });
+          maleBlock += '\n';
+        }
+        itemLines.push(maleBlock);
+
+        // 👩 TOP NỮ
+        let femaleBlock = `👩 <b>TOP ${res.females.length} NỮ (${res.qualifiedFemalesCount}/${res.totalFemales} VĐV đạt chỉ tiêu):</b>\n`;
+        if (res.females.length === 0) {
+          femaleBlock += `<i>Chưa có dữ liệu.</i>\n`;
+        } else {
+          res.females.forEach((user, index) => {
+            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<b>${index + 1}.</b>`;
+            const distKm = user.totalDistanceKm.toFixed(2);
+            let tag = '';
+            if (user.isExempt) {
+              tag = ' 🏥 [Nghỉ ốm]';
+            } else if (user.isQualified) {
+              tag = isWeekly ? ' ⚡' : ' ⚡ (Đã đạt 15km)';
+            }
+            const paceStr = user.runCount > 0 && isFinite(user.avgPaceSecPerKm) ? ` | Pace: <code>${formatPace(user.avgPaceSecPerKm)}</code>` : '';
+            femaleBlock += `${medal} <b>${escapeHtml(user.fullName || user.nickName)}</b> (@${escapeHtml(user.nickName)}) - ${escapeHtml(user.teamName)}: <code>${distKm} km</code> (${user.runCount} bài${paceStr})${tag}\n`;
+          });
+        }
+        itemLines.push(femaleBlock);
+
+        const footer = `\n💡 <i>Mẹo: Gõ <code>/bxh_canhan 4 20</code> xem Top 20 Tuần 4, hoặc <code>/bxh_canhan 20</code> xem Top 20 Cả giải!</i>`;
+        await sendChunkedHtmlMessages(ctx, header, itemLines, footer);
       } catch (error) {
         console.error('[Bot /bxh_canhan] Error:', error);
         return ctx.reply('Lỗi khi tải dữ liệu Bảng xếp hạng cá nhân.');
