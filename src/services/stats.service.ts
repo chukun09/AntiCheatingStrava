@@ -274,7 +274,10 @@ export async function getIndividualLeaderboard(options?: IndividualLeaderboardOp
   let qualifiedMalesCount = 0;
   let qualifiedFemalesCount = 0;
 
-  allUsers.forEach(u => {
+  // Exclude exempt users when filtering by week
+  const eligibleUsers = weekNumber ? allUsers.filter(u => !exemptUserIds.has(u.id)) : allUsers;
+
+  eligibleUsers.forEach(u => {
     const stat = userStatsMap.get(u.id);
     const isExempt = exemptUserIds.has(u.id);
     

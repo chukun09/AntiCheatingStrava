@@ -187,18 +187,19 @@ export async function getDailySummaryReport(): Promise<DailySummaryReportResult>
     diffAvgKm: Math.abs(w4AvgDiff)
   };
 
-  // 3. Top 15 Males & Top 15 Females in Week 4
+  // 3. Top 15 Males & Top 15 Females in Week 4 (Excluding exempt/sick leave members)
   const malesWeek4: TopAthleteItem[] = [];
   const femalesWeek4: TopAthleteItem[] = [];
 
-  users.forEach(u => {
-    const isExempt = exemptUserIdsW4.has(u.id);
+  const activeUsersW4 = users.filter(u => !exemptUserIdsW4.has(u.id));
+
+  activeUsersW4.forEach(u => {
     const stat = userWeek4Map.get(u.id);
     const distKm = stat ? stat.totalKm : 0;
     const runCount = stat ? stat.runCount : 0;
     const movingSec = stat ? stat.movingSec : 0;
     const avgPace = distKm > 0 && movingSec > 0 ? movingSec / distKm : Number.POSITIVE_INFINITY;
-    const isQualified = isExempt ? true : distKm >= 3.0;
+    const isQualified = distKm >= 3.0;
 
     const item: TopAthleteItem = {
       id: u.id,
@@ -212,7 +213,7 @@ export async function getDailySummaryReport(): Promise<DailySummaryReportResult>
       runCount,
       avgPaceSecPerKm: avgPace,
       isQualified,
-      isExempt
+      isExempt: false
     };
 
     if (u.gender === 'MALE') {
