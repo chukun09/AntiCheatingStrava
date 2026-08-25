@@ -11,13 +11,14 @@ import {
   getWeek2TeamAward, 
   getWeek3IndividualAward, 
   getWeek3TeamAward, 
-  getWeek4TeamAward 
+  getWeek4TeamAward,
+  WEEKS
 } from '../services/awards.service';
 import { exportViolationsToExcelBuffer, exportLeaderboardToExcelBuffer } from '../services/excel.service';
 import { reconcileAllUsers } from '../services/reconcile.service';
 import { getBestPaceActivities } from '../services/activity.service';
 import { getCompanySummaryStats, getIndividualLeaderboard } from '../services/stats.service';
-import { grantPickleballBonus, revokePickleballBonus } from '../services/bonus.service';
+import { grantPickleballBonus, revokePickleballBonus, findUserByFlexibleQuery } from '../services/bonus.service';
 import { getGrowthLeaderboard } from '../services/progress.service';
 import { getDepartmentSummaryLeaderboard, getDepartmentMembersDetail } from '../services/department.service';
 import { grantWeeklyExemption, revokeWeeklyExemption, getWeeklyExemptionsList } from '../services/exemption.service';
@@ -484,63 +485,162 @@ Danh sách lệnh hỗ trợ:
       }
     });
 
-    // Command /lichsu [Nickname] or /chitiet [Nickname] - Detailed athlete profile & activities history
+    // Command /lichsu [Nickname/Họ tên] [all / tuần / limit] - Detailed athlete profile & activities history
     bot.command(['lichsu', 'chitiet'], async (ctx) => {
       try {
-        const parts = ctx.message.text.trim().split(/\s+/);
-        if (parts.length < 2) {
-          return ctx.replyWithHTML('⚠️ <b>Cú pháp sai!</b> Vui lòng gõ: <code>/lichsu [Nickname]</code>\nVí dụ: <code>/lichsu CapyLong</code>');
+        const text = (ctx.message?.text || '').trim();
+        const parts = text.split(/\s+/).slice(1);
+
+        if (parts.length === 0) {
+          let guide = `📋 <b>HƯỚNG DẪN XEM LỊCH SỬ BÀI CHẠY VĐV:</b>\n\n`;
+          guide += `• <code>/lichsu [Nickname hoặc Họ tên]</code> - Xem hồ sơ và toàn bộ bài chạy\n`;
+          guide += `• <code>/lichsu [Nickname] all</code> - Xem 100% tất cả bài chạy cả giải\n`;
+          guide += `• <code>/lichsu [Nickname] tuan4</code> - Xem các bài chạy trong Tuần 4\n`;
+          guide += `• <code>/lichsu [Nickname] 15</code> - Xem 15 bài chạy gần nhất\n\n`;
+          guide += `<i>Ví dụ:</i> <code>/lichsu CapyLong</code> hoặc <code>/lichsu @IRIS_Hiennt1 tuan4</code>`;
+          return ctx.replyWithHTML(guide);
         }
 
-        const searchNick = parts[1];
-        const user = await db.user.findFirst({
-          where: { nickName: { contains: searchNick, mode: 'insensitive' } },
-          include: {
-            activities: {
-              orderBy: { startDate: 'desc' },
-              take: 10
+        // Parse optional parameters from end: week filter or limit or all
+        let weekNum: number | null = null;
+        let limit: number | null = null;
+        const queryTokens = [...parts];
+
+        const lastToken = queryTokens[queryTokens.length - 1].toLowerCase();
+        if (lastToken === 'all' || lastToken === 'tatca' || lastToken === 'full') {
+          queryTokens.pop();
+        } else if (lastToken.match(/^(tuan|w|tuần)?([1-4])$/i)) {
+          const match = lastToken.match(/^(tuan|w|tuần)?([1-4])$/i);
+          if (match) {
+            weekNum = parseInt(match[2], 10);
+            queryTokens.pop();
+          }
+        } else if (/^\d+$/.test(lastToken)) {
+          const parsed = parseInt(lastToken, 10);
+          if (parsed > 0 && parsed <= 200) {
+            limit = parsed;
+            queryTokens.pop();
+          }
+        }
+
+        const searchQuery = queryTokens.join(' ').trim();
+        if (!searchQuery) {
+          return ctx.replyWithHTML('⚠️ Vui lòng nhập Nickname hoặc Họ tên VĐV cần tra cứu (VD: <code>/lichsu CapyLong</code>).');
+        }
+
+        // 1. Flexible lookup for User
+        const user = await findUserByFlexibleQuery(searchQuery);
+        if (!user) {
+          return ctx.replyWithHTML(`⚠️ Không tìm thấy vận động viên nào khớp với <b>"${escapeHtml(searchQuery)}"</b>.`);
+        }
+
+        // 2. Fetch all activities for this user to compute statistics & weekly breakdown
+        const allActivities = await db.activity.findMany({
+          where: { userId: user.id },
+          orderBy: { startDate: 'desc' }
+        });
+
+        // 3. Compute stats
+        let totalLegitKm = 0;
+        let totalLegitMovingSec = 0;
+        let legitCount = 0;
+        let invalidCount = 0;
+
+        const weeklyKm = [0, 0, 0, 0];
+        const weeklyRuns = [0, 0, 0, 0];
+
+        allActivities.forEach(act => {
+          const distKm = act.distance / 1000;
+          if (act.isLegit) {
+            totalLegitKm += distKm;
+            totalLegitMovingSec += act.movingTime;
+            legitCount += 1;
+
+            // Weekly check
+            for (let w = 0; w < 4; w++) {
+              if (w < WEEKS.length) {
+                if (act.startDate >= WEEKS[w].start && act.startDate < WEEKS[w].end) {
+                  weeklyKm[w] += distKm;
+                  weeklyRuns[w] += 1;
+                  break;
+                }
+              }
             }
+          } else {
+            invalidCount += 1;
           }
         });
 
-        if (!user) {
-          return ctx.replyWithHTML(`⚠️ Không tìm thấy vận động viên nào có Nickname chứa <b>"${searchNick}"</b>.`);
-        }
-
+        const overallAvgPace = totalLegitKm > 0 && totalLegitMovingSec > 0 ? totalLegitMovingSec / totalLegitKm : 0;
         const genderIcon = user.gender === 'FEMALE' ? '👩' : '👨';
         const targetKm = user.gender === 'FEMALE' ? 15 : 30;
-        const totalKm = (user.totalDistance / 1000).toFixed(2);
         const teamName = getTeamName(user.teamId);
 
-        let message = `👤 <b>HỒ SƠ VẬN ĐỘNG VIÊN: ${escapeHtml(user.nickName)}</b> ${genderIcon}\n`;
-        message += `🛡️ <b>Đội thi đấu:</b> ${escapeHtml(teamName)}\n`;
-        message += `🏢 <b>Phòng ban:</b> ${escapeHtml(user.department || 'N/A')}\n`;
-        message += `📊 <b>Tổng km tích lũy:</b> <code>${totalKm} / ${targetKm} km</code>\n`;
-        message += `⚡ <b>Trạng thái mốc:</b> ${user.reachedTargetAt ? `✅ Đã đạt mốc lúc <code>${formatVietnamDateTime(user.reachedTargetAt)}</code> (UTC+7)` : '⏳ Chưa đạt chỉ tiêu'}\n\n`;
+        // Filter activities to display if week or limit specified
+        let activitiesToDisplay = allActivities;
+        let titleScope = 'TẤT CẢ CÁC BÀI CHẠY';
 
-        message += `🏃 <b>DANH SÁCH BÀI CHẠY GẦN ĐÂY (${user.activities.length} bài):</b>\n`;
-        if (user.activities.length === 0) {
-          message += `<i>Chưa có bài chạy nào được ghi nhận.</i>\n`;
+        if (weekNum) {
+          const weekObj = WEEKS[weekNum - 1];
+          if (weekObj) {
+            activitiesToDisplay = allActivities.filter(a => a.startDate >= weekObj.start && a.startDate < weekObj.end);
+            titleScope = `BÀI CHẠY TUẦN ${weekNum}`;
+          }
+        }
+
+        if (limit && limit > 0) {
+          activitiesToDisplay = activitiesToDisplay.slice(0, limit);
+          titleScope += ` (GẦN NHẤT ${activitiesToDisplay.length} BÀI)`;
+        }
+
+        // 4. Build Header
+        const milestoneStr = user.reachedTargetAt
+          ? `✅ Đã đạt mốc <b>${targetKm}km</b> lúc <code>${formatVietnamDateTime(user.reachedTargetAt)}</code>`
+          : `⏳ Chưa đạt chỉ tiêu (Còn thiếu <code>${Math.max(0, targetKm - totalLegitKm).toFixed(2)} km</code>)`;
+
+        let header = `👤 <b>HỒ SƠ VẬN ĐỘNG VIÊN: ${escapeHtml(user.fullName || user.nickName)}</b> (@${escapeHtml(user.nickName)}) ${genderIcon}\n`;
+        header += `🛡️ <b>Đội thi đấu:</b> ${escapeHtml(teamName)}\n`;
+        header += `🏢 <b>Phòng ban:</b> ${escapeHtml(user.department || 'N/A')}\n`;
+        header += `📊 <b>Tổng km cả giải:</b> <code>${totalLegitKm.toFixed(2)} / ${targetKm} km</code> (Hợp lệ: <b>${legitCount} bài</b>${invalidCount > 0 ? ` | Vi phạm: <code>${invalidCount} bài</code>` : ''})\n`;
+        if (overallAvgPace > 0) {
+          header += `⚡ <b>Pace trung bình toàn giải:</b> <code>${formatPace(overallAvgPace)}</code>\n`;
+        }
+        header += `🎯 <b>Trạng thái chỉ tiêu:</b> ${milestoneStr}\n\n`;
+
+        header += `📈 <b>TIẾN ĐỘ QUA 4 TUẦN THI ĐẤU:</b>\n`;
+        header += `   ├─ ⚡ <b>Tuần 1:</b> <code>${weeklyKm[0].toFixed(2)} km</code> (${weeklyRuns[0]} bài)\n`;
+        header += `   ├─ ⚡ <b>Tuần 2:</b> <code>${weeklyKm[1].toFixed(2)} km</code> (${weeklyRuns[1]} bài)\n`;
+        header += `   ├─ ⚡ <b>Tuần 3:</b> <code>${weeklyKm[2].toFixed(2)} km</code> (${weeklyRuns[2]} bài)\n`;
+        header += `   └─ 🏁 <b>Tuần 4:</b> <code>${weeklyKm[3].toFixed(2)} km</code> (${weeklyRuns[3]} bài)\n\n`;
+
+        header += `🏃 <b>DANH SÁCH ${titleScope} (${activitiesToDisplay.length} bài):</b>\n`;
+
+        // 5. Build Items
+        const itemLines: string[] = [];
+        if (activitiesToDisplay.length === 0) {
+          itemLines.push(`<i>Không có bài chạy nào trong khoảng thời gian này.</i>\n`);
         } else {
-          user.activities.forEach((act, idx) => {
+          activitiesToDisplay.forEach((act, idx) => {
             const distKm = (act.distance / 1000).toFixed(2);
             const dateStr = formatVietnamDateTime(act.startDate);
             const paceStr = formatPace(act.averagePace);
             const statusIcon = act.isLegit ? '✅' : '❌ (Phạm quy)';
             const stravaUrl = `https://www.strava.com/activities/${act.stravaActivityId}`;
 
-            message += `<b>${idx + 1}.</b> <a href="${stravaUrl}">${escapeHtml(act.name)}</a> - ${statusIcon}\n`;
-            message += `   ⏱️ ${dateStr} (UTC+7) | <code>${distKm} km</code> | Pace: <code>${paceStr}</code> (ID: <code>${act.stravaActivityId}</code>)\n`;
+            let actLine = `<b>${idx + 1}.</b> <a href="${stravaUrl}">${escapeHtml(act.name)}</a> - ${statusIcon}\n` +
+              `   ⏱️ ${dateStr} | <code>${distKm} km</code> | Pace: <code>${paceStr}</code> (ID: <code>${act.stravaActivityId}</code>)\n`;
             if (!act.isLegit && act.flagReason) {
-              message += `   ⚠️ Lý do: <i>${act.flagReason}</i>\n`;
+              actLine += `   ⚠️ <i>Lý do: ${escapeHtml(act.flagReason)}</i>\n`;
             }
+            itemLines.push(actLine);
           });
         }
 
-        return ctx.replyWithHTML(message);
-      } catch (error) {
+        const footer = `\n💡 <i>Mẹo: Gõ <code>/lichsu ${escapeHtml(user.nickName)} tuan4</code> để lọc riêng Tuần 4!</i>`;
+        await sendChunkedHtmlMessages(ctx, header, itemLines, footer);
+      } catch (error: any) {
         console.error('[Bot /lichsu] Error:', error);
-        return ctx.reply('Lỗi khi tải lịch sử bài chạy cá nhân.');
+        return ctx.reply('Lỗi khi tải lịch sử bài chạy cá nhân: ' + (error?.message || error));
       }
     });
 
