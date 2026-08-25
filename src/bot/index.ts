@@ -37,15 +37,29 @@ function escapeHtml(text?: string | null): string {
 }
 
 /**
- * Helper to send chunked HTML messages (<= 3800 chars) to prevent Telegram 400 Bad Request
+ * Helper to send chunked HTML messages (<= 3500 chars) to prevent Telegram 400 Bad Request
  */
 async function sendChunkedHtmlMessages(ctx: any, header: string, itemLines: string[], footer?: string) {
   let currentMessage = header;
   const messagesToSend: string[] = [];
 
-  for (const line of itemLines) {
-    if ((currentMessage + line).length > 3800) {
-      messagesToSend.push(currentMessage);
+  const allLines: string[] = [];
+  for (const item of itemLines) {
+    if (item.includes('\n')) {
+      const split = item.split('\n');
+      split.forEach((s, idx) => {
+        allLines.push(s + (idx < split.length - 1 ? '\n' : ''));
+      });
+    } else {
+      allLines.push(item);
+    }
+  }
+
+  for (const line of allLines) {
+    if ((currentMessage + line).length > 3500) {
+      if (currentMessage.trim().length > 0) {
+        messagesToSend.push(currentMessage);
+      }
       currentMessage = line;
     } else {
       currentMessage += line;
@@ -53,8 +67,10 @@ async function sendChunkedHtmlMessages(ctx: any, header: string, itemLines: stri
   }
 
   if (footer) {
-    if ((currentMessage + footer).length > 3800) {
-      messagesToSend.push(currentMessage);
+    if ((currentMessage + footer).length > 3500) {
+      if (currentMessage.trim().length > 0) {
+        messagesToSend.push(currentMessage);
+      }
       currentMessage = footer;
     } else {
       currentMessage += footer;
@@ -66,7 +82,7 @@ async function sendChunkedHtmlMessages(ctx: any, header: string, itemLines: stri
   }
 
   for (const msg of messagesToSend) {
-    await ctx.replyWithHTML(msg);
+    await ctx.replyWithHTML(msg, { disable_web_page_preview: true });
   }
 }
 
