@@ -24,6 +24,7 @@ import { grantWeeklyExemption, revokeWeeklyExemption, getWeeklyExemptionsList } 
 import { getWeeklyActivityReminderList } from '../services/reminder.service';
 import { grantManualKm, revokeManualKm, getManualKmList } from '../services/manual-km.service';
 import { getDailySummaryReport } from '../services/daily-report.service';
+import { removeAthleteFromContest } from '../services/athlete-removal.service';
 
 let bot: Telegraf | null = null;
 
@@ -128,6 +129,7 @@ Danh sách lệnh hỗ trợ:
 🏓 <code>/cong_pickleball [Nicknames...]</code> - BTC cộng điểm thưởng Pickleball (+5km Nam, +3km Nữ).
 🏥 <code>/nghi_om [tuần] [Nicknames...]</code> - BTC duyệt nghỉ ốm/miễn trừ theo tuần (VD: <code>/nghi_om 3 CapyLong</code>).
 🏥 <code>/ds_nghi_om [tuần]</code> - Xem danh sách VĐV nghỉ ốm/miễn trừ theo tuần.
+🚫 <code>/xoa_vdv [Nickname]</code> - Loại bỏ hoàn toàn VĐV và bài chạy khỏi giải đấu.
 📊 <code>/excel_bxh [tuần] [min_km]</code> - Xuất Excel BXH VĐV (VD: <code>/excel_bxh tuan3 3</code> hoặc <code>/excel_bxh 3 3</code>).
 📄 <code>/excel_vipham [tuan1-4/doi1-8/tatca]</code> - Trích xuất file Excel danh sách bài vi phạm.
 🔄 <code>/sync [Nickname/all]</code> - Đồng bộ bài chạy mới từ Strava (VD: <code>/sync CapyLong</code> hoặc <code>/sync</code>).
@@ -1800,6 +1802,46 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
     };
 
     bot.command(['ds_nghi_om', 'dsnghiom', 'ds_mien'], handleListWeeklyExemption);
+
+    // Command /xoa_vdv or /loai_vdv or /kick_vdv [Nickname/Họ tên] - Remove athlete and all activities completely from tournament
+    bot.command(['xoa_vdv', 'loai_vdv', 'kick_vdv'], async (ctx) => {
+      try {
+        const text = (ctx.message?.text || '').trim();
+        const parts = text.split(/\s+/).slice(1);
+
+        if (parts.length === 0) {
+          let msg = `⚠️ <b>HƯỚNG DẪN LOẠI BỎ VĐV KHỎI GIẢI ĐẤU:</b>\n\n`;
+          msg += `Cú pháp: <code>/xoa_vdv [Nickname hoặc Họ tên VĐV]</code>\n\n`;
+          msg += `<i>Ví dụ:</i> <code>/xoa_vdv CapyLong</code> hoặc <code>/xoa_vdv @IRIS_Hiennt1</code>\n\n`;
+          msg += `🚨 <b>LƯU Ý CỰC KỲ QUAN TRỌNG:</b>\n`;
+          msg += `   • Lệnh này sẽ <b>hủy liên kết Strava (Deauthorize)</b> của VĐV để Strava không gửi webhook nữa.\n`;
+          msg += `   • <b>Xóa sạch toàn bộ tài khoản và tất cả bài chạy</b> của VĐV đó khỏi CSDL.\n`;
+          msg += `   • Giảm sĩ số của Đội và trừ toàn bộ km của VĐV đó trên tất cả Bảng xếp hạng.\n`;
+          msg += `   • Hành động này <b>KHÔNG THỂ HOÀN TÁC</b>!`;
+          return ctx.replyWithHTML(msg);
+        }
+
+        const query = parts.join(' ').trim();
+        const res = await removeAthleteFromContest(query);
+
+        if (!res.success) {
+          return ctx.replyWithHTML(`❌ <b>LOẠI BỎ VĐV THẤT BẠI:</b>\n${escapeHtml(res.message)}`);
+        }
+
+        let msg = `🚫 <b>ĐÃ LOẠI BỎ HOÀN TOÀN VĐV KHỎI GIẢI ĐẤU!</b> 🚫\n\n`;
+        msg += `👤 <b>VĐV:</b> <b>${escapeHtml(res.fullName || res.nickname)}</b> (@${escapeHtml(res.nickname)})\n`;
+        msg += `🛡️ <b>Đội trước đó:</b> ${escapeHtml(res.teamName || 'N/A')}\n`;
+        msg += `🏃 <b>Tổng cự ly đã xóa sạch:</b> <code>-${res.deletedTotalKm?.toFixed(2)} km</code>\n`;
+        msg += `📊 <b>Số bài chạy đã xóa:</b> <code>${res.deletedActivitiesCount} bài</code>\n`;
+        msg += `🔗 <b>Trạng thái Strava:</b> ${res.deauthorizedOnStrava ? '✅ Đã hủy liên kết Webhook thành công' : '⚠️ Token đã hết hạn / không còn hiệu lực'}\n\n`;
+        msg += `✅ <i>Hệ thống và Strava sẽ không bao giờ nhận bài chạy hay gửi thông báo của VĐV này nữa. Toàn bộ Bảng xếp hạng đã được cập nhật lại tự động.</i>`;
+
+        return ctx.replyWithHTML(msg);
+      } catch (error: any) {
+        console.error('[Bot /xoa_vdv] Error:', error);
+        return ctx.reply('Lỗi khi loại bỏ VĐV khỏi giải: ' + (error?.message || error));
+      }
+    });
 
     const launchBotWithRetry = (retryCount = 0) => {
       bot?.launch({ dropPendingUpdates: false }).then(() => {
