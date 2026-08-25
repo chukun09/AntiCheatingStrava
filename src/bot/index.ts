@@ -230,14 +230,18 @@ Danh sách lệnh hỗ trợ:
       }
     });
 
-    // Command /bxh_doi [1-8/tuần] or /doi [1-8/tuần] - Team Leaderboards & Detailed Weekly Breakdown
+    // Command /bxh_doi [1-8/tuần/tatca] [min_km] or /doi [1-8] [tuần/tatca] [min_km]
     bot.command(['bxh_doi', 'doi'], async (ctx) => {
       try {
         const rawText = (ctx.message?.text || '').trim();
-        const parts = rawText.split(/\s+/).slice(1);
+        const fullParts = rawText.split(/\s+/);
+        const cmdName = fullParts[0].toLowerCase().replace(/^\//, '');
+        const isDoiDetailCmd = cmdName === 'doi';
+        const parts = fullParts.slice(1);
 
         let teamIdArg: number | null = null;
         let weekNumArg: number | null = null;
+        let minKmArg: number | null = null;
 
         if (parts.length === 1) {
           const p = parts[0].toLowerCase();
@@ -246,31 +250,80 @@ Danh sách lệnh hỗ trợ:
             if (num) weekNumArg = parseInt(num[0], 10);
           } else if (p === 'tatca' || p === 'all') {
             weekNumArg = null;
+          } else if (/^(?:doi|team|d)[1-8]$/i.test(p)) {
+            const num = p.match(/\d+/);
+            if (num) teamIdArg = parseInt(num[0], 10);
           } else {
-            const num = parseInt(p, 10);
+            const num = parseFloat(p.replace(/[^\d.]/g, ''));
             if (!isNaN(num)) {
-              if (num >= 5 && num <= 8) {
+              if (isDoiDetailCmd && num >= 1 && num <= 8) {
+                teamIdArg = num;
+              } else if (num >= 5 && num <= 8) {
                 teamIdArg = num;
               } else if (num >= 1 && num <= 4) {
                 weekNumArg = num;
               }
             }
           }
-        } else if (parts.length >= 2) {
-          const num1 = parseInt(parts[0].replace(/[^\d]/g, ''), 10);
-          const num2 = parseInt(parts[1].replace(/[^\d]/g, ''), 10);
+        } else if (parts.length === 2) {
+          const p0 = parts[0].toLowerCase();
+          const p1 = parts[1].toLowerCase();
 
-          if (!isNaN(num1) && num1 >= 1 && num1 <= 8) {
-            teamIdArg = num1;
+          // Case: /bxh_doi tatca 3 or /bxh_doi all 3
+          if (p0 === 'tatca' || p0 === 'all') {
+            weekNumArg = null;
+            const minKm = parseFloat(p1.replace(/[^\d.]/g, ''));
+            if (!isNaN(minKm) && minKm > 0) minKmArg = minKm;
+          } else if (/^(?:doi|team|d)[1-8]$/i.test(p0) || (isDoiDetailCmd && /^[1-8]$/.test(p0))) {
+            // Case: /doi 1 3 (team 1, week 3) or /doi 1 tatca (team 1 all)
+            const teamNum = parseInt(p0.replace(/[^\d]/g, ''), 10);
+            if (!isNaN(teamNum) && teamNum >= 1 && teamNum <= 8) teamIdArg = teamNum;
+
+            if (p1 === 'tatca' || p1 === 'all') {
+              weekNumArg = null;
+            } else if (/^(?:tuan|w|tuần)?[1-4]$/i.test(p1)) {
+              const wNum = parseInt(p1.replace(/[^\d]/g, ''), 10);
+              if (!isNaN(wNum) && wNum >= 1 && wNum <= 4) weekNumArg = wNum;
+            }
+          } else if (/^(?:tuan|w|tuần)?[1-4]$/i.test(p0)) {
+            // Case: /bxh_doi 3 5 (week 3, min 5km) or /bxh_doi tuan3 5
+            const wNum = parseInt(p0.replace(/[^\d]/g, ''), 10);
+            if (!isNaN(wNum) && wNum >= 1 && wNum <= 4) weekNumArg = wNum;
+            const minKm = parseFloat(p1.replace(/[^\d.]/g, ''));
+            if (!isNaN(minKm) && minKm > 0) minKmArg = minKm;
+          } else {
+            // Numeric fallback: e.g. "1 3"
+            const num1 = parseInt(parts[0].replace(/[^\d]/g, ''), 10);
+            const num2 = parseFloat(parts[1].replace(/[^\d.]/g, ''));
+            if (!isNaN(num1) && num1 >= 1 && num1 <= 8) teamIdArg = num1;
+            if (!isNaN(num2)) {
+              if (num2 >= 1 && num2 <= 4) weekNumArg = num2;
+              else if (num2 > 0) minKmArg = num2;
+            }
           }
-          if (!isNaN(num2) && num2 >= 1 && num2 <= 4) {
-            weekNumArg = num2;
+        } else if (parts.length >= 3) {
+          // e.g. /doi 1 tatca 3 or /doi 1 3 5 or /bxh_doi 1 3 5
+          const p0 = parts[0].toLowerCase();
+          const p1 = parts[1].toLowerCase();
+          const p2 = parts[2].toLowerCase();
+
+          const teamNum = parseInt(p0.replace(/[^\d]/g, ''), 10);
+          if (!isNaN(teamNum) && teamNum >= 1 && teamNum <= 8) teamIdArg = teamNum;
+
+          if (p1 === 'tatca' || p1 === 'all') {
+            weekNumArg = null;
+          } else {
+            const wNum = parseInt(p1.replace(/[^\d]/g, ''), 10);
+            if (!isNaN(wNum) && wNum >= 1 && wNum <= 4) weekNumArg = wNum;
           }
+
+          const minKm = parseFloat(p2.replace(/[^\d.]/g, ''));
+          if (!isNaN(minKm) && minKm > 0) minKmArg = minKm;
         }
 
         // Case 1: Detailed athlete-by-athlete list for a SPECIFIC team
         if (teamIdArg !== null) {
-          const detail = await getTeamWeekDetail(teamIdArg, weekNumArg);
+          const detail = await getTeamWeekDetail(teamIdArg, weekNumArg, minKmArg);
           if (!detail) {
             return ctx.replyWithHTML(`⚠️ Không tìm thấy thông tin cho <b>Đội ${teamIdArg}</b>.`);
           }
@@ -302,7 +355,7 @@ Danh sách lệnh hỗ trợ:
         }
 
         // Case 2: Summary Leaderboard of ALL 08 Teams (with week filter & >= 3km progress)
-        const res = await getTeamWeeklyLeaderboard(weekNumArg);
+        const res = await getTeamWeeklyLeaderboard(weekNumArg, minKmArg);
         const isWeekly = res.weekNumber !== null;
 
         let message = `🛡️ <b>BẢNG XẾP HẠNG TIẾN ĐỘ 08 ĐỘI THI (${escapeHtml(res.periodTitle.toUpperCase())})</b> 🛡️\n`;
@@ -328,7 +381,7 @@ Danh sách lệnh hỗ trợ:
           }
         });
 
-        message += `\n💡 <i>Mẹo: Gõ <code>/bxh_doi 3</code> để xem Tuần 3, hoặc <code>/doi 1 3</code> để xem chi tiết từng VĐV Đội 1!</i>`;
+        message += `\n💡 <i>Mẹo: Gõ <code>/bxh_doi 3</code> để xem Tuần 3, <code>/bxh_doi tatca 3</code> để xem cả giải chỉ tính bài >= 3km, hoặc <code>/doi 1 3</code> để xem chi tiết Đội 1!</i>`;
         return ctx.replyWithHTML(message);
       } catch (error) {
         console.error('[Bot /bxh_doi] Error:', error);

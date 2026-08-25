@@ -48,9 +48,13 @@ export interface TeamWeekDetailResult {
 }
 
 /**
- * Get detailed athlete-by-athlete breakdown for a specific team and optional week number.
+ * Get detailed athlete-by-athlete breakdown for a specific team, optional week number, and optional minActivityKm.
  */
-export async function getTeamWeekDetail(teamId: number, weekNumber?: number | null): Promise<TeamWeekDetailResult | null> {
+export async function getTeamWeekDetail(
+  teamId: number, 
+  weekNumber?: number | null,
+  minActivityKm?: number | null
+): Promise<TeamWeekDetailResult | null> {
   const team = TEAMS.find(t => t.id === teamId);
   if (!team) return null;
 
@@ -69,6 +73,10 @@ export async function getTeamWeekDetail(teamId: number, weekNumber?: number | nu
     weekName = targetWeekObj.name;
   }
 
+  if (minActivityKm && minActivityKm > 0) {
+    weekName += ` (Bài >= ${minActivityKm}km)`;
+  }
+
   const [users, exemptUserIds] = await Promise.all([
     db.user.findMany({
       where: { teamId },
@@ -83,7 +91,8 @@ export async function getTeamWeekDetail(teamId: number, weekNumber?: number | nu
     where: {
       userId: { in: userIds },
       isLegit: true,
-      ...(targetWeekObj ? { startDate: dateFilter } : {})
+      ...(targetWeekObj ? { startDate: dateFilter } : {}),
+      ...(minActivityKm && minActivityKm > 0 ? { distance: { gte: minActivityKm * 1000 } } : {})
     }
   });
 
@@ -170,15 +179,16 @@ export interface TeamSummaryItem {
   teamName: string;
   totalMembers: number;
   qualifiedMembers: number;
-  qualifiedRate: number;
+  qualifiedRate: number; // percentage 0-100
   totalDistanceKm: number;
   avgKmPerMember: number;
-  unqualifiedMembers: UnqualifiedMemberInfo[];
+  unqualifiedMembers?: UnqualifiedMemberInfo[];
 }
 
 export interface TeamWeeklyLeaderboardResult {
   periodTitle: string;
   weekNumber: number | null;
+  minActivityKm?: number | null;
   teams: TeamSummaryItem[];
   totalCompanyUsers: number;
   totalQualifiedUsers: number;
@@ -186,16 +196,29 @@ export interface TeamWeeklyLeaderboardResult {
 }
 
 /**
- * Get Leaderboard of all 8 teams filtered by week or whole contest,
- * showing the count and percentage of members who completed the 3km target.
+ * Get Leaderboard of all 8 teams filtered by week or whole contest, and optional minActivityKm.
  */
-export async function getTeamWeeklyLeaderboard(weekParam?: number | string | null): Promise<TeamWeeklyLeaderboardResult> {
+export async function getTeamWeeklyLeaderboard(
+  weekParam?: number | string | null,
+  minActivityKmParam?: number | string | null
+): Promise<TeamWeeklyLeaderboardResult> {
   let weekNumber: number | null = null;
   if (weekParam !== undefined && weekParam !== null && weekParam !== '') {
-    const match = String(weekParam).match(/\d+/);
-    if (match) {
-      const parsed = parseInt(match[0], 10);
-      if (parsed >= 1 && parsed <= 4) weekNumber = parsed;
+    const raw = String(weekParam).trim().toLowerCase();
+    if (raw !== 'tatca' && raw !== 'all') {
+      const match = raw.match(/\d+/);
+      if (match) {
+        const parsed = parseInt(match[0], 10);
+        if (parsed >= 1 && parsed <= 4) weekNumber = parsed;
+      }
+    }
+  }
+
+  let minActivityKm: number | null = null;
+  if (minActivityKmParam !== undefined && minActivityKmParam !== null && minActivityKmParam !== '') {
+    const parsedMin = parseFloat(String(minActivityKmParam).replace(/[^\d.]/g, ''));
+    if (!isNaN(parsedMin) && parsedMin > 0) {
+      minActivityKm = parsedMin;
     }
   }
 
@@ -208,6 +231,10 @@ export async function getTeamWeeklyLeaderboard(weekParam?: number | string | nul
     periodTitle = weekObj.name;
   }
 
+  if (minActivityKm && minActivityKm > 0) {
+    periodTitle += ` (Bài >= ${minActivityKm}km)`;
+  }
+
   const [users, exemptUserIds] = await Promise.all([
     db.user.findMany(),
     (weekNumber && weekNumber >= 1 && weekNumber <= 4) ? getExemptUserIdsForWeek(weekNumber) : Promise.resolve(new Set<string>())
@@ -217,7 +244,8 @@ export async function getTeamWeeklyLeaderboard(weekParam?: number | string | nul
   const activities = await db.activity.findMany({
     where: {
       isLegit: true,
-      ...(weekNumber ? { startDate: dateFilter } : {})
+      ...(weekNumber ? { startDate: dateFilter } : {}),
+      ...(minActivityKm && minActivityKm > 0 ? { distance: { gte: minActivityKm * 1000 } } : {})
     }
   });
 
@@ -245,9 +273,9 @@ export async function getTeamWeeklyLeaderboard(weekParam?: number | string | nul
       let userKm = 0;
       let targetKm = 3.0;
 
-      if (weekNumber) {
+      if (weekNumber || (minActivityKm && minActivityKm > 0)) {
         userKm = userStatsMap.get(u.id)?.totalDistanceKm || 0;
-        targetKm = 3.0;
+        targetKm = weekNumber ? 3.0 : (u.gender === 'FEMALE' ? 15 : 30);
       } else {
         userKm = u.totalDistance / 1000;
         targetKm = u.gender === 'FEMALE' ? 15 : 30;
@@ -306,6 +334,7 @@ export async function getTeamWeeklyLeaderboard(weekParam?: number | string | nul
   return {
     periodTitle,
     weekNumber,
+    minActivityKm,
     teams: teamList,
     totalCompanyUsers: activeCompanyUsers,
     totalQualifiedUsers,
