@@ -22,6 +22,7 @@ import { getGrowthLeaderboard } from '../services/progress.service';
 import { getDepartmentSummaryLeaderboard, getDepartmentMembersDetail } from '../services/department.service';
 import { grantWeeklyExemption, revokeWeeklyExemption, getWeeklyExemptionsList } from '../services/exemption.service';
 import { getWeeklyActivityReminderList } from '../services/reminder.service';
+import { grantManualKm, revokeManualKm, getManualKmList } from '../services/manual-km.service';
 
 let bot: Telegraf | null = null;
 
@@ -103,6 +104,9 @@ Danh sách lệnh hỗ trợ:
 🏃 <code>/giai_tuan2</code> - Xem BXH Giải Tập Thể Tuần 2 (Pace Đội - Ưu đãi Nữ -1 min/km).
 🚀 <code>/giai_tuan3</code> - Xem BXH Giải Tuần 3 (Bứt phá Cá nhân & Tập thể).
 🏁 <code>/giai_tuan4</code> - Xem BXH Giải Tập Thể Về Đích (Avg Km Cả Giải).
+👟 <code>/cong_km [Nickname] [Số_km] [Tuần] [Ghi chú]</code> - BTC cộng km thủ công (VD: <code>/cong_km CapyLong 5.2 4</code>).
+👟 <code>/ds_cong_km [tuần]</code> - Xem danh sách bài chạy cộng tay của BTC.
+👟 <code>/huy_cong_km [ID/Nickname]</code> - Thu hồi bài chạy cộng tay của BTC.
 🏓 <code>/cong_pickleball [Nicknames...]</code> - BTC cộng điểm thưởng Pickleball (+5km Nam, +3km Nữ).
 🏥 <code>/nghi_om [tuần] [Nicknames...]</code> - BTC duyệt nghỉ ốm/miễn trừ theo tuần (VD: <code>/nghi_om 3 CapyLong</code>).
 🏥 <code>/ds_nghi_om [tuần]</code> - Xem danh sách VĐV nghỉ ốm/miễn trừ theo tuần.
@@ -1424,6 +1428,153 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
       } catch (error: any) {
         console.error('[Bot /huy_pickleball] Error:', error);
         return ctx.reply('Lỗi khi thu hồi điểm thưởng Pickleball: ' + (error?.message || error));
+      }
+    });
+
+    // Command /cong_km [Nickname] [Số_km] [Tuần 1-4 (Tùy chọn)] [Ghi chú...]
+    bot.command(['cong_km', 'congkm', 'them_km'], async (ctx) => {
+      try {
+        const text = (ctx.message?.text || '').trim();
+        const parts = text.split(/\s+/).slice(1);
+
+        if (parts.length < 2) {
+          let msg = `👟 <b>HƯỚNG DẪN CỘNG KM THỦ CÔNG (BƯỚC CHÂN / BÀI CHẠY NGOÀI):</b>\n\n`;
+          msg += `Cú pháp: <code>/cong_km [Nickname/Họ tên] [Số km] [Tuần 1-4 (tùy chọn)] [Ghi chú (tùy chọn)]</code>\n\n`;
+          msg += `<i>Ví dụ:</i>\n`;
+          msg += `   • <code>/cong_km CapyLong 5.2</code> (Cộng 5.2km vào tuần hiện tại)\n`;
+          msg += `   • <code>/cong_km CapyLong 5.0 4 Đi bộ cung cấp ảnh</code> (Cộng 5km vào Tuần 4 kèm ghi chú)\n`;
+          msg += `   • <code>/cong_km @IRIS_Hiennt1 3.5 3</code> (Cộng 3.5km vào Tuần 3)\n\n`;
+          msg += `💡 <i>Hệ thống sẽ tự động cập nhật lại Bảng xếp hạng Đội, Cá nhân, Phòng ban và Giải tuần!</i>`;
+          return ctx.replyWithHTML(msg);
+        }
+
+        const query = parts[0];
+        const km = parseFloat(parts[1].replace(/[^\d.]/g, ''));
+
+        if (isNaN(km) || km <= 0) {
+          return ctx.replyWithHTML(`⚠️ Số km không hợp lệ: <b>"${escapeHtml(parts[1])}"</b>. Vui lòng nhập số km lớn hơn 0 (VD: <code>/cong_km CapyLong 5.2</code>).`);
+        }
+
+        let weekArg: number | null = null;
+        let reasonParts: string[] = [];
+
+        if (parts.length >= 3) {
+          const p2 = parts[2].toLowerCase();
+          if (/^(?:tuan|w|tuần)?[1-4]$/i.test(p2)) {
+            const wNum = parseInt(p2.replace(/[^\d]/g, ''), 10);
+            if (!isNaN(wNum) && wNum >= 1 && wNum <= 4) {
+              weekArg = wNum;
+              reasonParts = parts.slice(3);
+            } else {
+              reasonParts = parts.slice(2);
+            }
+          } else {
+            reasonParts = parts.slice(2);
+          }
+        }
+
+        const reason = reasonParts.join(' ').trim() || 'Ghi nhận bước chân';
+
+        const res = await grantManualKm({
+          query,
+          km,
+          week: weekArg,
+          reason
+        });
+
+        if (!res.success) {
+          return ctx.replyWithHTML(`❌ <b>CỘNG KM THẤT BẠI:</b>\n${escapeHtml(res.message)}`);
+        }
+
+        let msg = `👟 <b>CỘNG KM THỦ CÔNG THÀNH CÔNG!</b> 👟\n\n`;
+        msg += `👤 <b>VĐV:</b> <b>${escapeHtml(res.fullName || res.nickname)}</b> (@${escapeHtml(res.nickname)})\n`;
+        msg += `🛡️ <b>Đội:</b> ${escapeHtml(res.teamName || 'N/A')}\n`;
+        msg += `🏃 <b>Cự ly cộng:</b> <code>+${res.km?.toFixed(2)} km</code> (Pace 8:00) | <b>Tuần ${res.week}</b>\n`;
+        msg += `📊 <b>Tổng km cả giải hiện tại:</b> <code>${res.totalKmAfter?.toFixed(2)} km</code>\n`;
+        msg += `📝 <b>Ghi chú:</b> <i>${escapeHtml(reason)}</i>\n`;
+        msg += `🆔 <b>Mã bài chạy:</b> <code>${res.activityId}</code>\n\n`;
+        msg += `💡 <i>Nếu cần thu hồi bài này, gõ: <code>/huy_cong_km ${res.activityId}</code></i>`;
+
+        return ctx.replyWithHTML(msg);
+      } catch (error: any) {
+        console.error('[Bot /cong_km] Error:', error);
+        return ctx.reply('Lỗi khi thực hiện cộng km thủ công: ' + (error?.message || error));
+      }
+    });
+
+    // Command /ds_cong_km [tuần] - List all manually granted activities
+    bot.command(['ds_cong_km', 'dscongkm'], async (ctx) => {
+      try {
+        const text = (ctx.message?.text || '').trim();
+        const parts = text.split(/\s+/).slice(1);
+
+        let weekNum: number | null = null;
+        if (parts.length > 0) {
+          const parsed = parseInt(parts[0].replace(/[^\d]/g, ''), 10);
+          if (!isNaN(parsed) && parsed >= 1 && parsed <= 4) {
+            weekNum = parsed;
+          }
+        }
+
+        const list = await getManualKmList(weekNum);
+
+        if (list.length === 0) {
+          const title = weekNum ? `trong Tuần ${weekNum}` : 'trong toàn bộ giải đấu';
+          return ctx.replyWithHTML(`👟 <b>DANH SÁCH BÀI CHẠY CỘNG TAY (BTC):</b>\n\n<i>Chưa có bài chạy cộng tay nào ${title}.</i>`);
+        }
+
+        const title = weekNum ? `TUẦN ${weekNum}` : 'TẤT CẢ CÁC TUẦN';
+        let header = `👟 <b>DANH SÁCH BÀI CHẠY CỘNG TAY CỦA BTC (${title})</b> 👟\n`;
+        header += `📊 <b>Tổng số bài:</b> <code>${list.length} bài</code>\n\n`;
+
+        const itemLines = list.map((item, idx) => {
+          const dateStr = formatVietnamDateTime(item.startDate);
+          return `<b>${idx + 1}.</b> <b>${escapeHtml(item.fullName || item.nickname)}</b> (@${escapeHtml(item.nickname)} - ${escapeHtml(item.teamName)})\n` +
+            `   └─ <code>+${item.km.toFixed(2)} km</code> | ${dateStr} | ID: <code>${item.activityId}</code>\n` +
+            `   └─ 📝 <i>${escapeHtml(item.flagReason || item.name)}</i>\n`;
+        });
+
+        const footer = `\n💡 <i>Để thu hồi 1 bài, gõ: <code>/huy_cong_km [Mã ID]</code></i>`;
+        await sendChunkedHtmlMessages(ctx, header, itemLines, footer);
+      } catch (error: any) {
+        console.error('[Bot /ds_cong_km] Error:', error);
+        return ctx.reply('Lỗi khi tải danh sách bài chạy cộng tay: ' + (error?.message || error));
+      }
+    });
+
+    // Command /huy_cong_km [ActivityID / Nickname] - Revoke a manually granted km activity
+    bot.command(['huy_cong_km', 'huycongkm'], async (ctx) => {
+      try {
+        const text = (ctx.message?.text || '').trim();
+        const parts = text.split(/\s+/).slice(1);
+
+        if (parts.length === 0) {
+          let msg = `⚠️ <b>HƯỚNG DẪN THU HỒI BÀI CHẠY CỘNG TAY:</b>\n\n`;
+          msg += `Cú pháp: <code>/huy_cong_km [Mã Activity ID hoặc Nickname VĐV]</code>\n\n`;
+          msg += `<i>Ví dụ:</i>\n`;
+          msg += `   • Theo ID: <code>/huy_cong_km 888804159823</code>\n`;
+          msg += `   • Theo Nickname (hủy bài gần nhất): <code>/huy_cong_km CapyLong</code>`;
+          return ctx.replyWithHTML(msg);
+        }
+
+        const target = parts.join(' ').trim();
+        const res = await revokeManualKm(target);
+
+        if (!res.success) {
+          return ctx.replyWithHTML(`❌ <b>THU HỒI THẤT BẠI:</b>\n${escapeHtml(res.message)}`);
+        }
+
+        let msg = `🗑️ <b>THU HỒI BÀI CỘNG TAY THÀNH CÔNG!</b> 🗑️\n\n`;
+        msg += `👤 <b>VĐV:</b> <b>${escapeHtml(res.fullName || res.nickname)}</b> (@${escapeHtml(res.nickname)})\n`;
+        msg += `➖ <b>Đã trừ:</b> <code>-${res.kmDeducted?.toFixed(2)} km</code>\n`;
+        msg += `📊 <b>Tổng km cả giải còn lại:</b> <code>${res.totalKmAfter?.toFixed(2)} km</code>\n`;
+        msg += `🆔 <b>Mã bài bị xóa:</b> <code>${res.activityId}</code>\n\n`;
+        msg += `✅ <i>Đã tự động tính toán lại toàn bộ thành tích của VĐV trên tất cả Bảng xếp hạng.</i>`;
+
+        return ctx.replyWithHTML(msg);
+      } catch (error: any) {
+        console.error('[Bot /huy_cong_km] Error:', error);
+        return ctx.reply('Lỗi khi thu hồi bài cộng tay: ' + (error?.message || error));
       }
     });
 
