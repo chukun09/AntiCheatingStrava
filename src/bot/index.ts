@@ -1136,29 +1136,33 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
 
         const itemLines: string[] = [];
 
-        // 1. TIẾN ĐỘ 08 ĐỘI THI (SẮP XẾP THEO AVG KM CẢ GIẢI)
-        let block1 = `🛡️ <b>1. TIẾN ĐỘ 08 ĐỘI THI (XẾP THEO AVG KM CẢ GIẢI):</b>\n`;
+        // 1. TIẾN ĐỘ 08 ĐỘI THI (SẮP XẾP THEO AVG KM TUẦN 4)
+        let block1 = `🛡️ <b>1. TIẾN ĐỘ 08 ĐỘI THI (XẾP THEO AVG KM TUẦN 4):</b>\n`;
         rep.teamProgress.forEach((t, idx) => {
           const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `<b>#${idx + 1}.</b>`;
-          block1 += `${medal} <b>${escapeHtml(t.teamName)}</b> (<code>${t.totalMembers} VĐV</code>)\n` +
-            `   ├─ 🏃 <b>Cả giải:</b> <code>${t.totalKmWholeContest.toFixed(1)} km</code> (TB: <b>${t.avgKmWholeContest.toFixed(2)} km/người</b>)\n` +
-            `   └─ ⚡ <b>Tuần 4:</b> <code>${t.totalKmWeek4.toFixed(1)} km</code> (TB: <code>${t.avgKmWeek4.toFixed(2)} km/người</code>)\n`;
+          const memberStatus = t.exemptCountWeek4 > 0 ? `<code>${t.activeMembersWeek4} VĐV thi đấu / ${t.totalMembers} VĐV</code>` : `<code>${t.totalMembers} VĐV</code>`;
+          block1 += `${medal} <b>${escapeHtml(t.teamName)}</b> (${memberStatus})\n` +
+            `   ├─ 🏃 <b>Tổng km Cả giải:</b> <code>${t.totalKmWholeContest.toFixed(1)} km</code>\n` +
+            `   └─ ⚡ <b>Tuần 4:</b> <code>${t.totalKmWeek4.toFixed(1)} km</code> (TB: <b>${t.avgKmWeek4.toFixed(2)} km/người</b>)\n`;
         });
         itemLines.push(block1 + '\n');
 
         // 2. ĐỐI ĐẦU ĐUA TOP: ĐỘI 1 VS ĐỘI 5 (BÀI >= 3.0KM)
-        let block2 = `⚔️ <b>2. ĐỐI ĐẦU ĐUA TOP: ĐỘI 1 VS ĐỘI 5 (BÀI >= 3.0KM):</b>\n`;
+        let block2 = `⚔️ <b>2. ĐỐI ĐẦU ĐUA TOP: ĐỘI 1 VS ĐỘI 5 (CHỈ TÍNH BÀI >= 3.0KM):</b>\n`;
         const t1 = rep.team1StatsMin3;
         const t5 = rep.team5StatsMin3;
-        block2 += `🔥 <b>${escapeHtml(t1.teamName)}</b> (<code>${t1.totalMembers} VĐV</code>):\n` +
-          `   ├─ Cả giải (>=3km): <code>${t1.wholeContestKmMin3.toFixed(1)} km</code> (TB: <b>${t1.wholeContestAvgMin3.toFixed(2)} km/người</b>)\n` +
+        const t1Members = t1.totalMembers !== t1.activeMembersWeek4 ? `<code>${t1.activeMembersWeek4} VĐV thi đấu / ${t1.totalMembers} VĐV</code>` : `<code>${t1.totalMembers} VĐV</code>`;
+        const t5Members = t5.totalMembers !== t5.activeMembersWeek4 ? `<code>${t5.activeMembersWeek4} VĐV thi đấu / ${t5.totalMembers} VĐV</code>` : `<code>${t5.totalMembers} VĐV</code>`;
+
+        block2 += `🔥 <b>${escapeHtml(t1.teamName)}</b> (${t1Members}):\n` +
+          `   ├─ Tổng km Cả giải (>=3km): <code>${t1.wholeContestKmMin3.toFixed(1)} km</code>\n` +
           `   └─ Tuần 4 (>=3km): <code>${t1.week4KmMin3.toFixed(1)} km</code> (TB: <b>${t1.week4AvgMin3.toFixed(2)} km/người</b>)\n\n`;
-        block2 += `🔥 <b>${escapeHtml(t5.teamName)}</b> (<code>${t5.totalMembers} VĐV</code>):\n` +
-          `   ├─ Cả giải (>=3km): <code>${t5.wholeContestKmMin3.toFixed(1)} km</code> (TB: <b>${t5.wholeContestAvgMin3.toFixed(2)} km/người</b>)\n` +
+        block2 += `🔥 <b>${escapeHtml(t5.teamName)}</b> (${t5Members}):\n` +
+          `   ├─ Tổng km Cả giải (>=3km): <code>${t5.wholeContestKmMin3.toFixed(1)} km</code>\n` +
           `   └─ Tuần 4 (>=3km): <code>${t5.week4KmMin3.toFixed(1)} km</code> (TB: <b>${t5.week4AvgMin3.toFixed(2)} km/người</b>)\n\n`;
         
-        block2 += `📊 <b>Cách biệt Cả giải (>=3km):</b> <b>${escapeHtml(rep.wholeContestGapMin3.leadingTeamName)}</b> đang dẫn trước <code>+${rep.wholeContestGapMin3.diffKm.toFixed(1)} km</code> (TB <code>+${rep.wholeContestGapMin3.diffAvgKm.toFixed(2)} km/người</code>)\n`;
-        block2 += `📊 <b>Cách biệt Tuần 4 (>=3km):</b> <b>${escapeHtml(rep.week4GapMin3.leadingTeamName)}</b> đang dẫn trước <code>+${rep.week4GapMin3.diffKm.toFixed(1)} km</code> trong Tuần 4!\n`;
+        block2 += `📊 <b>Cách biệt Cả giải (>=3km):</b> <b>${escapeHtml(rep.wholeContestGapMin3.leadingTeamName)}</b> đang dẫn trước <code>+${rep.wholeContestGapMin3.diffKm.toFixed(1)} km</code>\n`;
+        block2 += `📊 <b>Cách biệt Tuần 4 (>=3km):</b> <b>${escapeHtml(rep.week4GapMin3.leadingTeamName)}</b> đang dẫn trước <code>+${rep.week4GapMin3.diffKm.toFixed(1)} km</code> (TB <code>+${rep.week4GapMin3.diffAvgKm.toFixed(2)} km/người</code>)\n`;
         itemLines.push(block2 + '\n');
 
         // 3. TOP 15 NAM TUẦN 4

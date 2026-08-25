@@ -8,8 +8,9 @@ export interface TeamDailyProgress {
   teamId: number;
   teamName: string;
   totalMembers: number;
+  activeMembersWeek4: number;
+  exemptCountWeek4: number;
   totalKmWholeContest: number;
-  avgKmWholeContest: number;
   totalKmWeek4: number;
   avgKmWeek4: number;
 }
@@ -18,8 +19,8 @@ export interface TeamMin3KmDetail {
   teamId: number;
   teamName: string;
   totalMembers: number;
+  activeMembersWeek4: number;
   wholeContestKmMin3: number;
-  wholeContestAvgMin3: number;
   week4KmMin3: number;
   week4AvgMin3: number;
 }
@@ -47,7 +48,6 @@ export interface DailySummaryReportResult {
   wholeContestGapMin3: {
     leadingTeamName: string;
     diffKm: number;
-    diffAvgKm: number;
   };
   week4GapMin3: {
     leadingTeamName: string;
@@ -114,55 +114,71 @@ export async function getDailySummaryReport(): Promise<DailySummaryReportResult>
   });
 
   // 1. Team Progress (8 teams)
+  // - Whole contest: sum for ALL members in team (no exclusions, no averaging)
+  // - Week 4: exclude Week 4 exempt members and calculate average km per active member
   const teamProgress: TeamDailyProgress[] = TEAMS.map(team => {
-    const activeMembers = users.filter(u => u.teamId === team.id && !exemptUserIdsW4.has(u.id));
-    const totalMembers = activeMembers.length;
+    const allMembers = users.filter(u => u.teamId === team.id);
+    const totalMembers = allMembers.length;
+    const activeMembers = allMembers.filter(u => !exemptUserIdsW4.has(u.id));
+    const activeMembersWeek4 = activeMembers.length;
+    const exemptCountWeek4 = totalMembers - activeMembersWeek4;
 
     let totalKmWholeContest = 0;
     let totalKmWeek4 = 0;
 
-    activeMembers.forEach(u => {
+    // All members in team count towards whole contest total km
+    allMembers.forEach(u => {
       totalKmWholeContest += userWholeContestMap.get(u.id)?.totalKm || 0;
+    });
+
+    // Only active non-exempt members count towards Week 4
+    activeMembers.forEach(u => {
       totalKmWeek4 += userWeek4Map.get(u.id)?.totalKm || 0;
     });
 
-    const avgKmWholeContest = totalMembers > 0 ? totalKmWholeContest / totalMembers : 0;
-    const avgKmWeek4 = totalMembers > 0 ? totalKmWeek4 / totalMembers : 0;
+    const avgKmWeek4 = activeMembersWeek4 > 0 ? totalKmWeek4 / activeMembersWeek4 : 0;
 
     return {
       teamId: team.id,
       teamName: team.name,
       totalMembers,
+      activeMembersWeek4,
+      exemptCountWeek4,
       totalKmWholeContest,
-      avgKmWholeContest,
       totalKmWeek4,
       avgKmWeek4
     };
-  }).sort((a, b) => b.avgKmWholeContest - a.avgKmWholeContest);
+  }).sort((a, b) => b.avgKmWeek4 - a.avgKmWeek4 || b.totalKmWeek4 - a.totalKmWeek4);
 
   // 2. Team 1 vs Team 5 (Filtered by activities >= 3.0km)
   const getTeamMin3Stats = (teamId: number): TeamMin3KmDetail => {
     const teamName = getTeamName(teamId);
-    const activeMembers = users.filter(u => u.teamId === teamId && !exemptUserIdsW4.has(u.id));
-    const totalMembers = activeMembers.length;
+    const allMembers = users.filter(u => u.teamId === teamId);
+    const totalMembers = allMembers.length;
+    const activeMembers = allMembers.filter(u => !exemptUserIdsW4.has(u.id));
+    const activeMembersWeek4 = activeMembers.length;
 
     let wholeContestKmMin3 = 0;
     let week4KmMin3 = 0;
 
-    activeMembers.forEach(u => {
+    // Whole contest >= 3km: sum for ALL members
+    allMembers.forEach(u => {
       wholeContestKmMin3 += userWholeContestMap.get(u.id)?.totalKmMin3 || 0;
+    });
+
+    // Week 4 >= 3km: sum for active members
+    activeMembers.forEach(u => {
       week4KmMin3 += userWeek4Map.get(u.id)?.totalKmMin3 || 0;
     });
 
-    const wholeContestAvgMin3 = totalMembers > 0 ? wholeContestKmMin3 / totalMembers : 0;
-    const week4AvgMin3 = totalMembers > 0 ? week4KmMin3 / totalMembers : 0;
+    const week4AvgMin3 = activeMembersWeek4 > 0 ? week4KmMin3 / activeMembersWeek4 : 0;
 
     return {
       teamId,
       teamName,
       totalMembers,
+      activeMembersWeek4,
       wholeContestKmMin3,
-      wholeContestAvgMin3,
       week4KmMin3,
       week4AvgMin3
     };
@@ -172,11 +188,9 @@ export async function getDailySummaryReport(): Promise<DailySummaryReportResult>
   const team5StatsMin3 = getTeamMin3Stats(5);
 
   const wholeDiff = team1StatsMin3.wholeContestKmMin3 - team5StatsMin3.wholeContestKmMin3;
-  const wholeAvgDiff = team1StatsMin3.wholeContestAvgMin3 - team5StatsMin3.wholeContestAvgMin3;
   const wholeContestGapMin3 = {
     leadingTeamName: wholeDiff >= 0 ? team1StatsMin3.teamName : team5StatsMin3.teamName,
-    diffKm: Math.abs(wholeDiff),
-    diffAvgKm: Math.abs(wholeAvgDiff)
+    diffKm: Math.abs(wholeDiff)
   };
 
   const w4Diff = team1StatsMin3.week4KmMin3 - team5StatsMin3.week4KmMin3;
