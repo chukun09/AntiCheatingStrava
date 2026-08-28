@@ -165,8 +165,7 @@
           title="Làm mới dữ liệu"
         >
           <i id="refresh-icon" data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
-          <span class="hidden md:inline">Làm mới</span>
-          <span id="countdown-sec" class="text-[11px] font-mono text-orange-600 dark:text-orange-400 font-bold ml-1">15s</span>
+          <span>Làm mới</span>
         </button>
 
         <!-- Light / Dark Theme Toggle Button -->
@@ -1009,28 +1008,11 @@
       listEl.innerHTML = html;
     }
 
-    // Auto Refresh Countdown
-    function startAutoRefreshLoop() {
-      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-
-      autoRefreshTimer = setInterval(() => {
-        countdownSec--;
-        const countdownEl = document.getElementById('countdown-sec');
-
-        if (countdownEl) countdownEl.innerText = `${countdownSec}s`;
-
-        if (countdownSec <= 0) {
-          fetchDashboardData(false);
-        }
-      }, 1000);
-    }
-
-    // Init
+    // Initialization on DOM Loaded
     document.addEventListener('DOMContentLoaded', () => {
       initTheme();
       lucide.createIcons();
       fetchDashboardData(false);
-      startAutoRefreshLoop();
     });
   </script>
 </body>
