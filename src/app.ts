@@ -5,6 +5,7 @@ import { env } from './config/env';
 import { db } from './config/db';
 import { handleStravaLink, handleStravaCallback, handleSyncAll, handleOverrideActivity } from './controllers/auth.controller';
 import { verifyWebhook, handleWebhookEvent } from './controllers/webhook.controller';
+import { getDashboardDailySummary } from './controllers/dashboard.controller';
 import { initTelegramBot } from './bot';
 import { initWeeklyCronJob } from './cron/weekly';
 import { initKeepAliveCronJob } from './cron/keepalive';
@@ -21,6 +22,12 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static frontend landing page
 app.use(express.static(path.join(__dirname, '../public')));
+
+// Public Dashboard Route & API
+app.get('/api/dashboard/daily', getDashboardDailySummary);
+app.get(['/dashboard', '/bxh', '/bang-xep-hang'], (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/dashboard.html'));
+});
 
 // Admin Token Middleware to protect sensitive administrative HTTP endpoints
 const adminAuthMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {

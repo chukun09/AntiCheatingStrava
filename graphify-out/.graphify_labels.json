@@ -5,13 +5,7 @@
   "3": "index.ts",
   "4": "telegram.service.ts",
   "5": "compilerOptions",
-  "6": "db.ts",
   "7": "sync.service.ts",
-  "8": "auth.controller.ts",
-  "9": "progress.service.ts",
-  "10": "department.service.ts",
-  "11": "team.service.ts",
   "12": "bonus.service.ts",
-  "13": "progress.service.ts",
   "14": "strava.service.ts"
 }

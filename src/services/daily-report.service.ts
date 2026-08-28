@@ -40,8 +40,19 @@ export interface TopAthleteItem {
   isExempt?: boolean;
 }
 
+export interface CompanyOverviewKpi {
+  totalAthletes: number;
+  totalWholeContestKm: number;
+  totalWeek4Km: number;
+  totalActivitiesWeek4: number;
+  activeAthletesWeek4: number;
+  qualifiedAthletesWeek4: number;
+  qualificationRateWeek4: number;
+}
+
 export interface DailySummaryReportResult {
   updatedAtStr: string;
+  companyKpi: CompanyOverviewKpi;
   teamProgress: TeamDailyProgress[];
   team1StatsMin3: TeamMin3KmDetail;
   team5StatsMin3: TeamMin3KmDetail;
@@ -54,15 +65,24 @@ export interface DailySummaryReportResult {
     diffKm: number;
     diffAvgKm: number;
   };
+  topMalesWeek4: TopAthleteItem[];
+  topFemalesWeek4: TopAthleteItem[];
+  topOverallWholeContest: TopAthleteItem[];
+  // Backward compatibility for existing bot handlers
   top15MalesWeek4: TopAthleteItem[];
   top15FemalesWeek4: TopAthleteItem[];
   top10OverallWholeContest: TopAthleteItem[];
 }
 
+export interface DailyReportOptions {
+  topN?: number;
+}
+
 /**
  * Generate daily briefing report for Week 4 & entire contest
  */
-export async function getDailySummaryReport(): Promise<DailySummaryReportResult> {
+export async function getDailySummaryReport(options?: DailyReportOptions): Promise<DailySummaryReportResult> {
+  const topN = options?.topN && options.topN > 0 ? options.topN : 20;
   const week4Obj = WEEKS[3] || WEEKS[WEEKS.length - 1];
   const contestStart = WEEKS[0].start;
   const contestEnd = week4Obj.end;
@@ -89,10 +109,20 @@ export async function getDailySummaryReport(): Promise<DailySummaryReportResult>
   const userWholeContestMap = new Map<string, { totalKm: number; totalKmMin3: number; movingSec: number; runCount: number }>();
   const userWeek4Map = new Map<string, { totalKm: number; totalKmMin3: number; movingSec: number; runCount: number }>();
 
+  let totalWholeContestKm = 0;
+  let totalWeek4Km = 0;
+  let totalActivitiesWeek4 = 0;
+
   activities.forEach(act => {
     const distKm = act.distance / 1000;
     const isMin3 = act.distance >= 3000;
     const isWeek4 = act.startDate >= week4Obj.start && act.startDate < week4Obj.end;
+
+    totalWholeContestKm += distKm;
+    if (isWeek4) {
+      totalWeek4Km += distKm;
+      totalActivitiesWeek4 += 1;
+    }
 
     // Whole contest aggregation
     const whole = userWholeContestMap.get(act.userId) || { totalKm: 0, totalKmMin3: 0, movingSec: 0, runCount: 0 };
@@ -201,11 +231,13 @@ export async function getDailySummaryReport(): Promise<DailySummaryReportResult>
     diffAvgKm: Math.abs(w4AvgDiff)
   };
 
-  // 3. Top 15 Males & Top 15 Females in Week 4 (Excluding exempt/sick leave members)
+  // 3. Top Males & Top Females in Week 4 (Excluding exempt/sick leave members)
   const malesWeek4: TopAthleteItem[] = [];
   const femalesWeek4: TopAthleteItem[] = [];
 
   const activeUsersW4 = users.filter(u => !exemptUserIdsW4.has(u.id));
+  let activeAthletesWeek4Count = 0;
+  let qualifiedAthletesWeek4Count = 0;
 
   activeUsersW4.forEach(u => {
     const stat = userWeek4Map.get(u.id);
@@ -214,6 +246,13 @@ export async function getDailySummaryReport(): Promise<DailySummaryReportResult>
     const movingSec = stat ? stat.movingSec : 0;
     const avgPace = distKm > 0 && movingSec > 0 ? movingSec / distKm : Number.POSITIVE_INFINITY;
     const isQualified = distKm >= 3.0;
+
+    if (distKm > 0) {
+      activeAthletesWeek4Count++;
+    }
+    if (isQualified) {
+      qualifiedAthletesWeek4Count++;
+    }
 
     const item: TopAthleteItem = {
       id: u.id,
@@ -240,10 +279,10 @@ export async function getDailySummaryReport(): Promise<DailySummaryReportResult>
   malesWeek4.sort((a, b) => b.totalDistanceKm - a.totalDistanceKm);
   femalesWeek4.sort((a, b) => b.totalDistanceKm - a.totalDistanceKm);
 
-  const top15MalesWeek4 = malesWeek4.slice(0, 15);
-  const top15FemalesWeek4 = femalesWeek4.slice(0, 15);
+  const topMalesWeek4 = malesWeek4.slice(0, topN);
+  const topFemalesWeek4 = femalesWeek4.slice(0, topN);
 
-  // 4. Top 10 Overall Club Throughout Whole Contest
+  // 4. Top Overall Club Throughout Whole Contest
   const allAthletesWholeContest: TopAthleteItem[] = users.map(u => {
     const stat = userWholeContestMap.get(u.id);
     const distKm = stat ? stat.totalKm : (u.totalDistance / 1000);
@@ -267,17 +306,34 @@ export async function getDailySummaryReport(): Promise<DailySummaryReportResult>
     };
   }).sort((a, b) => b.totalDistanceKm - a.totalDistanceKm);
 
-  const top10OverallWholeContest = allAthletesWholeContest.slice(0, 10);
+  const topOverallWholeContest = allAthletesWholeContest.slice(0, topN);
+
+  const totalAthletes = users.length;
+  const qualificationRateWeek4 = activeUsersW4.length > 0 ? (qualifiedAthletesWeek4Count / activeUsersW4.length) * 100 : 0;
+
+  const companyKpi: CompanyOverviewKpi = {
+    totalAthletes,
+    totalWholeContestKm,
+    totalWeek4Km,
+    totalActivitiesWeek4,
+    activeAthletesWeek4: activeAthletesWeek4Count,
+    qualifiedAthletesWeek4: qualifiedAthletesWeek4Count,
+    qualificationRateWeek4
+  };
 
   return {
     updatedAtStr: formatVietnamDateTime(new Date()),
+    companyKpi,
     teamProgress,
     team1StatsMin3,
     team5StatsMin3,
     wholeContestGapMin3,
     week4GapMin3,
-    top15MalesWeek4,
-    top15FemalesWeek4,
-    top10OverallWholeContest
+    topMalesWeek4,
+    topFemalesWeek4,
+    topOverallWholeContest,
+    top15MalesWeek4: malesWeek4.slice(0, 15),
+    top15FemalesWeek4: femalesWeek4.slice(0, 15),
+    top10OverallWholeContest: allAthletesWholeContest.slice(0, 10)
   };
 }

@@ -5,13 +5,13 @@
     "semantic_hash": ""
   },
   "src/app.ts": {
-    "mtime": 1786420528.5134044,
-    "ast_hash": "5784ce9d8e8adf2d66ad00b0b88de7ca",
+    "mtime": 1787933396.4077218,
+    "ast_hash": "864943d1c644e8cea22a4f7e655c13f9",
     "semantic_hash": ""
   },
   "src/bot/index.ts": {
-    "mtime": 1787152832.7501428,
-    "ast_hash": "32d7beb460e0cdec84b8f68dad1bdb26",
+    "mtime": 1787647901.7634537,
+    "ast_hash": "301848bc0e17eb3fc64c035bf4c9a2b2",
     "semantic_hash": ""
   },
   "src/config/db.ts": {
@@ -50,8 +50,8 @@
     "semantic_hash": ""
   },
   "src/services/activity.service.ts": {
-    "mtime": 1786714427.6324008,
-    "ast_hash": "2cf8adaf4f7de1f214f506e5492e0be1",
+    "mtime": 1787498484.7816956,
+    "ast_hash": "719248e0a3de5db2ecd523e9e58091c6",
     "semantic_hash": ""
   },
   "src/services/anticheat.service.ts": {
@@ -60,13 +60,13 @@
     "semantic_hash": ""
   },
   "src/services/awards.service.ts": {
-    "mtime": 1786950901.9379835,
-    "ast_hash": "4371caa197ba3d7e844cc47b04153628",
+    "mtime": 1787622139.32019,
+    "ast_hash": "59fd5961afeb4b35f57cf2a4077541c8",
     "semantic_hash": ""
   },
   "src/services/excel.service.ts": {
-    "mtime": 1786504934.7019465,
-    "ast_hash": "39c4720a985483e1ce0c6f442a19fecd",
+    "mtime": 1787498513.0024123,
+    "ast_hash": "c92e7bac03f8986bdc2882af4dade541",
     "semantic_hash": ""
   },
   "src/services/override.service.ts": {
@@ -95,8 +95,8 @@
     "semantic_hash": ""
   },
   "src/services/team.service.ts": {
-    "mtime": 1787133957.1504874,
-    "ast_hash": "97163cd501cd657316f760341df927ec",
+    "mtime": 1787622450.066399,
+    "ast_hash": "83d9cf6e8f39d9830be1cc318cc2239c",
     "semantic_hash": ""
   },
   "src/services/telegram.service.ts": {
@@ -115,8 +115,8 @@
     "semantic_hash": ""
   },
   "public/index.html": {
-    "mtime": 1785514148.8902426,
-    "ast_hash": "adb1b93af9afcb697d52dd5e44672d1e",
+    "mtime": 1787933441.2876616,
+    "ast_hash": "9a5ce026b4bfe9e9f276430c6649c86a",
     "semantic_hash": ""
   },
   "src/cron/reconcile.ts": {
@@ -160,18 +160,58 @@
     "semantic_hash": ""
   },
   "src/services/department.service.ts": {
-    "mtime": 1787123113.335875,
-    "ast_hash": "daa9fcd7a891b1dbc4ca272291ba3850",
+    "mtime": 1787499498.2644627,
+    "ast_hash": "5b4057788ea4a5dcc48c5abb66446b23",
     "semantic_hash": ""
   },
   "src/services/progress.service.ts": {
-    "mtime": 1786977034.6140492,
-    "ast_hash": "f05e65b62f83eacddf8c4c951665daef",
+    "mtime": 1787498275.7068863,
+    "ast_hash": "e2ae5c5d7bb70ec039ceb0fc8d8204aa",
     "semantic_hash": ""
   },
   "src/services/stats.service.ts": {
-    "mtime": 1786938535.5870686,
-    "ast_hash": "99b28dc8e3878747da9686f9de2b40ed",
+    "mtime": 1787625764.318908,
+    "ast_hash": "2e7aa96cbb810a2ef143d6ace3c892ad",
+    "semantic_hash": ""
+  },
+  "src/controllers/dashboard.controller.ts": {
+    "mtime": 1787933389.7178853,
+    "ast_hash": "357bce186e0941fecfdf2f50c1987e33",
+    "semantic_hash": ""
+  },
+  "src/services/athlete-removal.service.ts": {
+    "mtime": 1787625996.1953583,
+    "ast_hash": "be01b25fa84de46ecfe944df5ae5c36d",
+    "semantic_hash": ""
+  },
+  "src/services/daily-report.service.ts": {
+    "mtime": 1787933382.1329167,
+    "ast_hash": "25d7923d497a592ecc4dfcb010c1fefe",
+    "semantic_hash": ""
+  },
+  "src/services/exemption.service.ts": {
+    "mtime": 1787498070.9241276,
+    "ast_hash": "7b1d5e93824439614d40356ee3b7bf36",
+    "semantic_hash": ""
+  },
+  "src/services/manual-km.service.ts": {
+    "mtime": 1787623165.6981661,
+    "ast_hash": "2f782a266d5b905f05efc3961a0c6f69",
+    "semantic_hash": ""
+  },
+  "src/services/reminder.service.ts": {
+    "mtime": 1787499509.146212,
+    "ast_hash": "d68c538daf58f54eeb7f76d56d558e4e",
+    "semantic_hash": ""
+  },
+  "src/utils/cache.ts": {
+    "mtime": 1787933364.7792425,
+    "ast_hash": "175c2ba6eda36fd22e207e60e22f5915",
+    "semantic_hash": ""
+  },
+  "public/dashboard.html": {
+    "mtime": 1787934049.3753164,
+    "ast_hash": "a45f61388d5452c975b182a8425616cb",
     "semantic_hash": ""
   }
 }
