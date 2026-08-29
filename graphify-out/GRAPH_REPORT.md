@@ -1,16 +1,16 @@
 # Graph Report - Anti Cheating Strava  (2026-08-29)
 
 ## Corpus Check
-- 43 files · ~41,270 words
+- 43 files · ~41,622 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 257 nodes · 683 edges · 9 communities
+- 257 nodes · 688 edges · 14 communities
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 2 edges (avg confidence: 0.65)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `94837b43`
+- Built from commit: `f5d20888`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -22,11 +22,16 @@
 - [[_COMMUNITY_telegram.service.ts|telegram.service.ts]]
 - [[_COMMUNITY_compilerOptions|compilerOptions]]
 - [[_COMMUNITY_sync.service.ts|sync.service.ts]]
+- [[_COMMUNITY_dashboard.controller.ts|dashboard.controller.ts]]
+- [[_COMMUNITY_department.service.ts|department.service.ts]]
+- [[_COMMUNITY_stats.service.ts|stats.service.ts]]
+- [[_COMMUNITY_reminder.service.ts|reminder.service.ts]]
+- [[_COMMUNITY_progress.service.ts|progress.service.ts]]
 - [[_COMMUNITY_bonus.service.ts|bonus.service.ts]]
 - [[_COMMUNITY_strava.service.ts|strava.service.ts]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `initTelegramBot()` - 44 edges
+1. `initTelegramBot()` - 46 edges
 2. `getExemptUserIdsForWeek()` - 26 edges
 3. `getTeamName()` - 20 edges
 4. `env` - 16 edges
@@ -52,23 +57,23 @@
 ## Import Cycles
 - None detected.
 
-## Communities (9 total, 0 thin omitted)
+## Communities (14 total, 0 thin omitted)
 
 ### Community 0 - "dependencies"
-Cohesion: 0.10
-Nodes (24): xlsx, getDashboardDailySummary(), ipRequestMap, isRateLimited(), CompanyOverviewKpi, DailyReportOptions, DailySummaryReportResult, getDailySummaryReport() (+16 more)
+Cohesion: 0.12
+Nodes (23): xlsx, CompanyOverviewKpi, DailyReportOptions, DailySummaryReportResult, TeamDailyProgress, TeamMin3KmDetail, TopAthleteItem, ExcelExportResult (+15 more)
 
 ### Community 1 - "devDependencies"
 Cohesion: 0.07
 Nodes (27): dependencies, axios, cors, dotenv, express, node-cron, p-queue, @prisma/client (+19 more)
 
 ### Community 2 - "app.ts"
-Cohesion: 0.13
-Nodes (21): app, server, checkDistribution(), globalForPrisma, env, handleStravaCallback(), handleStravaLink(), verifyWebhook() (+13 more)
+Cohesion: 0.11
+Nodes (24): app, server, checkDistribution(), globalForPrisma, env, handleOverrideActivity(), handleStravaCallback(), handleStravaLink() (+16 more)
 
 ### Community 3 - "index.ts"
-Cohesion: 0.08
-Nodes (51): escapeHtml(), initTelegramBot(), sendChunkedHtmlMessages(), getBestPaceActivities(), getWeek1TeamAward(), getWeek2TeamAward(), getWeek3IndividualAward(), getWeek3TeamAward() (+43 more)
+Cohesion: 0.27
+Nodes (16): escapeHtml(), initTelegramBot(), sendChunkedHtmlMessages(), getBestPaceActivities(), getWeek1TeamAward(), getWeek2TeamAward(), getWeek3IndividualAward(), getWeek3TeamAward() (+8 more)
 
 ### Community 4 - "telegram.service.ts"
 Cohesion: 0.17
@@ -82,9 +87,29 @@ Nodes (13): compilerOptions, esModuleInterop, forceConsistentCasingInFileNames, 
 Cohesion: 0.22
 Nodes (15): handleSyncAll(), enqueueActivityTask(), handleWebhookEvent(), CONTEST_START, sleep(), syncAllUsersPastActivities(), syncUserPastActivities(), activityQueue (+7 more)
 
+### Community 7 - "dashboard.controller.ts"
+Cohesion: 0.21
+Nodes (7): getDashboardDailySummary(), ipRequestMap, isRateLimited(), getDailySummaryReport(), appCache, CacheEntry, MemoryCache
+
+### Community 8 - "department.service.ts"
+Cohesion: 0.28
+Nodes (8): WEEKS, DepartmentDetailResult, DepartmentLeaderboardResult, DepartmentMemberDetail, DepartmentSummaryItem, getDepartmentMembersDetail(), getDepartmentSummaryLeaderboard(), parseWeekParam()
+
+### Community 9 - "stats.service.ts"
+Cohesion: 0.25
+Nodes (7): CompanySummaryStats, getCompanySummaryStats(), getIndividualLeaderboard(), IndividualLeaderboardItem, IndividualLeaderboardOptions, IndividualLeaderboardResult, SummaryQueryOptions
+
+### Community 10 - "reminder.service.ts"
+Cohesion: 0.33
+Nodes (6): getWeeklyActivityReminderList(), ReminderAthleteInfo, ReminderQueryOptions, resolveWeekNumber(), TeamReminderGroup, WeeklyActivityReminderResult
+
+### Community 11 - "progress.service.ts"
+Cohesion: 0.40
+Nodes (4): AthleteGrowthStat, getGrowthLeaderboard(), GrowthLeaderboardResult, GrowthQueryOptions
+
 ### Community 12 - "bonus.service.ts"
-Cohesion: 0.23
-Nodes (14): handleOverrideActivity(), BonusResult, findUserByFlexibleQuery(), grantPickleballBonus(), revokePickleballBonus(), getCurrentWeekNumber(), grantManualKm(), GrantManualKmOptions (+6 more)
+Cohesion: 0.20
+Nodes (15): BonusResult, findUserByFlexibleQuery(), grantPickleballBonus(), revokePickleballBonus(), ExemptionResult, grantWeeklyExemption(), revokeWeeklyExemption(), getCurrentWeekNumber() (+7 more)
 
 ### Community 14 - "strava.service.ts"
 Cohesion: 0.12
@@ -106,8 +131,8 @@ _Questions this graph is uniquely positioned to answer:_
 - **What connects `name`, `version`, `description` to the rest of the system?**
   _98 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `dependencies` be split into smaller, more focused modules?**
-  _Cohesion score 0.1028225806451613 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.1225071225071225 - nodes in this community are weakly interconnected._
 - **Should `devDependencies` be split into smaller, more focused modules?**
   _Cohesion score 0.07142857142857142 - nodes in this community are weakly interconnected._
 - **Should `app.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.1268939393939394 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.11411411411411411 - nodes in this community are weakly interconnected._

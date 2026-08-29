@@ -28,6 +28,7 @@ import { getDailySummaryReport } from '../services/daily-report.service';
 import { removeAthleteFromContest } from '../services/athlete-removal.service';
 import { compareAthletesWeek4 } from '../services/versus-user.service';
 import { buildContestClosureMessage, broadcastContestClosureAnnouncement } from '../cron/contest-freeze';
+import { CONTEST_LOCK_DEADLINE, isContestLocked } from '../services/contest-lock.service';
 
 let bot: Telegraf | null = null;
 
@@ -136,12 +137,14 @@ Danh sách lệnh hỗ trợ:
 🚫 <code>/xoa_vdv [Nickname]</code> - Loại bỏ hoàn toàn VĐV và bài chạy khỏi giải đấu.
 📊 <code>/excel_bxh [tuần] [min_km]</code> - Xuất Excel BXH VĐV (VD: <code>/excel_bxh tuan3 3</code> hoặc <code>/excel_bxh 3 3</code>).
 📄 <code>/excel_vipham [tuan1-4/doi1-8/tatca]</code> - Trích xuất file Excel danh sách bài vi phạm.
-🔄 <code>/sync [Nickname/all]</code> - Đồng bộ bài chạy mới từ Strava (VD: <code>/sync CapyLong</code> hoặc <code>/sync</code>).
+🔄 <code>/sync [Nickname/all]</code> - Trạng thái đóng băng đồng bộ sau giải đấu.
+⏱ <code>/check_time</code> - Kiểm tra đồng hồ hệ thống, giờ VN và đếm ngược chốt sổ.
+📢 <code>/thongbao_chotso</code> - BTC xem/phát sóng thông báo đóng sổ toàn giải.
 ✅ <code>/duyet [IDs]</code> - BTC duyệt bài chạy hợp lệ theo danh sách IDs.
 ❌ <code>/huy [IDs]</code> - BTC từ chối bài chạy phạm quy theo danh sách IDs.
 ❓ <code>/help</code> - Hướng dẫn sử dụng Bot.
 
-🔗 <b>Trang đăng ký:</b> Truy cập <a href="${env.APP_BASE_URL}">${env.APP_BASE_URL}</a> để liên kết tài khoản Strava!`;
+📊 <b>Dashboard Trực Tuyến:</b> Truy cập <a href="${env.APP_BASE_URL}/dashboard">${env.APP_BASE_URL}/dashboard</a>`;
 
       return ctx.replyWithHTML(text);
     });
@@ -2002,6 +2005,74 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
       } catch (error: any) {
         console.error('[Bot /thongbao_chotso] Error:', error);
         return ctx.reply('Lỗi khi xử lý thông báo chốt sổ: ' + (error?.message || error));
+      }
+    });
+
+    // Command /check_time or /kiemtra_gio - Check server clock, Vietnam time, countdown & lock status
+    bot.command(['check_time', 'checktime', 'kiemtra_gio', 'gio', 'time'], async (ctx) => {
+      try {
+        const now = new Date();
+        const serverUtcStr = now.toISOString();
+        const vnTimeStr = now.toLocaleString('vi-VN', {
+          timeZone: 'Asia/Ho_Chi_Minh',
+          hour12: false,
+          weekday: 'long',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+
+        const deadlineVnStr = CONTEST_LOCK_DEADLINE.toLocaleString('vi-VN', {
+          timeZone: 'Asia/Ho_Chi_Minh',
+          hour12: false,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+
+        const nowMs = Date.now();
+        const deadlineMs = CONTEST_LOCK_DEADLINE.getTime();
+        const diffMs = deadlineMs - nowMs;
+        const locked = isContestLocked();
+
+        let countdownStr = '';
+        if (diffMs > 0) {
+          const totalSec = Math.floor(diffMs / 1000);
+          const days = Math.floor(totalSec / 86400);
+          const hours = Math.floor((totalSec % 86400) / 3600);
+          const minutes = Math.floor((totalSec % 3600) / 60);
+          const seconds = totalSec % 60;
+          countdownStr = `⏳ Còn <b>${days} ngày ${hours} giờ ${minutes} phút ${seconds} giây</b>`;
+        } else {
+          countdownStr = `🔒 <b>ĐÃ QUÁ HẠN CHỐT SỔ</b>`;
+        }
+
+        const lockStatusBadge = locked
+          ? `🔴 <b>ĐÃ ĐÓNG BĂNG (LOCKED)</b> - Mọi webhook sửa/xóa/tạo đều bị chặn`
+          : `🟢 <b>ĐANG MỞ (OPEN)</b> - Hệ thống tiếp nhận bài chạy bình thường`;
+
+        let msg = `⏱ <b>KIỂM TRA ĐỒNG HỒ HỆ THỐNG & MỐC CHỐT SỔ:</b>\n\n`;
+        msg += `🇻🇳 <b>Giờ Việt Nam (UTC+7):</b>\n   ➔ <code>${vnTimeStr}</code>\n\n`;
+        msg += `🌐 <b>Giờ Máy Chủ Render (UTC):</b>\n   ➔ <code>${serverUtcStr}</code>\n\n`;
+        msg += `🎯 <b>Mốc Chốt Sổ Cố Định:</b>\n   ➔ <code>${deadlineVnStr}</code>\n\n`;
+        msg += `⏳ <b>Đếm ngược đến giờ chốt:</b>\n   ➔ ${countdownStr}\n\n`;
+        msg += `🛡️ <b>Trạng thái khóa sổ:</b>\n   ➔ ${lockStatusBadge}\n\n`;
+        msg += `━━━━━━━━━━━━━━━━━━━━\n`;
+        msg += `🔢 <b>Unix Epoch Đối Chiếu:</b>\n`;
+        msg += `• Hiện tại: <code>${nowMs}</code>\n`;
+        msg += `• Mốc khóa: <code>${deadlineMs}</code>\n`;
+        msg += `💡 <i>Epoch Timestamp là số nguyên độc lập tuyệt đối với múi giờ của máy chủ.</i>`;
+
+        return ctx.replyWithHTML(msg);
+      } catch (error: any) {
+        console.error('[Bot /check_time] Error:', error);
+        return ctx.reply('Lỗi khi kiểm tra thời gian hệ thống: ' + (error?.message || error));
       }
     });
 

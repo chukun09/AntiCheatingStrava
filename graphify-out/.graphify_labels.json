@@ -6,6 +6,11 @@
   "4": "telegram.service.ts",
   "5": "compilerOptions",
   "6": "sync.service.ts",
+  "7": "dashboard.controller.ts",
+  "8": "department.service.ts",
+  "9": "stats.service.ts",
+  "10": "reminder.service.ts",
+  "11": "progress.service.ts",
   "12": "bonus.service.ts",
   "14": "strava.service.ts"
 }
