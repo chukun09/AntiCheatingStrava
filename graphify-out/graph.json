@@ -210,7 +210,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "package_dependencies_xlsx",
-      "community": 0,
+      "community": 14,
       "norm_label": "xlsx"
     },
     {
@@ -350,37 +350,37 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_bot_index",
-      "community": 3,
+      "community": 6,
       "norm_label": "index.ts"
     },
     {
       "label": "escapeHtml()",
       "file_type": "code",
       "source_file": "src/bot/index.ts",
-      "source_location": "L32",
+      "source_location": "L33",
       "_origin": "ast",
       "id": "src_bot_index_escapehtml",
-      "community": 3,
+      "community": 6,
       "norm_label": "escapehtml()"
     },
     {
       "label": "sendChunkedHtmlMessages()",
       "file_type": "code",
       "source_file": "src/bot/index.ts",
-      "source_location": "L44",
+      "source_location": "L45",
       "_origin": "ast",
       "id": "src_bot_index_sendchunkedhtmlmessages",
-      "community": 3,
+      "community": 6,
       "norm_label": "sendchunkedhtmlmessages()"
     },
     {
       "label": "initTelegramBot()",
       "file_type": "code",
       "source_file": "src/bot/index.ts",
-      "source_location": "L91",
+      "source_location": "L92",
       "_origin": "ast",
       "id": "src_bot_index_inittelegrambot",
-      "community": 3,
+      "community": 6,
       "norm_label": "inittelegrambot()"
     },
     {
@@ -720,7 +720,7 @@
       "source_location": "L295",
       "_origin": "ast",
       "id": "src_services_activity_service_getbestpaceactivities",
-      "community": 3,
+      "community": 6,
       "norm_label": "getbestpaceactivities()"
     },
     {
@@ -810,7 +810,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_awards_service",
-      "community": 3,
+      "community": 6,
       "norm_label": "awards.service.ts"
     },
     {
@@ -830,7 +830,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_services_awards_service_getweek1teamaward",
-      "community": 3,
+      "community": 6,
       "norm_label": "getweek1teamaward()"
     },
     {
@@ -840,7 +840,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "src_services_awards_service_getweek2teamaward",
-      "community": 3,
+      "community": 6,
       "norm_label": "getweek2teamaward()"
     },
     {
@@ -850,7 +850,7 @@
       "source_location": "L179",
       "_origin": "ast",
       "id": "src_services_awards_service_getweek3individualaward",
-      "community": 3,
+      "community": 6,
       "norm_label": "getweek3individualaward()"
     },
     {
@@ -860,7 +860,7 @@
       "source_location": "L232",
       "_origin": "ast",
       "id": "src_services_awards_service_getweek3teamaward",
-      "community": 3,
+      "community": 6,
       "norm_label": "getweek3teamaward()"
     },
     {
@@ -870,7 +870,7 @@
       "source_location": "L279",
       "_origin": "ast",
       "id": "src_services_awards_service_getweek4teamaward",
-      "community": 3,
+      "community": 6,
       "norm_label": "getweek4teamaward()"
     },
     {
@@ -930,7 +930,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_daily_report_service",
-      "community": 0,
+      "community": 3,
       "norm_label": "daily-report.service.ts"
     },
     {
@@ -940,7 +940,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_services_daily_report_service_teamdailyprogress",
-      "community": 0,
+      "community": 3,
       "norm_label": "teamdailyprogress"
     },
     {
@@ -950,7 +950,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_services_daily_report_service_teammin3kmdetail",
-      "community": 0,
+      "community": 3,
       "norm_label": "teammin3kmdetail"
     },
     {
@@ -960,7 +960,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_services_daily_report_service_topathleteitem",
-      "community": 0,
+      "community": 3,
       "norm_label": "topathleteitem"
     },
     {
@@ -970,7 +970,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_services_daily_report_service_companyoverviewkpi",
-      "community": 0,
+      "community": 3,
       "norm_label": "companyoverviewkpi"
     },
     {
@@ -980,7 +980,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "src_services_daily_report_service_dailysummaryreportresult",
-      "community": 0,
+      "community": 3,
       "norm_label": "dailysummaryreportresult"
     },
     {
@@ -990,7 +990,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "src_services_daily_report_service_dailyreportoptions",
-      "community": 0,
+      "community": 3,
       "norm_label": "dailyreportoptions"
     },
     {
@@ -1010,7 +1010,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_department_service",
-      "community": 3,
+      "community": 9,
       "norm_label": "department.service.ts"
     },
     {
@@ -1020,7 +1020,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_services_department_service_departmentsummaryitem",
-      "community": 3,
+      "community": 9,
       "norm_label": "departmentsummaryitem"
     },
     {
@@ -1030,7 +1030,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_services_department_service_departmentleaderboardresult",
-      "community": 3,
+      "community": 9,
       "norm_label": "departmentleaderboardresult"
     },
     {
@@ -1040,7 +1040,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_services_department_service_departmentmemberdetail",
-      "community": 3,
+      "community": 9,
       "norm_label": "departmentmemberdetail"
     },
     {
@@ -1050,7 +1050,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_services_department_service_departmentdetailresult",
-      "community": 3,
+      "community": 9,
       "norm_label": "departmentdetailresult"
     },
     {
@@ -1060,7 +1060,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "src_services_department_service_parseweekparam",
-      "community": 3,
+      "community": 9,
       "norm_label": "parseweekparam()"
     },
     {
@@ -1070,7 +1070,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "src_services_department_service_getdepartmentsummaryleaderboard",
-      "community": 3,
+      "community": 9,
       "norm_label": "getdepartmentsummaryleaderboard()"
     },
     {
@@ -1080,7 +1080,7 @@
       "source_location": "L216",
       "_origin": "ast",
       "id": "src_services_department_service_getdepartmentmembersdetail",
-      "community": 3,
+      "community": 9,
       "norm_label": "getdepartmentmembersdetail()"
     },
     {
@@ -1090,7 +1090,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_excel_service",
-      "community": 0,
+      "community": 8,
       "norm_label": "excel.service.ts"
     },
     {
@@ -1100,7 +1100,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_services_excel_service_week_ranges",
-      "community": 0,
+      "community": 8,
       "norm_label": "week_ranges"
     },
     {
@@ -1110,7 +1110,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_services_excel_service_excelexportresult",
-      "community": 0,
+      "community": 8,
       "norm_label": "excelexportresult"
     },
     {
@@ -1120,7 +1120,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_services_excel_service_exportviolationstoexcelbuffer",
-      "community": 0,
+      "community": 8,
       "norm_label": "exportviolationstoexcelbuffer()"
     },
     {
@@ -1130,7 +1130,7 @@
       "source_location": "L158",
       "_origin": "ast",
       "id": "src_services_excel_service_exportleaderboardtoexcelbuffer",
-      "community": 0,
+      "community": 8,
       "norm_label": "exportleaderboardtoexcelbuffer()"
     },
     {
@@ -1140,7 +1140,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_exemption_service",
-      "community": 3,
+      "community": 12,
       "norm_label": "exemption.service.ts"
     },
     {
@@ -1150,7 +1150,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_services_exemption_service_exemptionresult",
-      "community": 3,
+      "community": 12,
       "norm_label": "exemptionresult"
     },
     {
@@ -1160,7 +1160,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_services_exemption_service_grantweeklyexemption",
-      "community": 3,
+      "community": 12,
       "norm_label": "grantweeklyexemption()"
     },
     {
@@ -1170,7 +1170,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "src_services_exemption_service_revokeweeklyexemption",
-      "community": 3,
+      "community": 12,
       "norm_label": "revokeweeklyexemption()"
     },
     {
@@ -1180,7 +1180,7 @@
       "source_location": "L137",
       "_origin": "ast",
       "id": "src_services_exemption_service_getexemptuseridsforweek",
-      "community": 3,
+      "community": 6,
       "norm_label": "getexemptuseridsforweek()"
     },
     {
@@ -1190,7 +1190,7 @@
       "source_location": "L151",
       "_origin": "ast",
       "id": "src_services_exemption_service_getweeklyexemptionslist",
-      "community": 3,
+      "community": 12,
       "norm_label": "getweeklyexemptionslist()"
     },
     {
@@ -1320,7 +1320,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_penalty_service",
-      "community": 3,
+      "community": 6,
       "norm_label": "penalty.service.ts"
     },
     {
@@ -1330,7 +1330,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_services_penalty_service_penaltyrecord",
-      "community": 3,
+      "community": 6,
       "norm_label": "penaltyrecord"
     },
     {
@@ -1340,7 +1340,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_services_penalty_service_calculatepenalties",
-      "community": 3,
+      "community": 6,
       "norm_label": "calculatepenalties()"
     },
     {
@@ -1350,7 +1350,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_progress_service",
-      "community": 3,
+      "community": 10,
       "norm_label": "progress.service.ts"
     },
     {
@@ -1360,7 +1360,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_services_progress_service_athletegrowthstat",
-      "community": 3,
+      "community": 10,
       "norm_label": "athletegrowthstat"
     },
     {
@@ -1370,7 +1370,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_services_progress_service_growthleaderboardresult",
-      "community": 3,
+      "community": 10,
       "norm_label": "growthleaderboardresult"
     },
     {
@@ -1380,7 +1380,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_services_progress_service_growthqueryoptions",
-      "community": 3,
+      "community": 10,
       "norm_label": "growthqueryoptions"
     },
     {
@@ -1390,7 +1390,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_services_progress_service_getgrowthleaderboard",
-      "community": 3,
+      "community": 6,
       "norm_label": "getgrowthleaderboard()"
     },
     {
@@ -1540,7 +1540,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_services_stats_service_getcompanysummarystats",
-      "community": 3,
+      "community": 6,
       "norm_label": "getcompanysummarystats()"
     },
     {
@@ -1580,7 +1580,7 @@
       "source_location": "L207",
       "_origin": "ast",
       "id": "src_services_stats_service_getindividualleaderboard",
-      "community": 3,
+      "community": 6,
       "norm_label": "getindividualleaderboard()"
     },
     {
@@ -1810,7 +1810,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_services_team_service_getteamname",
-      "community": 12,
+      "community": 8,
       "norm_label": "getteamname()"
     },
     {
@@ -1840,7 +1840,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "src_services_team_service_getteamweekdetail",
-      "community": 3,
+      "community": 6,
       "norm_label": "getteamweekdetail()"
     },
     {
@@ -1880,7 +1880,7 @@
       "source_location": "L201",
       "_origin": "ast",
       "id": "src_services_team_service_getteamweeklyleaderboard",
-      "community": 3,
+      "community": 6,
       "norm_label": "getteamweeklyleaderboard()"
     },
     {
@@ -1900,7 +1900,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_services_telegram_service_formatvietnamdatetime",
-      "community": 0,
+      "community": 8,
       "norm_label": "formatvietnamdatetime()"
     },
     {
@@ -1910,7 +1910,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_services_telegram_service_formatpace",
-      "community": 0,
+      "community": 8,
       "norm_label": "formatpace()"
     },
     {
@@ -1982,6 +1982,46 @@
       "id": "src_services_telegram_service_notifyactivitydeletedbatch",
       "community": 4,
       "norm_label": "notifyactivitydeletedbatch()"
+    },
+    {
+      "label": "versus-user.service.ts",
+      "file_type": "code",
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_services_versus_user_service",
+      "community": 8,
+      "norm_label": "versus-user.service.ts"
+    },
+    {
+      "label": "UserVersusProfile",
+      "file_type": "code",
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L7",
+      "_origin": "ast",
+      "id": "src_services_versus_user_service_userversusprofile",
+      "community": 8,
+      "norm_label": "userversusprofile"
+    },
+    {
+      "label": "UserVersusResult",
+      "file_type": "code",
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L26",
+      "_origin": "ast",
+      "id": "src_services_versus_user_service_userversusresult",
+      "community": 8,
+      "norm_label": "userversusresult"
+    },
+    {
+      "label": "compareAthletesWeek4()",
+      "file_type": "code",
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L39",
+      "_origin": "ast",
+      "id": "src_services_versus_user_service_compareathletesweek4",
+      "community": 8,
+      "norm_label": "compareathletesweek4()"
     },
     {
       "label": "cache.ts",
@@ -3058,7 +3098,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/bot/index.ts",
-      "source_location": "L32",
+      "source_location": "L33",
       "weight": 1.0,
       "source": "src_bot_index",
       "target": "src_bot_index_escapehtml",
@@ -3068,7 +3108,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/bot/index.ts",
-      "source_location": "L91",
+      "source_location": "L92",
       "weight": 1.0,
       "source": "src_bot_index",
       "target": "src_bot_index_inittelegrambot",
@@ -3078,7 +3118,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/bot/index.ts",
-      "source_location": "L44",
+      "source_location": "L45",
       "weight": 1.0,
       "source": "src_bot_index",
       "target": "src_bot_index_sendchunkedhtmlmessages",
@@ -3745,11 +3785,33 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/bot/index.ts",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "src_bot_index",
+      "target": "src_services_versus_user_service",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/bot/index.ts",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "src_bot_index",
+      "target": "src_services_versus_user_service_compareathletesweek4",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/bot/index.ts",
-      "source_location": "L194",
+      "source_location": "L196",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_bot_index_escapehtml",
@@ -3760,7 +3822,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/bot/index.ts",
-      "source_location": "L223",
+      "source_location": "L225",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_bot_index_sendchunkedhtmlmessages",
@@ -3772,7 +3834,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L957",
+      "source_location": "L959",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_activity_service_getbestpaceactivities"
@@ -3783,7 +3845,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1929",
+      "source_location": "L1951",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_athlete_removal_service_removeathletefromcontest"
@@ -3794,7 +3856,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1141",
+      "source_location": "L1143",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek1teamaward"
@@ -3805,7 +3867,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1162",
+      "source_location": "L1164",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek2teamaward"
@@ -3816,7 +3878,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1185",
+      "source_location": "L1187",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek3individualaward"
@@ -3827,7 +3889,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1186",
+      "source_location": "L1188",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek3teamaward"
@@ -3838,7 +3900,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1211",
+      "source_location": "L1213",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_awards_service_getweek4teamaward"
@@ -3849,7 +3911,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L532",
+      "source_location": "L534",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_bonus_service_finduserbyflexiblequery"
@@ -3860,7 +3922,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1594",
+      "source_location": "L1616",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_bonus_service_grantpickleballbonus"
@@ -3871,7 +3933,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1625",
+      "source_location": "L1647",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_bonus_service_revokepickleballbonus"
@@ -3882,7 +3944,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1232",
+      "source_location": "L1234",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_daily_report_service_getdailysummaryreport"
@@ -3893,7 +3955,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L228",
+      "source_location": "L230",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_department_service_getdepartmentmembersdetail"
@@ -3904,7 +3966,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L191",
+      "source_location": "L193",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_department_service_getdepartmentsummaryleaderboard"
@@ -3915,7 +3977,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1394",
+      "source_location": "L1416",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_excel_service_exportleaderboardtoexcelbuffer"
@@ -3926,7 +3988,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1357",
+      "source_location": "L1379",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_excel_service_exportviolationstoexcelbuffer"
@@ -3937,7 +3999,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1878",
+      "source_location": "L1900",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_exemption_service_getweeklyexemptionslist"
@@ -3948,7 +4010,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1808",
+      "source_location": "L1830",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_exemption_service_grantweeklyexemption"
@@ -3959,7 +4021,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1846",
+      "source_location": "L1868",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_exemption_service_revokeweeklyexemption"
@@ -3970,7 +4032,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1726",
+      "source_location": "L1748",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_manual_km_service_getmanualkmlist"
@@ -3981,7 +4043,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1685",
+      "source_location": "L1707",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_manual_km_service_grantmanualkm"
@@ -3992,7 +4054,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1768",
+      "source_location": "L1790",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_manual_km_service_revokemanualkm"
@@ -4003,7 +4065,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L654",
+      "source_location": "L656",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_override_service_overrideactivitystatus"
@@ -4014,7 +4076,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1482",
+      "source_location": "L1504",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_override_service_recalculateuserstats"
@@ -4025,7 +4087,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1319",
+      "source_location": "L1341",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_penalty_service_calculatepenalties"
@@ -4036,7 +4098,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1090",
+      "source_location": "L1092",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_progress_service_getgrowthleaderboard"
@@ -4047,7 +4109,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1417",
+      "source_location": "L1439",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_reconcile_service_reconcileallusers"
@@ -4058,7 +4120,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L453",
+      "source_location": "L455",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_reminder_service_getweeklyactivityreminderlist"
@@ -4069,7 +4131,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L1019",
+      "source_location": "L1021",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_stats_service_getcompanysummarystats"
@@ -4080,7 +4142,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L828",
+      "source_location": "L830",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_stats_service_getindividualleaderboard"
@@ -4091,7 +4153,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L747",
+      "source_location": "L749",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_sync_service_syncalluserspastactivities"
@@ -4102,7 +4164,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L727",
+      "source_location": "L729",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_sync_service_syncuserpastactivities"
@@ -4113,7 +4175,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L245",
+      "source_location": "L247",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_team_service_getteamname"
@@ -4124,7 +4186,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L351",
+      "source_location": "L353",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_team_service_getteamweekdetail"
@@ -4135,7 +4197,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L383",
+      "source_location": "L385",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_team_service_getteamweeklyleaderboard"
@@ -4146,7 +4208,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L243",
+      "source_location": "L245",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_telegram_service_formatpace"
@@ -4157,7 +4219,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L598",
+      "source_location": "L600",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_telegram_service_formatvietnamdatetime"
@@ -4168,10 +4230,21 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/bot/index.ts",
-      "source_location": "L749",
+      "source_location": "L751",
       "weight": 1.0,
       "source": "src_bot_index_inittelegrambot",
       "target": "src_services_telegram_service_sendtelegrammessage"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/bot/index.ts",
+      "source_location": "L1326",
+      "weight": 1.0,
+      "source": "src_bot_index_inittelegrambot",
+      "target": "src_services_versus_user_service_compareathletesweek4"
     },
     {
       "relation": "contains",
@@ -4476,6 +4549,17 @@
       "source_location": "L1",
       "weight": 1.0,
       "source": "src_services_team_service",
+      "target": "src_config_db",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "src_services_versus_user_service",
       "target": "src_config_db",
       "confidence_score": 1.0
     },
@@ -6141,6 +6225,17 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_services_versus_user_service",
+      "target": "src_services_awards_service",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -6214,6 +6309,17 @@
       "source_location": "L2",
       "weight": 1.0,
       "source": "src_services_team_service",
+      "target": "src_services_awards_service_weeks",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_services_versus_user_service",
       "target": "src_services_awards_service_weeks",
       "confidence_score": 1.0
     },
@@ -6357,6 +6463,17 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_services_versus_user_service",
+      "target": "src_services_bonus_service",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -6442,6 +6559,28 @@
       "source_location": "L180",
       "weight": 1.0,
       "source": "src_services_manual_km_service_revokemanualkm",
+      "target": "src_services_bonus_service_finduserbyflexiblequery"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_services_versus_user_service",
+      "target": "src_services_bonus_service_finduserbyflexiblequery",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L44",
+      "weight": 1.0,
+      "source": "src_services_versus_user_service_compareathletesweek4",
       "target": "src_services_bonus_service_finduserbyflexiblequery"
     },
     {
@@ -8366,6 +8505,17 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_services_versus_user_service",
+      "target": "src_services_team_service",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "references",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -8386,6 +8536,28 @@
       "weight": 1.0,
       "source": "src_services_team_service_getteamweekdetail",
       "target": "src_services_team_service_teams"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_services_versus_user_service",
+      "target": "src_services_team_service_getteamname",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L109",
+      "weight": 1.0,
+      "source": "src_services_versus_user_service_compareathletesweek4",
+      "target": "src_services_team_service_getteamname"
     },
     {
       "relation": "contains",
@@ -8522,6 +8694,17 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_services_versus_user_service",
+      "target": "src_services_telegram_service",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -8531,6 +8714,50 @@
       "source": "src_services_telegram_service_notifyreachedmilestone",
       "target": "src_services_telegram_service_formatvietnamdatetime",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_services_versus_user_service",
+      "target": "src_services_telegram_service_formatvietnamdatetime",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L132",
+      "weight": 1.0,
+      "source": "src_services_versus_user_service_compareathletesweek4",
+      "target": "src_services_telegram_service_formatvietnamdatetime"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_services_versus_user_service",
+      "target": "src_services_telegram_service_formatpace",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L133",
+      "weight": 1.0,
+      "source": "src_services_versus_user_service_compareathletesweek4",
+      "target": "src_services_telegram_service_formatpace"
     },
     {
       "relation": "calls",
@@ -8641,6 +8868,36 @@
       "weight": 1.0,
       "source": "src_services_telegram_service_notifyactivitydeletedbatch",
       "target": "src_utils_format_escapehtml"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L39",
+      "weight": 1.0,
+      "source": "src_services_versus_user_service",
+      "target": "src_services_versus_user_service_compareathletesweek4",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_services_versus_user_service",
+      "target": "src_services_versus_user_service_userversusprofile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/versus-user.service.ts",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "src_services_versus_user_service",
+      "target": "src_services_versus_user_service_userversusresult",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -9068,5 +9325,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "d58fcfdded81d39a5895de2c436bfa98ac4aabfc"
+  "built_at_commit": "b74839ca18cbebb036ad1547ca2d30479978b11a"
 }

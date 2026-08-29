@@ -26,6 +26,7 @@ import { getWeeklyActivityReminderList } from '../services/reminder.service';
 import { grantManualKm, revokeManualKm, getManualKmList } from '../services/manual-km.service';
 import { getDailySummaryReport } from '../services/daily-report.service';
 import { removeAthleteFromContest } from '../services/athlete-removal.service';
+import { compareAthletesWeek4 } from '../services/versus-user.service';
 
 let bot: Telegraf | null = null;
 
@@ -124,6 +125,7 @@ Danh sách lệnh hỗ trợ:
 🚀 <code>/giai_tuan3</code> - Xem BXH Giải Tuần 3 (Bứt phá Cá nhân & Tập thể).
 🏁 <code>/giai_tuan4</code> - Xem BXH Giải Tập Thể Về Đích (Avg Km Cả Giải).
 📊 <code>/tonghop_ngay</code> - Bảng tổng hợp toàn diện hằng ngày Tuần 4 & Toàn giải (alias: <code>/daily</code>, <code>/baocao_ngay</code>).
+🥊 <code>/keo [VĐV1] [VĐV2]</code> - So kèo đối đầu Tuần 4 (Mặc định: MrChoi vs IRIS JOSEPH).
 👟 <code>/cong_km [Nickname] [Số_km] [Tuần] [Ghi chú]</code> - BTC cộng km thủ công (VD: <code>/cong_km CapyLong 5.2 4</code>).
 👟 <code>/ds_cong_km [tuần]</code> - Xem danh sách bài chạy cộng tay của BTC.
 👟 <code>/huy_cong_km [ID/Nickname]</code> - Thu hồi bài chạy cộng tay của BTC.
@@ -1312,6 +1314,26 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
     };
 
     bot.command(['tonghop_ngay', 'baocao_ngay', 'daily', 'tongket_ngay'], handleDailySummaryReport);
+
+    // Command /keo or /solo [Nickname1] [Nickname2] - Head to head comparison (Defaults to MrChoi vs IRIS JOSEPH)
+    bot.command(['keo', 'solo', 'keo_tuan4', 'keo_mrchoi_ngoc', 'versus'], async (ctx) => {
+      try {
+        const rawText = (ctx.message?.text || '').trim();
+        const parts = rawText.split(/\s+/).slice(1);
+        const q1 = parts[0] || 'MrChoi';
+        const q2 = parts[1] || 'IRIS JOSEPH';
+
+        const res = await compareAthletesWeek4(q1, q2);
+        if (!res.success) {
+          return ctx.replyWithHTML(res.message || 'Lỗi khi so kèo 2 VĐV.');
+        }
+
+        return ctx.replyWithHTML(res.formattedTelegramText || 'Không có dữ liệu đối đầu.');
+      } catch (error: any) {
+        console.error('[Bot /keo] Error:', error);
+        return ctx.reply('Lỗi khi kiểm tra kết quả đối đầu: ' + (error?.message || error));
+      }
+    });
 
     // Command /phat - Penalty / Contribution Report
     bot.command('phat', async (ctx) => {

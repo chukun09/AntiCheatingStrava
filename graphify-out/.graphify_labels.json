@@ -5,7 +5,11 @@
   "3": "index.ts",
   "4": "telegram.service.ts",
   "5": "compilerOptions",
+  "6": "index.ts",
   "7": "sync.service.ts",
+  "8": "getTeamName",
+  "9": "department.service.ts",
+  "10": "progress.service.ts",
   "12": "bonus.service.ts",
   "14": "strava.service.ts"
 }
