@@ -4,6 +4,7 @@ import { validateActivity } from './anticheat.service';
 import { notifyReachedMilestone, notifyCheatingAlert, notifyActivityDeleted, notifyActivityUpdated } from './telegram.service';
 import { WEEKS } from './awards.service';
 import { getExemptUserIdsForWeek } from './exemption.service';
+import { isContestLocked, notifyContestTamperingAlert } from './contest-lock.service';
 
 /**
  * Worker function executed by P-Queue to process a Strava activity event (create, update, or delete)
@@ -34,6 +35,18 @@ export async function processActivityQueueItem(
   // CASE A: ASPECT TYPE = 'DELETE'
   // ----------------------------------------------------
   if (aspectType === 'delete') {
+    // Layer 2 Guard: Block delete if contest is locked
+    if (isContestLocked()) {
+      console.warn(`[Queue Worker Guard] Blocked delete for activity ${activityId} after contest lock.`);
+      await notifyContestTamperingAlert({
+        athleteId,
+        stravaActivityId: activityId,
+        aspectType: 'delete',
+        user
+      });
+      return;
+    }
+
     let deletedActivityName = 'Bài chạy';
     let deletedDistanceKm = 0;
     let newTotalKm = 0;
@@ -154,6 +167,20 @@ export async function processActivityQueueItem(
     }
 
     if (existingActivity) {
+      // Layer 2 Guard: Block update if contest is locked
+      if (isContestLocked()) {
+        console.warn(`[Queue Worker Guard] Blocked update for activity ${activityId} after contest lock.`);
+        await notifyContestTamperingAlert({
+          athleteId,
+          stravaActivityId: activityId,
+          aspectType: 'update',
+          user,
+          activityName: existingActivity.name,
+          distanceKm: existingActivity.distance / 1000
+        });
+        return;
+      }
+
       // UPDATE EXISTING ACTIVITY
       const oldLegitMeters = existingActivity.isLegit ? existingActivity.distance : 0;
       const newLegitMeters = validation.isLegit ? (activityData.distance || 0) : 0;

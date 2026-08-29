@@ -22,11 +22,20 @@ export function validateActivity(activity: any): ValidationResult {
     if (!rawDateStr) {
       return { isLegit: false, reason: 'Thiếu dữ liệu ngày bắt đầu bài chạy' };
     }
-    const activityDate = new Date(rawDateStr);
-    if (isNaN(activityDate.getTime()) || activityDate < CONTEST_START || activityDate >= CONTEST_END) {
+    const startDate = new Date(rawDateStr);
+    if (isNaN(startDate.getTime()) || startDate < CONTEST_START) {
       return {
         isLegit: false,
-        reason: `Ngoài thời gian diễn ra cuộc thi (Hành trình IRIS: 03/08 - 30/08/2026)`
+        reason: `Bài chạy xuất phát trước thời gian diễn ra cuộc thi (trước 00:00 ngày 03/08/2026)`
+      };
+    }
+
+    const elapsedSec = Math.max(activity.elapsed_time || 0, activity.moving_time || 0);
+    const endDate = new Date(startDate.getTime() + elapsedSec * 1000);
+    if (endDate >= CONTEST_END) {
+      return {
+        isLegit: false,
+        reason: `Bài chạy kết thúc sau thời điểm đóng sổ cuộc thi (kết thúc lúc ${endDate.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}, sau 23:59:59 ngày 30/08/2026)`
       };
     }
   }

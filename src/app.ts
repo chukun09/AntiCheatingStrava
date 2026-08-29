@@ -10,6 +10,7 @@ import { initTelegramBot } from './bot';
 import { initWeeklyCronJob } from './cron/weekly';
 import { initKeepAliveCronJob } from './cron/keepalive';
 import { initReconcileCronJob } from './cron/reconcile';
+import { initContestFreezeCronJob } from './cron/contest-freeze';
 import { migrateLegacyUsersAppClientId } from './services/stravapool.service';
 import { activityQueue } from './utils/queue';
 
@@ -20,7 +21,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static frontend landing page
+// Root redirect to Dashboard (Onboarding is permanently closed)
+app.get('/', (req, res) => {
+  return res.redirect('/dashboard');
+});
+
+// Serve static frontend assets
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Public Dashboard Route & API
@@ -90,6 +96,9 @@ const server = app.listen(env.PORT, () => {
 
   // Initialize Daily 03:00 AM Reconcile Audit CronJob
   initReconcileCronJob();
+
+  // Initialize Contest Freeze & Closure Announcement CronJob (00:00 31/08 Vietnam Time)
+  initContestFreezeCronJob();
 
   // Populate default appClientId for legacy users in DB
   migrateLegacyUsersAppClientId();

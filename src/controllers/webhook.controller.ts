@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { env } from '../config/env';
 import { activityQueue, isActivityQueued, markActivityQueued, unmarkActivityQueued } from '../utils/queue';
 import { processActivityQueueItem } from '../services/activity.service';
+import { isContestLocked, notifyContestTamperingAlert } from '../services/contest-lock.service';
 
 /**
  * GET /webhook
@@ -67,6 +68,23 @@ export async function handleWebhookEvent(req: Request, res: Response) {
       const aspectType = event.aspect_type as 'create' | 'update' | 'delete';
 
       if (activityId && athleteId) {
+        // ----------------------------------------------------
+        // CONTEST LOCK GUARD (00:00:00 31/08/2026)
+        // ----------------------------------------------------
+        if (isContestLocked()) {
+          console.warn(`[Contest Lock] Webhook event received after lock deadline: activityId=${activityId}, athleteId=${athleteId}, aspectType=${aspectType}. Blocking & notifying BTC.`);
+          
+          // Non-blocking asynchronous alert to BTC Admin group
+          notifyContestTamperingAlert({
+            athleteId,
+            stravaActivityId: activityId,
+            aspectType
+          }).catch(err => console.error('[Contest Lock] Error firing tampering alert:', err));
+
+          // Immediately return 200 OK to Strava without queueing DB task
+          return res.status(200).json({ status: 'contest_locked_ignored' });
+        }
+
         // Queue length cap guard (max 500 items) to prevent OOM on 512MB RAM
         if (activityQueue.size > 500) {
           console.warn(`[Webhook Event] Activity queue size limit reached (${activityQueue.size} items). Dropping non-critical webhook event for activity ${activityId}.`);
@@ -89,3 +107,4 @@ export async function handleWebhookEvent(req: Request, res: Response) {
     return res.status(200).json({ status: 'error_handled' });
   }
 }
+

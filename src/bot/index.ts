@@ -27,6 +27,7 @@ import { grantManualKm, revokeManualKm, getManualKmList } from '../services/manu
 import { getDailySummaryReport } from '../services/daily-report.service';
 import { removeAthleteFromContest } from '../services/athlete-removal.service';
 import { compareAthletesWeek4 } from '../services/versus-user.service';
+import { buildContestClosureMessage, broadcastContestClosureAnnouncement } from '../cron/contest-freeze';
 
 let bot: Telegraf | null = null;
 
@@ -1966,6 +1967,41 @@ Gõ <code>/bxh_canhan</code> hoặc <code>/bxh_doi</code> để xem Bảng xếp
       } catch (error: any) {
         console.error('[Bot /xoa_vdv] Error:', error);
         return ctx.reply('Lỗi khi loại bỏ VĐV khỏi giải: ' + (error?.message || error));
+      }
+    });
+
+    // Command /sync or /dongbo - Notify participants that sync is closed after contest completion
+    bot.command(['sync', 'dongbo', 'dong_bo'], async (ctx) => {
+      try {
+        let msg = `🔒 <b>THÔNG BÁO ĐÓNG CỔNG ĐỒNG BỘ DỮ LIỆU:</b>\n\n`;
+        msg += `Chiến dịch chạy IRIS 2026 đã chính thức kết thúc vào <b>23:59:59 ngày 30/08/2026</b>.\n\n`;
+        msg += `🛡️ Cổng đồng bộ dữ liệu đã được <b>ĐÓNG BĂNG HOÀN TOÀN</b> để Ban Tổ Chức tiến hành rà soát, đối soát và tổng kết kết quả chung cuộc.\n\n`;
+        msg += `📊 Toàn bộ kết quả đã được bảo toàn chính xác tuyệt đối. Vui lòng theo dõi Bảng Xếp Hạng tại: <code>/bxh</code> hoặc Web Dashboard!`;
+        return ctx.replyWithHTML(msg);
+      } catch (error: any) {
+        console.error('[Bot /sync] Error:', error);
+      }
+    });
+
+    // Command /thongbao_chotso or /chot_so - Broadcast contest closure announcement manually (Admin only)
+    bot.command(['thongbao_chotso', 'thongbaochotso', 'chot_so'], async (ctx) => {
+      try {
+        const text = (ctx.message?.text || '').trim();
+        const parts = text.split(/\s+/);
+        
+        if (parts[1] === 'send' || parts[1] === 'gui') {
+          await broadcastContestClosureAnnouncement(true);
+          return ctx.replyWithHTML('✅ <b>ĐÃ PHÁT SÓNG THÔNG BÁO ĐÓNG SỔ TOÀN GIẢI TỚI NHÓM TELEGRAM CÔNG TY!</b>');
+        }
+
+        const previewMsg = buildContestClosureMessage();
+        let reply = `🔍 <b>XEM TRƯỚC THÔNG BÁO ĐÓNG SỔ GIẢI CHẠY:</b>\n\n`;
+        reply += previewMsg;
+        reply += `\n\n💡 <i>Để phát sóng ngay thông báo này vào nhóm chính, gõ: <code>/thongbao_chotso send</code></i>`;
+        return ctx.replyWithHTML(reply);
+      } catch (error: any) {
+        console.error('[Bot /thongbao_chotso] Error:', error);
+        return ctx.reply('Lỗi khi xử lý thông báo chốt sổ: ' + (error?.message || error));
       }
     });
 
