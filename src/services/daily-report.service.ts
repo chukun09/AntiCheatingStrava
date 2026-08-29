@@ -12,6 +12,7 @@ export interface TeamDailyProgress {
   exemptCountWeek4: number;
   totalKmWholeContest: number;
   totalKmWeek4: number;
+  avgKmWholeContest: number;
   avgKmWeek4: number;
 }
 
@@ -167,6 +168,7 @@ export async function getDailySummaryReport(options?: DailyReportOptions): Promi
     });
 
     const avgKmWeek4 = activeMembersWeek4 > 0 ? totalKmWeek4 / activeMembersWeek4 : 0;
+    const avgKmWholeContest = totalMembers > 0 ? totalKmWholeContest / totalMembers : 0;
 
     return {
       teamId: team.id,
@@ -176,6 +178,7 @@ export async function getDailySummaryReport(options?: DailyReportOptions): Promi
       exemptCountWeek4,
       totalKmWholeContest,
       totalKmWeek4,
+      avgKmWholeContest,
       avgKmWeek4
     };
   }).sort((a, b) => b.avgKmWeek4 - a.avgKmWeek4 || b.totalKmWeek4 - a.totalKmWeek4);

@@ -185,8 +185,8 @@
     "semantic_hash": ""
   },
   "src/services/daily-report.service.ts": {
-    "mtime": 1787933382.1329167,
-    "ast_hash": "25d7923d497a592ecc4dfcb010c1fefe",
+    "mtime": 1787966693.903306,
+    "ast_hash": "e4f07e3162402dc53349b9a49b08b53e",
     "semantic_hash": ""
   },
   "src/services/exemption.service.ts": {
@@ -210,8 +210,8 @@
     "semantic_hash": ""
   },
   "public/dashboard.html": {
-    "mtime": 1787934409.6671567,
-    "ast_hash": "bd7957571ca55234b7f4c5b242b70442",
+    "mtime": 1787966812.4611967,
+    "ast_hash": "0ac44c7b866c709b353579fa81d50b02",
     "semantic_hash": ""
   }
 }

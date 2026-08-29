@@ -1,7 +1,7 @@
-# Graph Report - Anti Cheating Strava  (2026-08-28)
+# Graph Report - Anti Cheating Strava  (2026-08-29)
 
 ## Corpus Check
-- 40 files · ~40,310 words
+- 40 files · ~39,856 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `41753899`
+- Built from commit: `d58fcfdd`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
